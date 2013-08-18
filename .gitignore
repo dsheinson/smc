@@ -1,0 +1,23 @@
+# History files
+*.Rhistory
+*.RData
+
+# Example code in package build process
+*-Ex.R
+
+
+# LaTeX files
+*.aux
+*.bbl
+*.blg
+*.fff
+*.log
+*.spl
+*.synctex.gz
+
+# MVIM temporary files
+*.swp
+
+# Automatic backup files
+*.bak
+

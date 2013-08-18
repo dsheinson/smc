@@ -1,0 +1,13 @@
+model {
+  x[1] ~ dnorm(0.0, tau.e)  
+  for(i in 2:n) {
+    x[i] ~ dnorm(0.95*x[i-1], tau.e)
+    y[i-1] ~ dnorm(2*x[i], tau.e)
+  }
+  x[n+1] ~ dnorm(0.95*x[n], tau.e)
+  y[n] ~ dnorm(2*x[n+1], tau.e)
+
+  # Priors
+  tau.v ~ dgamma(1, .25)
+  tau.e <- 1 / tau.v
+}

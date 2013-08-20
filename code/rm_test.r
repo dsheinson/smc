@@ -52,44 +52,19 @@ pstate <- function(x, theta) .95*x
 source("kd_pf.r")
 out.kd = kd_pf(y, dllik, pstate, revo, rprior, 100, method="stratified", nonuniformity="ess", threshold=0.8, log=FALSE)
 
-## Perform SMC using resample-move particle filter
-dllik <- function(y, x, theta) dnorm(y,2*x,sqrt(theta),log=TRUE)
-revo <- function(x, theta) rnorm(1,.95*x,sqrt(theta))
-rprior <- function(j)
-{
-  mytheta = rgamma(1,1,.25)
-  mystate = rnorm(1,0,sqrt(mytheta))
-  return(list(x=mystate,theta=mytheta))
-}
-rmove <- function(y, x, theta, n.iter)
-{
-  K = length(y)
-  for(t in 1:n.iter)
-  {
-    theta.proposal = 0
-    while(theta.proposal == 0) theta.proposal = rgamma(1,theta^2,theta)
-    ll.curr <- ll.proposal <- 0
-    lp.curr <- dgamma(theta,1,.25,log=T)+dnorm(x[1],0,sqrt(theta),log=TRUE)
-    lp.proposal <- dgamma(theta.proposal,1,.25,log=T)+dnorm(x[1],0,sqrt(theta.proposal),log=TRUE)
-    for(k in 1:K)
-    {
-      ll.curr = ll.curr + dllik(y[k],x[k+1],theta)
-      ll.proposal = ll.proposal + dllik(y[k],x[k+1],theta.proposal)
-      lp.curr = lp.curr + dnorm(x[k+1],x[k],sqrt(theta),log=TRUE)
-      lp.proposal = lp.proposal + dnorm(x[k+1],x[k],sqrt(theta.proposal),log=TRUE)
-    }
-    numer = ll.proposal + lp.proposal + dnorm(theta,theta.proposal,1,log=T)
-    denom = ll.curr + lp.curr + dnorm(theta.proposal,theta,1,log=T)
-    logMH = numer - denom
-    if(log(runif(1)) < logMH) theta = theta.proposal
-  }
-  return(list(state=x,theta=theta))
-}
-rmove1 <- function(y, x, theta) rmove(y, x, theta, 1)
+## Perform SMC using resample-move particle filter - move parameter only using Metropolis-Hastings
+source("rm_test_functions.r")
+rmove <- function(y, x, theta) return(list(state=x,theta=sample.theta(y, x, theta)))
 source("rm_pf.r")
-out.rm = rm_pf(y, dllik, revo, rprior, rmove1, 100, method="stratified", nonuniformity="ess", threshold=0.8, log=FALSE)
+out.rm1 = rm_pf(y, dllik, revo, rprior, rmove, 100, method="stratified", nonuniformity="ess", threshold=0.8, log=FALSE)
 
-#########################################
+## Perform SMC using resample-move particle filter - move states and parameter using Gibbs sampling
+rmove <- function(y, x, theta) rm_mcmc(y, x, theta, 1)
+out.rm2 = rm_pf(y, dllik, revo, rprior, rmove, 100, method="stratified", nonuniformity="ess", threshold=0.8, log=FALSE)
+
+#######
+# Plots
+#######
 
 # Plot 95% credible intervals of filtered states over time
 gmin = min(x,y); gmax = max(x,y)
@@ -118,18 +93,30 @@ for(i in 1:dim(mystates)[2])
 }
 lines(0:n,lkd,col=3)
 lines(0:n,ukd,col=3)
-# Resample-move SMC
+# Resample-move SMC - moving theta only
 require(Hmisc)
-lr = rep(NA,n+1)
-ur = rep(NA,n+1)
-for(i in 1:length(out.rm$state))
+lr1 = rep(NA,n+1)
+ur1 = rep(NA,n+1)
+for(i in 1:length(out.rm1$state))
 {
-  lr[i] = wtd.quantile(out.rm$state[[i]][1,,i],out.rm$weight[,i],probs=0.025,normwt=TRUE)
-  ur[i] = wtd.quantile(out.rm$state[[i]][1,,i],out.rm$weight[,i],probs=0.975,normwt=TRUE)
+  lr1[i] = wtd.quantile(out.rm1$state[[i]][1,,i],out.rm1$weight[,i],probs=0.025,normwt=TRUE)
+  ur1[i] = wtd.quantile(out.rm1$state[[i]][1,,i],out.rm1$weight[,i],probs=0.975,normwt=TRUE)
 }
-lines(0:n,lr,col=6)
-lines(0:n,ur,col=6)
-legend("bottomleft",legend=c("KF","MCMC","KD","RM"),lty=c(1,1,1,1),col=c(2,4,3,6))
+lines(0:n,lr1,col=6)
+lines(0:n,ur1,col=6)
+# Resample-move SMC - moving states and theta
+require(Hmisc)
+lr2 = rep(NA,n+1)
+ur2 = rep(NA,n+1)
+for(i in 1:length(out.rm2$state))
+{
+  lr2[i] = wtd.quantile(out.rm2$state[[i]][1,,i],out.rm2$weight[,i],probs=0.025,normwt=TRUE)
+  ur2[i] = wtd.quantile(out.rm2$state[[i]][1,,i],out.rm2$weight[,i],probs=0.975,normwt=TRUE)
+}
+lines(0:n,lr2,col=7)
+lines(0:n,ur2,col=7)
+
+legend("bottomleft",legend=c("KF","MCMC","KD","RM1","RM2"),lty=c(1,1,1,1,1),col=c(2,4,3,6,7))
 
 # Plot 95% credible intervals of unknown precision over time
 # Analytic estimates
@@ -156,14 +143,25 @@ for(i in 1:(n+1))
 }
 lines(0:n,lkd,col=3)
 lines(0:n,ukd,col=3)
-# resample-move
-lr = rep(NA,n+1)
-ur = rep(NA,n+1)
+# resample-move - moving theta only
+lr1 = rep(NA,n+1)
+ur1 = rep(NA,n+1)
 for(i in 1:(n+1))
 {
-  lr[i] = wtd.quantile(1/out.rm$theta[1,,i],out.rm$weight[,i],probs=0.025,normwt=TRUE)
-  ur[i] = wtd.quantile(1/out.rm$theta[1,,i],out.rm$weight[,i],probs=0.975,normwt=TRUE)
+  lr1[i] = wtd.quantile(1/out.rm1$theta[1,,i],out.rm1$weight[,i],probs=0.025,normwt=TRUE)
+  ur1[i] = wtd.quantile(1/out.rm1$theta[1,,i],out.rm1$weight[,i],probs=0.975,normwt=TRUE)
 }
-lines(0:n,lr,col=6)
-lines(0:n,ur,col=6)
-legend("topright",legend=c("KF","MCMC","KD","RM"),lty=c(1,1,1,1),col=c(2,4,3,6))
+lines(0:n,lr1,col=6)
+lines(0:n,ur1,col=6)
+# resample-move - moving theta only
+lr2 = rep(NA,n+1)
+ur2 = rep(NA,n+1)
+for(i in 1:(n+1))
+{
+  lr2[i] = wtd.quantile(1/out.rm2$theta[1,,i],out.rm2$weight[,i],probs=0.025,normwt=TRUE)
+  ur2[i] = wtd.quantile(1/out.rm2$theta[1,,i],out.rm2$weight[,i],probs=0.975,normwt=TRUE)
+}
+lines(0:n,lr2,col=7)
+lines(0:n,ur2,col=7)
+
+legend("topright",legend=c("KF","MCMC","KD","RM1","RM2"),lty=c(1,1,1,1,1),col=c(2,4,3,6,7))

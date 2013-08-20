@@ -39,8 +39,7 @@ samps1 = coda.samples(mod1, c("tau.e","x"), n.iter = 1e4)
 #gelman.diag(samps1) # psrf should be around 1
 #summary(samps1)
 
-## Perform SMC
-# kernel density particle filter
+## Perform SMC using kernel density particle filter
 dllik <- function(y, x, theta) dnorm(y,2*x,sqrt(exp(theta)),log=TRUE)
 revo <- function(x, theta) rnorm(1,.95*x,sqrt(exp(theta)))
 rprior <- function(j)
@@ -53,69 +52,42 @@ pstate <- function(x, theta) .95*x
 source("kd_pf.r")
 out.kd = kd_pf(y, dllik, pstate, revo, rprior, 100, method="stratified", nonuniformity="ess", threshold=0.8, log=FALSE)
 
-# resample-move
-# function to evaluate the logarithm of the likelihood of a new observation given the current state
-dllik <- function(y, x, theta)
-{
-  if(!is.matrix(x)) x = matrix(x, 1)
-  dnorm(y,2*x[1,dim(x)[2]],sqrt(theta),log=TRUE)
-}
-
-# function to sample from state evolution equation
-revo <- function(x, theta)
-{
-  if(!is.matrix(x)) x = matrix(x, 1)
-  rnorm(1,.95*x[1,dim(x)[2]],sqrt(theta))
-}
-
-# function to sample prior state and parameter
+## Perform SMC using resample-move particle filter
+dllik <- function(y, x, theta) dnorm(y,2*x,sqrt(theta),log=TRUE)
+revo <- function(x, theta) rnorm(1,.95*x,sqrt(theta))
 rprior <- function(j)
 {
   mytheta = rgamma(1,1,.25)
   mystate = rnorm(1,0,sqrt(mytheta))
   return(list(x=mystate,theta=mytheta))
 }
-
-# function to move parameter by Metropolis-Hastings
-rmove <- function(y, x, theta)
+rmove <- function(y, x, theta, n.iter)
 {
-  n.iter = 1
-  if(!is.matrix(x)) x = matrix(x, 1)
-  if(!is.matrix(y)) y = matrix(y, 1)
-  K = dim(y)[2]
+  K = length(y)
   for(t in 1:n.iter)
   {
     theta.proposal = 0
     while(theta.proposal == 0) theta.proposal = rgamma(1,theta^2,theta)
-#    x.proposal = rnorm(1,x[1,1],sqrt(theta.proposal))
-    x.proposal = x[1,1]
     ll.curr <- ll.proposal <- 0
-    lp.curr <- dgamma(theta,1,.25,log=T)+dnorm(x[1,1],0,sqrt(theta),log=TRUE)
-    lp.proposal <- dgamma(theta.proposal,1,.25,log=T)+dnorm(x.proposal,0,sqrt(theta.proposal),log=TRUE)
+    lp.curr <- dgamma(theta,1,.25,log=T)+dnorm(x[1],0,sqrt(theta),log=TRUE)
+    lp.proposal <- dgamma(theta.proposal,1,.25,log=T)+dnorm(x[1],0,sqrt(theta.proposal),log=TRUE)
     for(k in 1:K)
     {
-#      x.proposal <- c(x.proposal, rnorm(1,x.proposal[k],sqrt(theta.proposal)))
-      x.proposal <- c(x.proposal, x[1,k+1])
-      ll.curr = ll.curr + dllik(y[1,k],x[1,k+1],theta)
-      ll.proposal = ll.proposal + dllik(y[1,k],x.proposal[k+1],theta.proposal)
-      lp.curr = lp.curr + dnorm(x[1,k+1],x[1,k],sqrt(theta),log=TRUE)
-      lp.proposal = lp.proposal + dnorm(x.proposal[k+1],x.proposal[k],sqrt(theta.proposal),log=TRUE)
+      ll.curr = ll.curr + dllik(y[k],x[k+1],theta)
+      ll.proposal = ll.proposal + dllik(y[k],x[k+1],theta.proposal)
+      lp.curr = lp.curr + dnorm(x[k+1],x[k],sqrt(theta),log=TRUE)
+      lp.proposal = lp.proposal + dnorm(x[k+1],x[k],sqrt(theta.proposal),log=TRUE)
     }
     numer = ll.proposal + lp.proposal + dnorm(theta,theta.proposal,1,log=T)
     denom = ll.curr + lp.curr + dnorm(theta.proposal,theta,1,log=T)
     logMH = numer - denom
-    if(log(runif(1)) < logMH)
-    { 
-      theta = theta.proposal
-      x[1,] = x.proposal
-    }
+    if(log(runif(1)) < logMH) theta = theta.proposal
   }
   return(list(state=x,theta=theta))
 }
-
-# run resample-move particle filter
+rmove1 <- function(y, x, theta) rmove(y, x, theta, 1)
 source("rm_pf.r")
-out.rm = rm_pf(y, dllik, revo, rprior, rmove, 100, method="stratified", nonuniformity="ess", threshold=0.8, log=FALSE)
+out.rm = rm_pf(y, dllik, revo, rprior, rmove1, 100, method="stratified", nonuniformity="ess", threshold=0.8, log=FALSE)
 
 #########################################
 
@@ -161,11 +133,14 @@ legend("bottomleft",legend=c("KF","MCMC","KD","RM"),lty=c(1,1,1,1),col=c(2,4,3,6
 
 # Plot 95% credible intervals of unknown precision over time
 # Analytic estimates
+x11()
 lk = qgamma(0.025,a,b)
 uk = qgamma(0.975,a,b)
-burn = 20
-ymin = min(lk[-(1:burn)],v)
-ymax = max(uk[-(1:burn)],v)
+ymin = 0.05
+ymax = 1.95
+#burn = 20
+#ymin = min(lk[-(1:burn)],v)
+#ymax = max(uk[-(1:burn)],v)
 plot(0:n,lk,type="l",col=2,ylim=c(ymin,ymax),xlab=expression(t),ylab=expression(phi))
 lines(0:n,uk,col=2)
 abline(h=v)

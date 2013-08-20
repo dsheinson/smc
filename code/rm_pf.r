@@ -1,14 +1,14 @@
 #' A function to perform the resample-move particle filter
 #'
 #' @param y a matrix with no, dimension of each observation, rows and nt, number of observation time points, columns
-#' @param dllik a function to evaluate the logarithm of the likelihood with arguments y, x, and theta; y is no-length vector giving the current data point, x is an ns (dimension of state) by k < nt+1 matrix giving the history of the state up to the current time point, and theta is an np (dimension of parameter) length vector giving the fixed parameters
-#' @param revo a function to propagate the state with arguments x, the state history matrix, and theta, the fixed parameters
+#' @param dllik a function to evaluate the logarithm of the likelihood given y the current observation, x the current state, and theta the fixed parameters
+#' @param revo a function to propagate the state given the current state x and the fixed parameters theta
 #' @param rprior a function to sample from the prior for the state and fixed parameters; returns a list with elements x and theta; takes an integer argument corresponding to the particle number to give the user the option to load already sampled prior draws
-#' @param rmove a function to regenerate values of the state history and/or fixed parameters with arguments y, x, and theta; y is an no by k < nt data matrix, x is the state history matrix, and theta is the fixed parameters; returns a list with components state and theta, the regenerated values of the state history and fixed parameters
+#' @param rmove a function to regenerate values of the state history and/or fixed parameters with arguments y, x, and theta; y is an no by k < nt matrix of observations up to the current time point, x is an ns (dimension of state) by k < nt+1 matrix of states up to the current time point, and theta is the fixed parameters; returns a list with components state, an ns by k matrix of (possibly) regenerated states, and theta, the (possibly) regenerated values of the fixed parameters
 #' @param n the number of particles
 #' @param progress a boolean to display progress bar if TRUE
 #' @param ... arguments passed on to resample
-#' @return a list containing (nt+1)-length list of state histories (each an ns x n x k matrix), an n x (nt+1) matrix of normalized particle weights, an np x n x (nt+1) array of theta draws, and an n x nt parent matrix
+#' @return a list containing (nt+1)-length list of state histories (each an ns by n by k matrix), an n by (nt+1) matrix of normalized particle weights, an np by n by (nt+1) array of theta draws, and an n by nt parent matrix
 #' @references Berzuini, C. and Gilks, W. Following a Moving Target-Monte Carlo Inference for Dynamic Bayesian Models. Journal of the Royal Statistical Society. Series B (Statistical Methodology), Vol. 63, No. 1 (2001), pp. 127-146
 #' @seealso \code{\link{resample}}
 #'
@@ -55,8 +55,8 @@ rm_pf = function(y, dllik, revo, rprior, rmove, n, progress = TRUE, ...)
     state[[i+1]][,,1:i] = state[[i]]
     for(j in 1:n)
     {
-      state[[i+1]][,j,i+1] = revo(state[[i]][,j,],theta[,j,i])
-      weight[j,i+1] = log(weight[j,i]) + dllik(y[,i],state[[i+1]][,j,],theta[,j,i])
+      state[[i+1]][,j,i+1] = revo(state[[i]][,j,i],theta[,j,i])
+      weight[j,i+1] = log(weight[j,i]) + dllik(y[,i],state[[i+1]][,j,i+1],theta[,j,i])
     }
     
     # Resample particles

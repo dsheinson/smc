@@ -1,10 +1,10 @@
-dllik <- function(y, x, theta) dnorm(y,2*x,sqrt(theta),log=TRUE)
+dllik <- function(y, x, theta) dnorm(y,x,sqrt(theta),log=TRUE)
 
-revo <- function(x, theta) rnorm(1,.95*x,sqrt(theta))
+revo <- function(x, theta) rnorm(1,x,sqrt(theta))
 
 rprior <- function(j)
 {
-  mytheta = rgamma(1,1,.25)
+  mytheta = 1 / rgamma(1,1,.25)
   mystate = rnorm(1,0,sqrt(mytheta))
   return(list(x=mystate,theta=mytheta))
 }
@@ -14,17 +14,25 @@ rm_mcmc <- function(y, x, theta, n.iter)
 {
   for(t in 1:n.iter)
   {
-    # Sample theta by Metropolis-Hastings
+    # Sample theta from full conditional
     theta = sample.theta(y, x, theta)
 
     # Sample states by FFBS
-    mydlm = dlm(list(m0=0, C0=theta, FF=2, V=theta, GG=.95, W=theta))
+    mydlm = dlm(list(m0=0, C0=theta, FF=1, V=theta, GG=1, W=theta))
     x = dlmBSample(dlmFilter(y, mydlm))
   }
   return(list(state=x,theta=theta))
 }
 
 sample.theta <- function(y, x, theta)
+{
+  K = length(y)
+  a = K + 1.5
+  b = .5*(sum((y - x[2:(K+1)])^2) + sum((x[2:(K+1)] - x[1:K])^2) + x[1]^2) + 4
+  return(1/rgamma(1,a,b))
+}
+
+sample.theta.mh <- function(y, x, theta)
 {
   K = length(y)
   theta.proposal = 0

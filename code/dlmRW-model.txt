@@ -8,6 +8,5 @@ model {
   y[n] ~ dnorm(2*x[n+1], tau.e)
 
   # Priors
-  tau.v ~ dgamma(1, .25)
-  tau.e <- 1 / tau.v
+  tau.e ~ dgamma(1, .25)
 }

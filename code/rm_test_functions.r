@@ -65,7 +65,7 @@ sample.theta.mh <- function(y, x, theta)
 ##############################
 # Functions to construct plots
 ##############################
-pf.states_plot <- function(m, C, a, b, x, out.kd, out.rm1, out.rm2)
+pf.states_plot <- function(m, C, a, b, x, out.kd, out.rm1, out.rm2, xlab, ylab)
 {
   n = length(a) - 1
 
@@ -109,7 +109,7 @@ pf.states_plot <- function(m, C, a, b, x, out.kd, out.rm1, out.rm2)
 
   # Plot 95% credible intervals of filtered states over time
   gmin = min(x,lk,lkd,lr1,lr2); gmax = max(x,uk,ukd,ur1,ur2)
-  plot(0:n,x,ylim=c(gmin,gmax),type="l",xlab=expression(t),ylab="Position")
+  plot(0:n,x,ylim=c(gmin,gmax),type="l",xlab=xlab,ylab=ylab,cex.lab=2.5,cex.axis=2)
   lines(0:n,lk,col=2)
   lines(0:n,uk,col=2)
   lines(0:n,lkd,col=3)
@@ -118,10 +118,10 @@ pf.states_plot <- function(m, C, a, b, x, out.kd, out.rm1, out.rm2)
   lines(0:n,ur1,col=6)
   lines(0:n,lr2,col=4)
   lines(0:n,ur2,col=4)
-  legend("bottomright",legend=c("x","Post.","KD","RM1","RM2"),lty=rep(1,5),col=c(1,2,3,6,4))
+  legend("topright",legend=c("x","Post.","KD","RM1","RM2"),lty=rep(1,5),col=c(1,2,3,6,4),cex=1.75)
 }
 
-pf.states.zeroed_plot <- function(m, C, a, b, x, out.kd, out.rm1, out.rm2)
+pf.states.zeroed_plot <- function(m, C, a, b, x, out.kd, out.rm1, out.rm2, xlab, ylab)
 {
   n = length(a) - 1
 
@@ -164,8 +164,8 @@ pf.states.zeroed_plot <- function(m, C, a, b, x, out.kd, out.rm1, out.rm2)
   }
 
   # Plot 95% credible intervals of filtered states over time
-  gmin = min(x,lk,lkd,lr1,lr2,lrj); gmax = max(x,uk,ukd,ur1,ur2,urj)
-  plot(0:n,x-m,ylim=c(gmin,gmax),type="l",xlab=expression(t),ylab="Position")
+  gmin = min(x-m,lk-m,lkd-m,lr1-m,lr2-m); gmax = max(x-m,uk-m,ukd-m,ur1-m,ur2-m)
+  plot(0:n,x-m,ylim=c(gmin,gmax),type="l",xlab=xlab,ylab=ylab,cex.lab=2.5,cex.axis=2)
   lines(0:n,lk-m,col=2)
   lines(0:n,uk-m,col=2)
   lines(0:n,lkd-m,col=3)
@@ -174,11 +174,13 @@ pf.states.zeroed_plot <- function(m, C, a, b, x, out.kd, out.rm1, out.rm2)
   lines(0:n,ur1-m,col=6)
   lines(0:n,lr2-m,col=4)
   lines(0:n,ur2-m,col=4)
-  legend("bottomright",legend=c("x","Post.","KD","RM1","RM2"),lty=rep(1,5),col=c(1,2,3,6,4))
+  legend("bottomright",legend=c("x","Post.","KD","RM1","RM2"),lty=rep(1,5),col=c(1,2,3,6,4),cex=1.75)
 }
 
-pf.pvalues_plot <- function(m, C, a, b, out.kd, out.rm1, out.rm2)
+pf.pvalues_plot <- function(m, C, a, b, out.kd, out.rm1, out.rm2, xlab, ylab)
 {
+  n = length(a) - 1
+
   # Compute p-values of test of particle filtered distribution versus true posterior
   pval = matrix(NA,n+1,3)
   for(i in 1:(n+1))
@@ -191,24 +193,21 @@ pf.pvalues_plot <- function(m, C, a, b, out.kd, out.rm1, out.rm2)
 
   # Plot p-values over time
   gmin = min(pval[-1,]); gmax = max(pval[-1,])
-  plot(0:n,pval[,1],ylim=c(gmin,gmax),type="l",col=3,xlab=expression(t),ylab="P-value")
+  plot(0:n,pval[,1],ylim=c(gmin,gmax),type="l",col=3,xlab=xlab,ylab=ylab,cex.lab=2.5,cex.axis=2)
   lines(0:n,pval[,2],col=6)
   lines(0:n,pval[,3],col=4)
-  legend("topleft",legend=c("KD","RM1","RM2"),lty=rep(1,3),col=c(3,6,4))
+  legend("topleft",legend=c("KD","RM1","RM2"),lty=rep(1,3),col=c(3,6,4),cex=1.75)
 }
 
-pf.theta_plot <- function(m, C, a, b, out.kd, out.rm1, out.rm2)
+pf.precision_plot <- function(m, C, a, b, v, out.kd, out.rm1, out.rm2, xlab, ylab)
 {
+  n = length(a) - 1
+
   # Plot 95% credible intervals of unknown precision over time
   # Analytic estimates
   lk = qgamma(0.025,a,b)
   uk = qgamma(0.975,a,b)
-  burn = 15
-  ymin = min(cbind(lk,v)[-(1:burn),])
-  ymax = max(cbind(uk,v)[-(1:burn),])
-  plot(0:n,lk,type="l",col=2,ylim=c(ymin,ymax),xlab=expression(t),ylab=expression(phi))
-  lines(0:n,uk,col=2)
-  abline(h=v)
+
   # Kernel density SMC
   lkd = rep(NA,n+1)
   ukd = rep(NA,n+1)
@@ -217,8 +216,7 @@ pf.theta_plot <- function(m, C, a, b, out.kd, out.rm1, out.rm2)
     lkd[i] = wtd.quantile(1/exp(out.kd$theta[1,,i]),out.kd$weight[,i],probs=0.025,normwt=TRUE)
     ukd[i] = wtd.quantile(1/exp(out.kd$theta[1,,i]),out.kd$weight[,i],probs=0.975,normwt=TRUE)
   }
-  lines(0:n,lkd,col=3)
-  lines(0:n,ukd,col=3)
+
   # resample-move - moving theta only
   lr1 = rep(NA,n+1)
   ur1 = rep(NA,n+1)
@@ -227,8 +225,7 @@ pf.theta_plot <- function(m, C, a, b, out.kd, out.rm1, out.rm2)
     lr1[i] = wtd.quantile(1/out.rm1$theta[1,,i],out.rm1$weight[,i],probs=0.025,normwt=TRUE)
     ur1[i] = wtd.quantile(1/out.rm1$theta[1,,i],out.rm1$weight[,i],probs=0.975,normwt=TRUE)
   }
-  lines(0:n,lr1,col=6)
-  lines(0:n,ur1,col=6)
+
   # resample-move - moving theta and states
   lr2 = rep(NA,n+1)
   ur2 = rep(NA,n+1)
@@ -237,7 +234,18 @@ pf.theta_plot <- function(m, C, a, b, out.kd, out.rm1, out.rm2)
     lr2[i] = wtd.quantile(1/out.rm2$theta[1,,i],out.rm2$weight[,i],probs=0.025,normwt=TRUE)
     ur2[i] = wtd.quantile(1/out.rm2$theta[1,,i],out.rm2$weight[,i],probs=0.975,normwt=TRUE)
   }
+
+  burn = 1
+  gmin = min(cbind(lk,v)[-(1:burn),])
+  gmax = max(cbind(uk,v)[-(1:burn),])
+  plot(0:n,lk,type="l",col=2,ylim=c(gmin,gmax),xlab=xlab,ylab=ylab,cex.lab=2.5,cex.axis=2)
+  lines(0:n,uk,col=2)
+  abline(h=v)
+  lines(0:n,lkd,col=3)
+  lines(0:n,ukd,col=3)
+  lines(0:n,lr1,col=6)
+  lines(0:n,ur1,col=6)
   lines(0:n,lr2,col=4)
   lines(0:n,ur2,col=4)
-  legend("topright",legend=c("True precision","True posterior","KD","RM1","RM2"),lty=rep(1,5),col=c(1,2,3,6,4))
+  legend("topright",legend=c("True precision","True posterior","KD","RM1","RM2"),lty=rep(1,5),col=c(1,2,3,6,4),cex=1.75)
 }

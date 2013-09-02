@@ -71,6 +71,6 @@ pf_run <- function(pf, np, a, b, label = "", ...){
 }
 
 # Run particle filters
-mydata = expand.grid(pf=c("KD","RM1","RM2"), np=c(100,1000), a=1, b=c(1,.25), label=seq(1,9,1), method="stratified", nonuniformity="ess", threshold=0.8, log=FALSE, stringsAsFactors=FALSE)
+mydata = expand.grid(pf=c("KD","RM1","RM2"), a=1, b=c(1,.25), label=seq(1,9,1), np=c(100,1000), progress = FALSE, method="stratified", nonuniformity="ess", threshold=0.8, log=FALSE, stringsAsFactors=FALSE)
 require(plyr)
 m_ply(.data = mydata, .fun = pf_run)

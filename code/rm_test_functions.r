@@ -65,7 +65,7 @@ sample.theta.mh <- function(y, x, theta)
 ##############################
 # Functions to construct plots
 ##############################
-pf.states_plot <- function(m, C, a, b, x, out.kd, out.rm1, out.rm2, xlab, ylab)
+pf.states_plot <- function(m, C, a, b, x, out.kd, out.rm1, out.rm2, xlab, ylab, leg = TRUE)
 {
   n = length(a) - 1
 
@@ -118,10 +118,10 @@ pf.states_plot <- function(m, C, a, b, x, out.kd, out.rm1, out.rm2, xlab, ylab)
   lines(0:n,ur1,col=6)
   lines(0:n,lr2,col=4)
   lines(0:n,ur2,col=4)
-  legend("topright",legend=c("x","Post.","KD","RM1","RM2"),lty=rep(1,5),col=c(1,2,3,6,4),cex=1.75)
+  if(leg) legend("topright",legend=c("x","Post.","KD","RM1","RM2"),lty=rep(1,5),col=c(1,2,3,6,4),cex=1.75)
 }
 
-pf.states.zeroed_plot <- function(m, C, a, b, x, out.kd, out.rm1, out.rm2, xlab, ylab)
+pf.states.zeroed_plot <- function(m, C, a, b, x, out.kd, out.rm1, out.rm2, xlab, ylab, leg = TRUE)
 {
   n = length(a) - 1
 
@@ -174,10 +174,10 @@ pf.states.zeroed_plot <- function(m, C, a, b, x, out.kd, out.rm1, out.rm2, xlab,
   lines(0:n,ur1-m,col=6)
   lines(0:n,lr2-m,col=4)
   lines(0:n,ur2-m,col=4)
-  legend("bottomright",legend=c("x","Post.","KD","RM1","RM2"),lty=rep(1,5),col=c(1,2,3,6,4),cex=1.75)
+  if(leg) legend("bottomright",legend=c("x","Post.","KD","RM1","RM2"),lty=rep(1,5),col=c(1,2,3,6,4),cex=1.75)
 }
 
-pf.pvalues_plot <- function(m, C, a, b, out.kd, out.rm1, out.rm2, xlab, ylab)
+pf.pvalues_plot <- function(m, C, a, b, out.kd, out.rm1, out.rm2, xlab, ylab, leg = TRUE)
 {
   n = length(a) - 1
 
@@ -196,10 +196,10 @@ pf.pvalues_plot <- function(m, C, a, b, out.kd, out.rm1, out.rm2, xlab, ylab)
   plot(0:n,pval[,1],ylim=c(gmin,gmax),type="l",col=3,xlab=xlab,ylab=ylab,cex.lab=2.5,cex.axis=2)
   lines(0:n,pval[,2],col=6)
   lines(0:n,pval[,3],col=4)
-  legend("topleft",legend=c("KD","RM1","RM2"),lty=rep(1,3),col=c(3,6,4),cex=1.75)
+  if(leg) legend("topleft",legend=c("KD","RM1","RM2"),lty=rep(1,3),col=c(3,6,4),cex=1.75)
 }
 
-pf.precision_plot <- function(m, C, a, b, v, out.kd, out.rm1, out.rm2, xlab, ylab)
+pf.precision_plot <- function(m, C, a, b, v, out.kd, out.rm1, out.rm2, xlab, ylab, leg = TRUE)
 {
   n = length(a) - 1
 
@@ -247,5 +247,5 @@ pf.precision_plot <- function(m, C, a, b, v, out.kd, out.rm1, out.rm2, xlab, yla
   lines(0:n,ur1,col=6)
   lines(0:n,lr2,col=4)
   lines(0:n,ur2,col=4)
-  legend("topright",legend=c("True precision","True posterior","KD","RM1","RM2"),lty=rep(1,5),col=c(1,2,3,6,4),cex=1.75)
+  if(leg) legend("topright",legend=c("True precision","True posterior","KD","RM1","RM2"),lty=rep(1,5),col=c(1,2,3,6,4),cex=1.75)
 }

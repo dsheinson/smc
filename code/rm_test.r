@@ -11,14 +11,6 @@ for(i in 1:n)
   y[i] = F*x[i] + V*rnorm(1,0,v)
 }
 
-# Plot data
-pdf("../graphs/rm_test-data.pdf")
-gmin = min(x,y); gmax = max(x,y)
-plot(0:n,x,ylim=c(gmin,gmax),type="l",xlab=expression(t),ylab="Position")
-points(1:n,y)
-legend("bottomright",legend=expression(x,y),lty=c(1,NA),pch=c(NA,1))
-dev.off()
-
 # Compute true marginal filtered distributions of states and unknown variance
 m = C = a = b = rep(NA,n+1)
 m[1] = 0; C[1] = 1; a[1] = 1; b[1] = 1

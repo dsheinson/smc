@@ -14,11 +14,11 @@ We allow $\theta_t$ to change with time, and we consider in particular the case 
 We initialize the algorithm by drawing $\theta_{j,0}$ from some prior distribution $p(\theta_0)$ and setting $w_{j,0} = 1 / J$ for $j = 1,\ldots,J$. Given a particle sample approximation of the posterior $p(\theta_{t-1}|y_{1:t-1})$ - i.e. $\left(\theta_{j,t-1}, w_{j,t-1}\right)$ for $j=1,\ldots,J$ - we move to a particle sample approximation of $p(\theta_t|y_{1:t})$ by the following steps:
 
 \begin{enumerate}
-\item Augmentation and update weights: For each $j = 1,\ldots,J$, draw $\theta^{+}_{j,t-1}$ from some state evolution distribution $p(\theta^{+}_{t-1}|\theta^{(j)}_{t-1})$ and define a new particle $\theta^{*}_{j,t-1} = (\theta_{j,t-1},\theta^{+}_{j,t-1})'$. Then, define $w^{**}_{j,t-1} = w_{j,t-1}p(y_t|\theta^{*}_{j,t-1})$.
+\item Augmentation and update weights: For each $j = 1,\ldots,J$, draw $\theta^{+}_{j,t-1}$ from some state evolution distribution $p(\theta^{+}_{t-1}|\theta_{j,t-1})$ and define a new particle $\theta^{*}_{j,t-1} = (\theta_{j,t-1},\theta^{+}_{j,t-1})'$. Then, calculate the unnormalized weight $w^{**}_{j,t-1} = w_{j,t-1}p(y_t|\theta^{*}_{j,t-1})$.
 \item Renormalize the $w^{**}_{j,t-1}$'s by setting $w^{*}_{j,t-1} = w^{**}_{j,t-1} / \sum_{l=1}^J w^{**}_{l,t-1}$.
 \item Resample (optional): For each $j$, sample an index $k_j$ from $\{1,2,\ldots,J\}$ with associated probabilities $\{w^{*}_{1,t-1},w^{*}_{2,t-1},\ldots,w^{*}_{j,t-1},\ldots,w^{*}_{J,t-1}\}$.
 \item Update weights: If resampling was performed, set $w_{j,t} = 1 / J$ for all $j$. Otherwise, set $w_{j,t} = w^{*}_{j,t-1}$.
-\item Move particles (only do if `Resample' step carried out): For each $j = 1,2,\ldots,J$, draw $\theta_{j,t}$ from some transition kernel $q(\theta_t|\theta^{*}_{k_j,t-1},y_{1:t})$ with invariant distribution $p(\theta_t|y_{1:t})$.
+\item Move particles (only do if `Resample' step carried out): For each $j = 1,2,\ldots,J$, draw $\theta_{j,t}$ from some transition kernel $q(\theta_t|\theta^{*}_{k_j,t-1})$ with invariant distribution $p(\theta_t|y_{1:t})$.
 \end{enumerate}
 
 \clearpage
@@ -26,4 +26,4 @@ We initialize the algorithm by drawing $\theta_{j,0}$ from some prior distributi
 \bibliographystyle{plainnat}
 \bibliography{jarad}
 
-\end{document}
+\end{document} 

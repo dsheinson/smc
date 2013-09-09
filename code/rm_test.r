@@ -48,14 +48,14 @@ pf_run <- function(pf, np, a, b, label = "", ...){
   } else if(pf == "RM1") {
     source("rm_test_functions.r")
     rprior1 <- function(j) rprior(j,a,b)
-    rmove <- function(y, x, theta) return(list(state=x,theta=sample.theta(y, x, theta)))
+    rmove <- function(y, x, theta) return(list(state=x,theta=sample.theta(y, x, theta, a, b)))
     source("rm_pf.r")
     out.rm1 = rm_pf(y, dllik, revo, rprior1, rmove, np, ...)
     save(out.rm1,file=paste("../data/rm_test-RM1-",np,"-",a,"-",b,"-",label,".rdata",sep=""))
   } else if(pf == "RM2") {
     source("rm_test_functions.r")
     rprior1 <- function(j) rprior(j,a,b)
-    rmove <- function(y, x, theta) rm_mcmc(y, x, theta, 1)
+    rmove <- function(y, x, theta) rm_mcmc(y, x, theta, a, b, 1)
     source("rm_pf.r")
     out.rm2 = rm_pf(y, dllik, revo, rprior1, rmove, np, ...)
     save(out.rm2,file=paste("../data/rm_test-RM2-",np,"-",a,"-",b,"-",label,".rdata",sep=""))

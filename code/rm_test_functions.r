@@ -14,12 +14,12 @@ rprior <- function(j,a,b)
 }
 
 require(dlm)
-rm_mcmc <- function(y, x, theta, n.iter)
+rm_mcmc <- function(y, x, theta, a0, b0, n.iter)
 {
   for(t in 1:n.iter)
   {
     # Sample theta from full conditional
-    theta = sample.theta(y, x, theta)
+    theta = sample.theta(y, x, theta, a0, b0)
 
     # Sample states by FFBS
     mydlm = dlm(list(m0=0, C0=theta, FF=1, V=theta, GG=1, W=theta))
@@ -32,11 +32,11 @@ rm_mcmc <- function(y, x, theta, n.iter)
 # Utility functions
 ###################
 
-sample.theta <- function(y, x, theta)
+sample.theta <- function(y, x, theta, a0, b0)
 {
   K = length(y)
-  a = K + 1.5
-  b = .5*(sum((y - x[2:(K+1)])^2) + sum((x[2:(K+1)] - x[1:K])^2) + x[1]^2) + 4
+  a = K + 1.5 + a0 - 1
+  b = .5*(sum((y - x[2:(K+1)])^2) + sum((x[2:(K+1)] - x[1:K])^2) + x[1]^2 + 2*b0)
   return(1/rgamma(1,a,b))
 }
 

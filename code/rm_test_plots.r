@@ -8,12 +8,12 @@ legend("bottomright",legend=expression(x,y),lty=c(1,NA),pch=c(NA,1))
 dev.off()
 
 # Function to construct plots for particle filters
-pf_plots <- function(np, alpha, beta, xlab, ylab)
+pf_plots <- function(np, alpha, beta)
 {
   iter = 9
 
-  source("rm_test_functions.r")
   load("../data/rm_test-truth.rdata")
+  source("rm_test_functions.r")
 
   pdf(paste("../graphs/rm_test-states-",np,"-",alpha,"-",beta,".pdf",sep=""), width = 15, height = 15)
   par(mfrow=c(3,3),mar=c(7,6,2,0)+.1,mgp=c(4,1,0))

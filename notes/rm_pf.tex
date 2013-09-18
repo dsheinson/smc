@@ -46,12 +46,12 @@ In addition, there are different ways to implement the `Resample' step that may 
 
 \section{Model Comparison}
 
-Using the algorithm described in Section \ref{sec:rm} we obtain an approximation to $p(\theta_t|y_{1:t})$ through $\sum_{j=1}^J \delta_{\theta_{j,t}}(x)$, where $\delta_{x_0}(x)$ is the Dirac delta mass function centered at $x_0$. In addition we can use the weighted particle sample to obtain an approximation to the marginal likelihood $p(y_{1:t})$. We first note that given $p(y_{1:t-1})$, $p(y_{1:t})$ can be updated recursively by $p(y_{1:t}) = p(y_t|y_{1:t-1})p(y_{1:t-1})$. Next, we note that an approximation of $p(y_t|y_{1:t-1})$ can be obtained from the weighted particle sample by 
+Using the algorithm described in Section \ref{sec:rm} we obtain an approximation to $p(\theta_t|y_{1:t})$ through $\sum_{j=1}^J w_{j,t}\delta_{\theta_{j,t}}(x)$, where $\delta_{x_0}(x)$ is the Dirac delta mass function centered at $x_0$. In addition we can use the weighted particle sample to obtain an approximation to the marginal likelihood $p(y_{1:t})$. We first note that given $p(y_{1:t-1})$, $p(y_{1:t})$ can be updated recursively by $p(y_{1:t}) = p(y_t|y_{1:t-1})p(y_{1:t-1})$. Next, we note that an approximation of $p(y_t|y_{1:t-1})$ can be obtained from the weighted particle sample by
 \begin{equation}
 p(y_t|y_{1:t-1}) \approx \sum_{j=1}^J w_{j,t-1}p(y_t|\theta_{j,t}) \label{eqn:condmarg}
 \end{equation}
 
-Having now prescribed a method for approximating $p(y_{1:t})$ sequentially within the resample-move algorithm, we can compare a set of possible models ${M_1,M_2,\ldots,M_p}$ be calculating posterior model probabilities by
+Having now prescribed a method for approximating $p(y_{1:t})$ sequentially within the resample-move algorithm, we can compare a set of possible models ${M_1,M_2,\ldots,M_p}$ by calculating posterior model probabilities by
 \begin{equation}
 p(M_i|y_{1:t}) = \frac{p(y_{1:t}|M_i)p(M_i)}{\sum_{i=1}^p p(y_{1:t}|M_i)p(M_i)} \label{eqn:modelcomp}
 \end{equation}

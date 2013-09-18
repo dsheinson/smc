@@ -8,7 +8,7 @@ x[1] = x0
 for(i in 1:n)
 {
   x[i+1] = G*x[i] + t(chol(W))*rnorm(1,0,sqrt(v))
-  y[i] = F*x[i] + t(chol(V))*rnorm(1,0,sqrt(v))
+  y[i] = F*x[i+1] + t(chol(V))*rnorm(1,0,sqrt(v))
 }
 
 # Compute true marginal filtered distributions of states and unknown variance

@@ -20,7 +20,7 @@ x_t &= Gx_{t-1} + w_t \label{eqn:state}
 \noindent where $v_t$ and $w_t$ are iid Gaussian random variables with mean 0 and covariance matrices $V$ and $W$, respectively. We also assume $v_t \perp w_{t'}$ for all $t$ and $t'$. $y_t$ is the observed data at time $t$, and $x_t$ is the unknown state at time $t$. We regard $F$ and $G$ as known, and consider the special case where $V = \sigma^2V'$ and $W = \sigma^2W'$, where $V'$ and $W'$ are known and $\sigma^2$ is an unknown parameter. A fully Bayesian model is specified by defining the prior $p(x_0,\sigma^2)$, which we give as \[p(\sigma^2) \sim \mbox{IG}(a_0,b_0) \qquad p(x_0|\sigma^2) \sim \mbox{N}(0,\sigma^2C_0)\]
 \noindent where $a_0$, $b_0$, and $C_0$ are known.
 
-\section{Resample-move algorithm}
+\section{Resample-move algorithm} \label{sec:rm}
 
 Let $y_{1:t} = (y_1,y_2,\ldots,y_t)'$ represent the vector of data observed up until time $t$ and let $\theta_t$ be a vector of unknown states and/or parameters at time $t$. We allow $\theta_t$ to change with time, and we consider in particular the case where the dimension of $\theta_t$ changes with time, e.g. if $\theta_t$ contains an evolving trajectory of states. Let $\theta^{+}_t$ be the (possibly empty) set of unknown states entering the model at time $t+1$. Then, we can define $\theta_{t+1} = (\theta_t,\theta^{+}_t)'$. For the DLM described in Section \ref{sec:model}, we might wish to keep track of the entire trajectory of unknown states up to time $t$, in which case $\theta_t = (x_0,x_1,\ldots,x_t,\sigma^2)'$ and $\theta^{+}_t = x_{t+1}$.
 
@@ -44,9 +44,21 @@ The `Resample' step is optional in the sense that if particle weights are not ou
 
 In addition, there are different ways to implement the `Resample' step that may be more efficient under certain conditions. The algorithm as written above implicity uses a \emph{multinomial} resampling scheme, i.e. when we say `sample an index $k_j$ ...'. Additional techniques for resampling exist including \emph{residual}, \emph{stratified}, and \emph{systematic} resampling. \citet{Douc:Capp:Moul:comp:2005} provides an overview of these methods. %We use stratified resampling.
 
+\section{Model Comparison}
+
+Using the algorithm described in Section \ref{sec:rm} we obtain an approximation to $p(\theta_t|y_{1:t})$ through $\sum_{j=1}^J \delta_{\theta_{j,t}}(x)$, where $\delta_{x_0}(x)$ is the Dirac delta mass function centered at $x_0$. In addition we can use the weighted particle sample to obtain an approximation to the marginal likelihood $p(y_{1:t})$. We first note that given $p(y_{1:t-1})$, $p(y_{1:t})$ can be updated recursively by $p(y_{1:t}) = p(y_t|y_{1:t-1})p(y_{1:t-1})$. Next, we note that an approximation of $p(y_t|y_{1:t-1})$ can be obtained from the weighted particle sample by 
+\begin{equation}
+p(y_t|y_{1:t-1}) \approx \sum_{j=1}^J w_{j,t-1}p(y_t|\theta_{j,t}) \label{eqn:condmarg}
+\end{equation}
+
+Having now prescribed a method for approximating $p(y_{1:t})$ sequentially within the resample-move algorithm, we can compare a set of possible models ${M_1,M_2,\ldots,M_p}$ be calculating posterior model probabilities by
+\begin{equation}
+p(M_i|y_{1:t}) = \frac{p(y_{1:t}|M_i)p(M_i)}{\sum_{i=1}^p p(y_{1:t}|M_i)p(M_i)} \label{eqn:modelcomp}
+\end{equation}
+
 \clearpage
 
 \bibliographystyle{plainnat}
 \bibliography{jarad}
 
-\end{document}
+\end{document} 

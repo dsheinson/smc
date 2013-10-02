@@ -48,7 +48,7 @@ dr.prob <- function(y, f, Q, a, b)
 {
   nt = length(y)
   log.marglik = 0
-  for(i in 1:nt) log.marglik = log.marglik + dt.ns(y[i],f[i],sqrt(Q[i]*b[i]/a[i]), df = 2*a[i], log = TRUE)
+  for(i in 1:nt) log.marglik = log.marglik + log(dt((y[i]-f[i])/sqrt(Q[i]*b[i]/a[i]), df = 2*a[i])/sqrt(Q[i]*b[i]/a[i]))
   return(log.marglik)
 }
 
@@ -58,13 +58,4 @@ dr.pf.prob <- function(out)
   log.marglik <- 0
   for(i in 1:nt) log.marglik = log.marglik + log(sum(exp(out$increment[,i])*out$weight[,i]))
   return(log.marglik)
-}
-
-###################
-# Utility functions
-###################
-
-dt.ns <- function(x, mu, sigma, ...)
-{
-  dt((x - mu)/sigma, ...) / sigma
 }

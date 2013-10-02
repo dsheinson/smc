@@ -9,7 +9,7 @@
 #' @param lag the percentage of past data points and states to include in move kernel, expressed as a decimal
 #' @param progress a boolean to display progress bar if TRUE
 #' @param ... arguments passed on to resample
-#' @return a list containing (nt+1)-length list of state histories (each an ns by n by k matrix), an n by (nt+1) matrix of normalized particle weights, an np by n by (nt+1) array of theta draws, and an n by nt parent matrix
+#' @return a list containing (nt+1)-length list of state histories (each an ns by n by k matrix), an n by (nt+1) matrix of normalized particle weights, an np by n by (nt+1) array of theta draws, an n by nt matrix of unnormalized particle weights (increments), and an n by nt parent matrix
 #' @references Berzuini, C. and Gilks, W. Following a Moving Target-Monte Carlo Inference for Dynamic Bayesian Models. Journal of the Royal Statistical Society. Series B (Statistical Methodology), Vol. 63, No. 1 (2001), pp. 127-146
 #' @seealso \code{\link{resample}}
 #'
@@ -43,6 +43,7 @@ rm_pf = function(y, dllik, revo, rprior, rmove, n, lag = 1, progress = TRUE, ...
 
   # Initialize weights
   weight = matrix(NA, n, nt+1)
+  increment = matrix(NA, n, nt)
   weight[,1] = 1/n
   
   # Initialize parent
@@ -60,7 +61,8 @@ rm_pf = function(y, dllik, revo, rprior, rmove, n, lag = 1, progress = TRUE, ...
     for(j in 1:n)
     {
       state[[i+1]][,j,i+1] = revo(state[[i]][,j,i],theta[,j,i])
-      weight[j,i+1] = log(weight[j,i]) + dllik(y[,i],state[[i+1]][,j,i+1],theta[,j,i])
+      increment[j,i] = dllik(y[,i],state[[i+1]][,j,i+1],theta[,j,i])
+      weight[j,i+1] = log(weight[j,i]) + increment[j,i]
     }
     
     # Resample particles
@@ -88,5 +90,5 @@ rm_pf = function(y, dllik, revo, rprior, rmove, n, lag = 1, progress = TRUE, ...
     parent[,i+1] = kk
   }
 
-  return(list(state=state, theta=theta, weight=weight, parent=parent))
+  return(list(state=state, theta=theta, weight=weight, increment=increment, parent=parent))
 }

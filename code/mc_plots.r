@@ -24,7 +24,7 @@ ylab1 = c("True Posterior Model Probability","","")
 ylab2 = c("Estimated by Particle Filtering","","")
 for(i in 1:3)
 {
-  hist(out$mod.post[,i,1],xlim=c(0,1),xlab="",ylab=ylab1[i],main=main[i],cex.lab=2.65,cex.main=2.5,cex.axis=2.5)
-  hist(out$mod.post[,i,2],xlim=c(0,1),xlab=xlab[i],ylab=ylab2[i],main="",cex.lab=2.65,cex.main=2.5,cex.axis=2.5)
+  hist(out$mod.post[,i,1],freq=FALSE,xlim=c(0,1),xlab="",ylab=ylab1[i],main=main[i],cex.lab=2.65,cex.main=2.5,cex.axis=2.5)
+  hist(out$mod.post[,i,2],freq=FALSE,xlim=c(0,1),xlab=xlab[i],ylab=ylab2[i],main="",cex.lab=2.65,cex.main=2.5,cex.axis=2.5)
 }
 dev.off()

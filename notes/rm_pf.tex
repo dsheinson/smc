@@ -3,6 +3,7 @@
 \usepackage{amsmath}
 \usepackage{natbib}
 \usepackage{enumitem}
+\usepackage{graphicx}
 
 \begin{document}
 
@@ -55,6 +56,49 @@ Having now prescribed a method for approximating $p(y_{1:t})$ sequentially withi
 \begin{equation}
 p(M_i|y_{1:t}) = \frac{p(y_{1:t}|M_i)p(M_i)}{\sum_{i=1}^p p(y_{1:t}|M_i)p(M_i)} \label{eqn:modelcomp}
 \end{equation}
+
+\subsection{Example}
+
+Consider three models of the form described in \eqref{eqn:obs} and \eqref{eqn:state}. For all models, we let known values $F = G = V = 1$, and we let $W$ be known at values 0.5, 1, and 1.5 for models $M_1$, $M_2$, and $M_3$, respectively. Data were simulated from $M_2$ with common observation and state equation variance $\sigma^2$ set equal to 1. From this simulated data, true posterior model probabilities can be calculated exactly using equations \eqref{modelcomp} since the predictive distribution $p(y_t|y_{1:t-1})$ is known in this case to follow a Student-t distribution (we let prior model probabilities be equal to 1/3 apiece). We can compare these values with those obtained from running the resample-move particle filter and then using equations \eqref{condmarg} and \eqref{modelcomp} to approximate the posterior model probabilities.
+
+100 data sets were simulated from $M_2$ with $\sigma^2 = 1$. For each data set, posterior model probabilities were calculated using both the true predictive distributions (Student-t) and the resample-move particle filter with 100 particles. Figure \ref{fig:probhist} displays histograms of these probabilities and tables \ref{tab:true.propbestmod} and \ref{tab:pf.propbestmod} display the proportion of the simulations for which each model had the highest posterior model probability. For 42\% of the simulations, the model that generated the highest posterior probability using particle filtering was the same as when calculating posterior model probabilities directly (95\% CI: (0.32, 0.52)).
+
+\clearpage
+
+\begin{figure}
+\includegraphics[width=1.0\textwidth]{../graphs/mod-post}
+\caption{Histograms of posterior probabilities for each model (columns) calculated directly (top row) and using particle filtering (bottom row) for 100 data sets simulated from $M_2$ with $\sigma^2 = 1$.} \label{fig:probhist}
+\end{figure}
+
+\begin{table}
+\begin{center}
+\caption{Proportion of times out of 100 simulations each model generated the highest posterior model probability using direct calculation. Credible intervals were calculated by normal approximation to binomial distribution.} \label{tab:true.propbestmod}
+\begin{tabular}{|c|c|c|c|}
+\hline
+ Model & \% Highest Prob. & lower 95\% CI bound & upper 95\% CI bound \\
+ \hline
+ $M_1$ & 0.20 & 0.12 & 0.28 \\
+ $M_2$ & 0.51 & 0.41 & 0.61 \\
+ $M_3$ & 0.29 & 0.20 & 0.38 \\
+ \hline
+\end{tabular}
+\end{center}
+\end{table}
+
+\begin{table}
+\begin{center}
+\caption{Proportion of times out of 100 simulations each model generated the highest posterior model probability using particle filtering. Credible intervals were calculated by normal approximation to binomial distribution.} \label{tab:true.propbestmod}
+\begin{tabular}{|c|c|c|c|}
+\hline
+ Model & \% Highest Prob. & lower 95\% CI bound & upper 95\% CI bound \\
+ \hline
+ $M_1$ & 0.22 & 0.14 & 0.30 \\
+ $M_2$ & 0.52 & 0.42 & 0.62 \\
+ $M_3$ & 0.26 & 0.17 & 0.35 \\
+ \hline
+\end{tabular}
+\end{center}
+\end{table}
 
 \clearpage
 

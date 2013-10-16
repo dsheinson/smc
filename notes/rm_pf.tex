@@ -7,8 +7,6 @@
 
 \begin{document}
 
-Presented here is the particle filter known as the \emph{resample-move} algorithm, as described by \citet{Gilk:Berz:foll:2001} and \citet{Berz:gilk:2001}, applied to a dynamic linear model (DLM) \citep{petris2009dynamic}.
-
 \section{Model} \label{sec:model}
 
 We can represent a DLM as a state space model with observation and state equations given by
@@ -18,10 +16,38 @@ y_t &= Fx_t + v_t \label{eqn:obs} \\
 x_t &= Gx_{t-1} + w_t \label{eqn:state}
 \end{align}
 
-\noindent where $v_t$ and $w_t$ are iid Gaussian random variables with mean 0 and covariance matrices $V$ and $W$, respectively. We also assume $v_t \perp w_{t'}$ for all $t$ and $t'$. $y_t$ is the observed data at time $t$, and $x_t$ is the unknown state at time $t$. We regard $F$ and $G$ as known, and consider the special case where $V = \sigma^2V'$ and $W = \sigma^2W'$, where $V'$ and $W'$ are known and $\sigma^2$ is an unknown parameter. A fully Bayesian model is specified by defining the prior $p(x_0,\sigma^2)$, which we give as \[p(\sigma^2) \sim \mbox{IG}(a_0,b_0) \qquad p(x_0|\sigma^2) \sim \mbox{N}(0,\sigma^2C_0)\]
-\noindent where $a_0$, $b_0$, and $C_0$ are known.
+\noindent where $v_t$ and $w_t$ are iid Gaussian random variables with mean 0 and covariance matrices $V$ and $W$, respectively. We also assume $v_t \perp w_{t'}$ for all $t$ and $t'$. $y_t$ is the observed data at time $t$, and $x_t$ is the unknown state at time $t$. We regard $F$ and $G$ as known, and consider the special case where $V = \sigma^2\tilde{V}$ and $W = \sigma^2\tilde{W}$, where $\tilde{V}$ and $\tilde{W}$ are known and $\sigma^2$ is an unknown parameter. A fully Bayesian model is specified by defining the prior $p(x_0,\sigma^2)$, which we give as \[\sigma^2 \sim \mbox{IG}(a_0,b_0) \qquad x_0|\sigma^2 \sim \mbox{N}(m_0,\sigma^2\tilde{C}_0)\]
+\noindent where $\alpha_0$, $\beta_0$, $m_0$, and $\tilde{C}_0$ are known, $\mbox{IG}(a,b)$ represents the inverse-gamma distribution with shape parameter $a$ and rate parameter $b$, and $N(\mu,\sigma^2)$ represents the normal distribution with mean $\mu$ and variance $\sigma^2$. We could also define the model in terms of the precision, $\phi = 1 / \sigma^2$, and specify the prior $p(x_0,\phi)$ by \[\phi \sim \mbox{G}(\alpha_0,\beta_0) \qquad x_0|\phi \sim \mbox{N}(m_0,\phi^{-1}\tilde{C}_0)\]
+\noindent where $G(a,b)$ represents the gamma distribution with shape parameter $a$ and rate parameter $b$.
+
+\section{Estimation} \label{sec:estimation}
+
+Let $y_{1:t} = (y_1,y_2,\ldots,y_t)'$ represent the vector of data observed up until time $t$, $x_{1:t} = (x_1,x_2,\ldots,x_t)'$ the vector of unknown states up until time $t$, and let $\psi$ denote the vector of any unknown fixed parameters in the model. In general, the posterior distribution $p(x_{1:t},\psi|y_{1:t})$ is not analytically tractable for models of the form given in \eqref{eqn:obs} and \eqref{eqn:state}. However, we can calculate this distribution for the special case described in Section \ref{sec:model}.
+
+We can update the calculation of $p(x_{1:t},\psi|y_{1:t})$ as data arrives sequentially using recursive equations. Denote the prior distribution $p(x_0, \phi)$ defined in Section \ref{sec:model} by $(x_0, \phi) \sim \mbox{NG}(m_0, \tilde{C}_0, \alpha_0, \beta_0)$. Given \[(x_{t-1},\phi)|y_{1:t-1} \sim \mbox{NG}(m_{t-1},\tilde{C}_{t-1}, \alpha_{t-1}, \beta_{t-1})\]
+\noindent for $t \ge 1$, the posterior distribution $p(x_t,\phi|y_{1:t})$ is $\mbox{NG}(m_t,\tilde{C}_t,\alpha_t,\beta_t)$ where $m_t$, $\tilde{C}_t$, $\alpha_t$, and $\beta_t$ are calculated through the following equations \citep{petris2009dynamic}:
+
+\begin{align}
+a_t &= Gm_{t-1} &\qquad \tilde{R}_t &= G\tilde{C}_{t-1}G + W \label{eqn:state.pred} \\
+f_t &= Fa_t &\qquad \tilde{Q_t} &= F\tilde{R}_tF + V \label{eqn:obs.pred} \\
+m_t &= a_t + \tilde{R}_tF\tilde{Q}_t^{-1}(y_t-f_t) &\qquad \tilde{C}_t &= \tilde{R}_t - \tilde{R}_tF'\tilde{Q}_t^{-1}F\tilde{R}_t' \\
+\alpha_t &= \alpha_{t-1} + q / 2 &\qquad \beta_t &= \beta_{t-1} + (y_t-f_t)'\tilde{Q}_t^{-1}(y_t-f_t)
+\end{align}
+
+\noindent where $q$ is the dimension of $y_t$.
+
+We can also calculate the marginal posterior distributions $p(x_t|y_{1:t})$ and $p(\phi|y_{1:t})$, given by
+
+\begin{equation}
+x_t|y_{1:t} \sim \mbox{T}(m_t,\tilde{C}_t \frac{\beta_t}{\alpha_t},2\alpha_t) \qquad \phi|y_{1:t} \sim \mbox{G}(\alpha_t,\beta_t) \label{eqn:margpost}
+\end{equation}
+
+In addition, we can calculate the one-step ahead predictive density $p(y_t|y_{1:t-1})$ using equations \eqref{eqn:state.pred} and \eqref{eqn:obs.pred} since \[y_t|y_{1:t-1} \sim \mbox{T}(f_t,\tilde{Q}_t \frac{\beta_{t-1}}{\alpha_{t-1}},2\alpha_{t-1})\]
+\noindent where $\mbox{T}(\mu,\Sigma,d)$ represents the non-standard student-t distribution with location parameter $\mu$, scale parameter $\Sigma$, and $d$ degrees of freedom.
 
 \section{Resample-move algorithm} \label{sec:rm}
+
+As mentioned in Section \ref{sec:estimation}, models of the form described by equations \eqref{eqn:obs} and \eqref{eqn:state} generally do not emit tractable forms of the posterior distribution $p(x_{1:t},\psi|y_{1:t})$. Thus, in many cases we must turn toward methods for approximating this distribution such as particle filtering. One specific type of particle filter known as the \emph{resample-move} algorithm was developed by \citet{Gilk:Berz:foll:2001, Berz:gilk:2001} and is summarized here.
 
 Let $y_{1:t} = (y_1,y_2,\ldots,y_t)'$ represent the vector of data observed up until time $t$ and let $\theta_t$ be a vector of unknown states and/or parameters at time $t$. We allow $\theta_t$ to change with time, and we consider in particular the case where the dimension of $\theta_t$ changes with time, e.g. if $\theta_t$ contains an evolving trajectory of states. Let $\theta^{+}_t$ be the (possibly empty) set of unknown states entering the model at time $t+1$. Then, we can define $\theta_{t+1} = (\theta_t,\theta^{+}_t)'$. For the DLM described in Section \ref{sec:model}, we might wish to keep track of the entire trajectory of unknown states up to time $t$, in which case $\theta_t = (x_0,x_1,\ldots,x_t,\sigma^2)'$ and $\theta^{+}_t = x_{t+1}$.
 
@@ -30,7 +56,8 @@ We use particle filtering to approximate the posterior distribution $p(\theta_t|
 We initialize the algorithm by drawing $\theta_{j,0}$ from some prior distribution $p(\theta_0)$ and setting $w_{j,0} = 1 / J$ for $j = 1,\ldots,J$. Given a particle sample approximation of the posterior $p(\theta_{t-1}|y_{1:t-1})$ - i.e. $\left(\theta_{j,t-1}, w_{j,t-1}\right)$ for $j=1,\ldots,J$ - we move to a particle sample approximation of $p(\theta_t|y_{1:t})$ by the following steps:
 
 \begin{enumerate}
-\item Augmentation and update weights: For each $j = 1,\ldots,J$, draw $\theta^{+}_{j,t-1}$ from some state evolution distribution $p(\theta^{+}_{t-1}|\theta_{j,t-1})$ and define a new particle $\theta^{*}_{j,t} = (\theta_{j,t-1},\theta^{+}_{j,t-1})'$. Then, calculate the unnormalized weight $w^{**}_{j,t} = w_{j,t-1}p(y_t|\theta^{*}_{j,t-1})$.
+\item Augmentation: For each $j = 1,\ldots,J$, draw $\theta^{+}_{j,t-1}$ from some state evolution distribution $p(\theta^{+}_{t-1}|\theta_{j,t-1})$ and define a new particle $\theta^{*}_{j,t} = (\theta_{j,t-1},\theta^{+}_{j,t-1})'$.
+\item Update weights: For each $j = 1,\ldots,J$, calculate the incremental weight $\alpha_{j,t} = p(y_t|\theta^{*}_{j,t-1})$ and then the  unnormalized weight $w^{**}_{j,t} = w_{j,t-1}\alpha_{j,t}$.
 \item Renormalize the $w^{**}_{j,t}$'s by setting $w^{*}_{j,t} = w^{**}_{j,t} / \sum_{l=1}^J w^{**}_{l,t}$.
 \item Resample (optional): For each $j$, sample an index $k_j$ from $\{1,2,\ldots,J\}$ with associated probabilities $\{w^{*}_{1,t},w^{*}_{2,t},\ldots,w^{*}_{j,t},\ldots,w^{*}_{J,t}\}$.
 \item {\tt if(}resampling was performed{\tt )\{} \\
@@ -47,9 +74,15 @@ In addition, there are different ways to implement the `Resample' step that may 
 
 \section{Model Comparison}
 
-Using the algorithm described in Section \ref{sec:rm} we obtain an approximation to $p(\theta_t|y_{1:t})$ through $\sum_{j=1}^J w_{j,t}\delta_{\theta_{j,t}}(x)$, where $\delta_{x_0}(x)$ is the Dirac delta mass function centered at $x_0$. In addition we can use the weighted particle sample to obtain an approximation to the marginal likelihood $p(y_{1:t})$. We first note that given $p(y_{1:t-1})$, $p(y_{1:t})$ can be updated recursively by $p(y_{1:t}) = p(y_t|y_{1:t-1})p(y_{1:t-1})$. Next, we note that an approximation of $p(y_t|y_{1:t-1})$ can be obtained from the weighted particle sample by
+Using the algorithm described in Section \ref{sec:rm} we obtain an approximation to $p(\theta_t|y_{1:t})$ through $\sum_{j=1}^J w_{j,t}\delta_{\theta_{j,t}}(x)$, where $\delta_{x_0}(x)$ is the Dirac delta mass function centered at $x_0$. In addition we can use the weighted particle sample to obtain an approximation to the marginal likelihood $p(y_{1:t})$. We first note that given $p(y_{1:t-1})$, $p(y_{1:t})$ can be updated recursively by
+
 \begin{equation}
-p(y_t|y_{1:t-1}) \approx \sum_{j=1}^J w_{j,t-1}p(y_t|\theta_{j,t}) \label{eqn:condmarg}
+p(y_{1:t}) = p(y_t|y_{1:t-1})p(y_{1:t-1}) \label{eqn:marglik}
+\end{equation}
+
+\noindent Next, we note that an approximation of $p(y_t|y_{1:t-1})$ can be obtained from the weighted particle sample by
+\begin{equation}
+p(y_t|y_{1:t-1}) \approx \sum_{j=1}^J w_{j,t-1}\alpha_{j,t} \label{eqn:condmarg}
 \end{equation}
 
 Having now prescribed a method for approximating $p(y_{1:t})$ sequentially within the resample-move algorithm, we can compare a set of possible models ${M_1,M_2,\ldots,M_p}$ by calculating posterior model probabilities by
@@ -57,16 +90,28 @@ Having now prescribed a method for approximating $p(y_{1:t})$ sequentially withi
 p(M_i|y_{1:t}) = \frac{p(y_{1:t}|M_i)p(M_i)}{\sum_{i=1}^p p(y_{1:t}|M_i)p(M_i)} \label{eqn:modelcomp}
 \end{equation}
 
-\subsection{Example}
+\section{Example}
 
-Consider three models of the form described in \eqref{eqn:obs} and \eqref{eqn:state}. For all models, we let known values $F = G = V = 1$, and we let $W$ be known at values 0.5, 1, and 1.5 for models $M_1$, $M_2$, and $M_3$, respectively. Data were simulated from $M_2$ with common observation and state equation variance $\sigma^2$ set equal to 1. From this simulated data, true posterior model probabilities can be calculated exactly using equations \eqref{modelcomp} since the predictive distribution $p(y_t|y_{1:t-1})$ is known in this case to follow a Student-t distribution (we let prior model probabilities be equal to 1/3 apiece). We can compare these values with those obtained from running the resample-move particle filter and then using equations \eqref{eqn:condmarg} and \eqref{eqn:modelcomp} to approximate the posterior model probabilities.
+Consider three models of the form described in \eqref{eqn:obs} and \eqref{eqn:state}. For each model, we let $V = \sigma^2\tilde{V}$, $W = \sigma^2\tilde{W}$, and known values $F = G = \tilde{V} = 1$. We let $\tilde{W}$ be known at values 0.5, 1, and 1.5 for models $M_1$, $M_2$, and $M_3$, respectively. Data were simulated from $M_2$ with common observation and state equation variance $\sigma^2$ set equal to 1. From this simulated data, true posterior model probabilities can be calculated exactly using equations \eqref{eqn:marglik} and \eqref{eqn:modelcomp} since the predictive distribution $p(y_t|y_{1:t-1})$ is known in this case to follow a Student-t distribution (we let prior model probabilities be equal to 1/3 apiece). We can compare these values with those obtained from running the resample-move particle filter and then using equations \eqref{eqn:condmarg} and \eqref{eqn:modelcomp} to approximate the posterior model probabilities.
+
+First we consider 1 simulated data set where we observe 150 data points, i.e. $(y_1,y_2,\ldots,y_{150})'$. We can calculate directly the marginal likelihood of observing this data under $M_2$ ($\log p(y_{1:150}) = -370.606$). We can also calculate the marginal posterior distributions $p(x_t|y_{1:t})$ and one-step ahead predictive distributions $p(y_t|y_{1:t-1})$ for $t = 1,2,\ldots,150$. This allows us to compute 95\% credible intervals for the unknown states and 95\% one-step ahead prediction intervals for each data point, displayed in Figure \ref{fig:sim}.
+
+\begin{figure}
+\includegraphics[width=1.0\textwidth]{../graphs/10-16-13/mc_1pf_test}
+\caption{95\% credible intervals (red lines) of $x_t|y_{1:t}$ and 95\% prediction intervals (blue lines) for $y_t|y_{1:t-1}$ calculated explicitly using the student-t distribution for $t = 1,2,\ldots,150$. Black circles indicate simulated observations and black line gives the simulated unknown states.} \label{fig:sim}
+\end{figure}
+
+\begin{figure}
+\includegraphics[width=1.0\textwidth]{../graphs/10-16-13/mc_1pf_test-hist}
+\caption{Histograms of log marginal likelihoods of the simulated data under $M_2$ calculated for each of 20 particle filter runs using 100 particles (white bars) and 20 particle filter runs using 500 particles (gray bars).} \label{fig:pfs}
+\end{figure}
 
 100 data sets were simulated from $M_2$ with $\sigma^2 = 1$. For each data set, posterior model probabilities were calculated using both the true predictive distributions (Student-t) and the resample-move particle filter with 100 particles. Figure \ref{fig:probhist} displays histograms of these probabilities and tables \ref{tab:true.propbestmod} and \ref{tab:pf.propbestmod} display the proportion of the simulations for which each model had the highest posterior model probability. For 42\% of the simulations, the model that generated the highest posterior probability using particle filtering was the same as when calculating posterior model probabilities directly (95\% CI: (0.32, 0.52)).
 
 \clearpage
 
 \begin{figure}
-\includegraphics[width=1.0\textwidth]{../graphs/mod-post}
+\includegraphics[width=1.0\textwidth]{../graphs/10-9-13/mod-post}
 \caption{Histograms of posterior probabilities for each model (columns) calculated directly (top row) and using particle filtering (bottom row) for 100 data sets simulated from $M_2$ with $\sigma^2 = 1$.} \label{fig:probhist}
 \end{figure}
 
@@ -99,6 +144,126 @@ Consider three models of the form described in \eqref{eqn:obs} and \eqref{eqn:st
 \end{tabular}
 \end{center}
 \end{table}
+
+\begin{figure}
+\includegraphics[width=1.0\textwidth]{../graphs/10-16-13/mc_pf_test-100}
+\caption{Log marginal likelihoods (colored points) calculated under each model (columns) using exact calculation (left side of panels) and particle filtering with 100 particles (right side of panels) for all 100 simulated data sets. Horizontal lines connect points of the same color that correspond to the same simulation.} \label{fig:logliks}
+\end{figure}
+
+\begin{table}
+\begin{center}
+\caption{Contingency table of models with highest posterior model probability among three models under each method of calculation of the marginal likelihood (particle filtering with 100 particles or direct calculation).} \label{tab:3mod100}
+\begin{tabular}{|c|c|c|c|}
+\hline
+ & \multicolumn{3}{|c|}{PF approximation} \\
+ \hline
+ True Posterior & $M_1$& $M_2$ & $M_3$ \\
+ \hline
+ $M_1$ & 5 & 10 & 5 \\
+ \hline
+ $M_2$ & 11 & 28 & 12 \\
+ \hline
+ $M_3$ & 6 & 14 & 9 \\
+
+ \hline
+\end{tabular}
+\end{center}
+\end{table}
+
+\begin{table}
+\begin{center}
+\caption{Contingency table of models with highest posterior model probability among two models ($M_1$ and $M_2$) under each method of calculation of the marginal likelihood (particle filtering with 100 particles or direct calculation).} \label{tab:12mod100}
+\begin{tabular}{|c|c|c|c|}
+\hline
+ & \multicolumn{2}{|c|}{PF approximation} \\
+ \hline
+ True Posterior & $M_1$& $M_2$  \\
+ \hline
+ $M_1$ & 5 & 15  \\
+ $M_2$ & 24 & 56 \\
+ \hline
+\end{tabular}
+\end{center}
+\end{table}
+
+\begin{table}
+\begin{center}
+\caption{Contingency table of models with highest posterior model probability among two models ($M_2$ and $M_3$) under each method of calculation of the marginal likelihood (particle filtering with 100 particles or direct calculation).} \label{tab:23mod100}
+\begin{tabular}{|c|c|c|c|}
+\hline
+ & \multicolumn{2}{|c|}{PF approximation} \\
+ \hline
+ True Posterior & $M_2$& $M_3$  \\
+ \hline
+ $M_2$ & 49 & 22  \\
+ $M_3$ & 18 & 11 \\
+ \hline
+\end{tabular}
+\end{center}
+\end{table}
+
+\begin{table}
+\begin{center}
+\caption{Contingency table of models with highest posterior model probability among three models under each method of calculation of the marginal likelihood (particle filtering with 200 particles or direct calculation).} \label{tab:3mod200}
+\begin{tabular}{|c|c|c|c|}
+\hline
+ & \multicolumn{3}{|c|}{PF approximation} \\
+ \hline
+ True Posterior & $M_1$& $M_2$ & $M_3$ \\
+ \hline
+ $M_1$ & 6 & 9 & 5 \\
+ \hline
+ $M_2$ & 12 & 19 & 10 \\
+ \hline
+ $M_3$ & 4 & 18 & 17 \\
+ \hline
+\end{tabular}
+\end{center}
+\end{table}
+
+\begin{table}
+\begin{center}
+\caption{Contingency table of models with highest posterior model probability among two models ($M_1$ and $M_2$) under each method of calculation of the marginal likelihood (particle filtering with 200 particles or direct calculation).} \label{tab:12mod200}
+\begin{tabular}{|c|c|c|c|}
+\hline
+ & \multicolumn{2}{|c|}{PF approximation} \\
+ \hline
+ True Posterior & $M_1$& $M_2$  \\
+ \hline
+ $M_1$ & 6 & 14  \\
+ \hline
+ $M_2$ & 17 & 63 \\
+ \hline
+\end{tabular}
+\end{center}
+\end{table}
+
+\begin{table}
+\begin{center}
+\caption{Contingency table of models with highest posterior model probability among two models ($M_2$ and $M_3$) under each method of calculation of the marginal likelihood (particle filtering with 200 particles or direct calculation).} \label{tab:23mod200}
+\begin{tabular}{|c|c|c|c|}
+\hline
+ & \multicolumn{2}{|c|}{PF approximation} \\
+ \hline
+ True Posterior & $M_2$& $M_3$  \\
+ \hline
+ $M_2$ & 44 & 17  \\
+ \hline
+ $M_3$ & 21 & 18 \\
+ \hline
+\end{tabular}
+\end{center}
+\end{table}
+
+\begin{figure}
+\includegraphics[width=1.0\textwidth]{../graphs/10-16-13/mc_pf_test-acomp}
+\caption{Compositional plot of posterior model probabilities among three models under each method of calculation of the marginal likelihood (rows) and number of particles used for the resample-move algorithm (columns). Points with same color within columns correspond to the same simulation (100 sims total for each column).} \label{fig:3comp}
+\end{figure}
+
+\begin{figure}
+\includegraphics[width=1.0\textwidth]{../graphs/10-16-13/mc_pf_test_2comp-100}
+\caption{Displays probability of choosing $M_2$ when compared pairwise to each other model (rows) under each method of calculating the marginal likelihood (sides within each panel) for different number of particles used in the resample-move algorithm (columns). Points with same color within panels connected by horizontal lines correspond to the same simulation (100 sims total).} \label{fig:2comp}
+\end{figure}
 
 \clearpage
 

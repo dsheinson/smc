@@ -1,5 +1,5 @@
 # Load simulated data
-load("../data/10-23-13/mc_1sim_test-truth.rdata")
+load("../data/mc_1sim_test-truth.rdata")
 
 # Calculate true log marginal likelihood of the simulated data
 source("mc_functions.r")
@@ -15,7 +15,7 @@ um = qt(0.975,2*post$a[-nt])*sqrt(post$Q[1,1,]*(post$b[-nt]/post$a[-nt])) + post
 gmin = min(sim$x, sim$y, lk[-(1:burn)], lm[-(1:burn)])
 gmax = max(sim$x, sim$y, uk[-(1:burn)], um[-(1:burn)])
 
-pdf(file="../graphs/10-23-13/mc_1sim_test-states.pdf",width=10,height=5)
+pdf(file="../graphs/mc_1sim_test-states.pdf",width=10,height=5)
 par(mfrow=c(1,2))
 plot(0:nt,sim$x[,1],ylim=c(gmin,gmax),type="l",main="95% CI for Filtered States",xlab=expression(t),ylab="Position")
 lines(0:nt,lk,col=2)
@@ -30,7 +30,7 @@ dev.off()
 # Plot 95% CI for filtered precision
 lp = qgamma(0.025,post$a,post$b)
 up = qgamma(0.975,post$a,post$b)
-pdf(file="../graphs/10-23-13/mc_1sim_test-precision.pdf")
+pdf(file="../graphs/mc_1sim_test-precision.pdf")
 plot(0:nt,lp,type="l",col=2,ylim=c(min(lp,1/sigma^2),max(up,1/sigma^2)),main="95% CI for Filtered Precision",xlab=expression(t),ylab=expression(phi))
 lines(0:nt,up,col=2)
 abline(h=1/sigma^2)
@@ -45,13 +45,14 @@ for(i in 1:N)
 {
   for(j in 1:length(np))
   {
-    load(paste("../data/10-16-13/mc_1sim_test-",np[j],"-",20*(j-1)+i,".rdata",sep=""))
+    load(paste("../data/mc_1sim_test-",np[j],"-",20*(j-1)+i,".rdata",sep=""))
+    pf.marg = pf.lmarglik(out)
     pf.margs[i,j] = pf.marg
   }
 }
 
 # Plot histograms of of log marginal likelihoods for pfs compared with truth
-pdf(file="../graphs/10-23-13/mc_1sim_hist.pdf")
+pdf(file="../graphs/mc_1sim_hist.pdf")
 hist(pf.margs[,1],breaks=5,main="Histogram of Log Marginal Likelihoods",xlab="Log Marginal Likelihood",xlim=c(min(pf.margs,true.marg),max(pf.margs,true.marg)))
 hist(pf.margs[,2],breaks=5,add=TRUE,col="gray")
 hist(pf.margs[,3],breaks=5,add=TRUE,col="black")

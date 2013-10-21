@@ -24,6 +24,7 @@ rm_pf = function(y, dllik, revo, rprior, rmove, n, lag = 1, progress = TRUE, ...
   nt = ncol(y)
 
   # Find dimension of state
+  if(class(try(.Random.seed,silent=TRUE)) == "try-error") runif(1)
   current.seed = .Random.seed
   tmp = rprior(1)
   ns = length(tmp$x)

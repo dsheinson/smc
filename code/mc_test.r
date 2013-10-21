@@ -1,9 +1,14 @@
 source("mc_functions.r")
 
+# Simulate states and observations from dlm
 F <- G <- V <- W <- sigma <- 1
-sim = dr.sim(nt, F, G, V, W, sigma)
-post = dr.post(sim$y, F, G, V, W.test[i], 1, 1, 0, 1e6)
+nt = 100
+sim = dlm.sim(nt, F, G, V, W, sigma)
 
+# Calculate sufficient statistics of filtered distributions
+post = dlm.post(sim$y, F, G, V, W, 1, 1, 0, 1)
+
+# Plot true data, states, 95% CI of filtered states, and 95% one-step ahead PI
 burn = 1
 lk = qt(0.025,2*post$a)*sqrt(post$C[1,1,]*(post$b/post$a)) + post$m[,1]
 uk = qt(0.975,2*post$a)*sqrt(post$C[1,1,]*(post$b/post$a)) + post$m[,1]
@@ -20,28 +25,15 @@ lines(1:nt,lm,col=4)
 lines(1:nt,um,col=4)
 legend("bottomright",legend=c(expression(x,y),"95% CI","95% PI"),lty=c(1,NA,1,1),pch=c(NA,1,NA,NA),col=c(1,1,2,4))
 
-nt = 200
-W.test <- c(0.5, 0.75, 1, 1.25, 1.5)
+# Calculate true log marginal likelihood of the data
+dlm.lmarglik(sim$y[,1], post$f[,1], post$Q[1,1,], post$a, post$b)
 
-N = 100
-post.lprob = mod.lpost = matrix(NA, nr=N, nc=length(W.test))
-mod.priors = rep(1/length(W.test),length(W.test))
-x = matrix(NA, nr = N, nc = nt + 1)
-y = matrix(NA, nr = N, nc = nt)
-for(j in 1:N)
-{
-  sim = dr.sim(nt, F, G, V, W, sigma)
-  x[j,] = sim$x[,1]
-  y[j,] = sim$y[,1]
-  for(i in 1:length(W.test))
-  { 
-    post = dr.post(sim$y, F, G, V, W.test[i], 1, 1, 0, 1e6)
-    post.lprob[j,i] = dr.prob(sim$y[,1], post$f[,1], post$Q[1,1,], post$a, post$b)
-  }
-  mod.lpost[j,] = post.lprob[j,] + log(mod.priors)  - log(sum(exp(post.lprob[j,])*mod.priors))
-  print(j)
-}
-
-mod.post = exp(mod.lpost)
-table(apply(mod.post, 1, function(x) which(x == max(x))))
-
+# Run resample move particle filter and approximate log marginal likelihood of the data
+source("rm_pf.r")
+source("rm_test_functions.r")
+np = 100
+a0 = b0 = 1
+rprior1 <- function(j) rprior(j,a0,b0)
+rmove <- function(y, x, theta) rm_mcmc(y, x, theta, a0, b0, 1)
+out = rm_pf(sim$y[,1], dllik, revo, rprior1, rmove, np, method="stratified", nonuniformity="ess", threshold=0.8, log=FALSE)
+pf.lmarglik(out)

@@ -34,13 +34,11 @@ true.postModProbs = apply(true.lmarglik, 1, function(x) postModProbs(x, rep(1/le
 rm.postModProbs = aaply(rm.lmarglik, 1:2, function(x) postModProbs(x, rep(1/length(W.test), length(W.test))))
 
 # Contingency tables
-r = 1:20
-true.max = apply(true.postModProbs[,r], 2, function(x) which(x == max(x)))
-rm.max = aaply(rm.postModProbs[,r,], 1:2, function(x) which(x == max(x)))
+true.max = apply(true.postModProbs, 2, function(x) which(x == max(x)))
+rm.max = aaply(rm.postModProbs, 1:2, function(x) which(x == max(x)))
 for(i in 1:dim(rm.max)[1])
 {
   tab = table(true.max, rm.max[i,])
-#  dimnames(tab) = list(Truth=c("M_1","M_2","M_3"),Approx=c("M_1","M_2","M_3"))
   require(xtable)
   print(xtable(tab),file=paste("../data/mc_pf_test-contTable-",np[i],".txt",sep=""),type="latex") 
 }
@@ -54,7 +52,7 @@ plot(acomp(t(true.postModProbs)[grad,]),labels=c("W = 0.5","W = 1","W = 2"),col=
 mtext("True Posterior",side=3,cex=2)
 for(i in 1:length(np))
 {
-  plot(acomp(rm.postModProbs[i,r,]),labels=c("W = 0.5","W = 1","W = 2"),col=gray.colors(N)[grad[r]],lwd=2)
+  plot(acomp(rm.postModProbs[i,grad,]),labels=c("W = 0.5","W = 1","W = 2"),col=gray.colors(N),lwd=2)
   mtext(paste(np[i]," particles",sep=""),side=3,cex=2)
 }
 dev.off()
@@ -72,8 +70,8 @@ for(i in 1:length(np))
   plot(rep(1,N),true.postModProbs[2,grad],main=paste(np[i]," particles",sep=""),col=gray.colors(N),xaxt = 'n',yaxt='n',lwd=2,xlim=c(0.9,2.1),ylim=c(0,1),xlab="",ylab=ylabs[i],cex.lab=1.75,cex.main=1.75)
   axis(side=1, at=c(1,2), labels=c("Direct Calculation","PF approx."),cex.axis=1.65)
   axis(side=2, at=c(0,0.5,1),cex.axis=1.65)
-  points(rep(2,length(r)),rm.postModProbs[i,r,2],col=gray.colors(N)[grad[r]],lwd=2)
-  segments(rep(1,length(r)), true.postModProbs[2,r], rep(2,length(r)), rm.postModProbs[i,r,2])
+  points(rep(2,N),rm.postModProbs[i,grad,2],col=gray.colors(N),lwd=2)
+  segments(rep(1,N), true.postModProbs[2,grad], rep(2,N), rm.postModProbs[i,grad,2],col=gray.colors(N))
 }
 ylabs=c(expression(paste("P(",tilde(W)," = 1) vs P(",tilde(W)," = 2)",sep="")),rep("",length(np)-1))
 true.postModProbs = apply(true.lmarglik[,2:3], 1, function(x) postModProbs(x, rep(1/length(W.test[2:3]), length(W.test[2:3]))))
@@ -84,7 +82,7 @@ for(i in 1:length(np))
   plot(rep(1,N),true.postModProbs[1,grad],col=gray.colors(N),xaxt = 'n',yaxt='n',lwd=2,xlim=c(0.9,2.1),ylim=c(0,1),xlab="",ylab=ylabs[i],cex.lab=1.75,cex.main=1.75)
   axis(side=1, at=c(1,2), labels=c("Direct Calculation","PF approx."),cex.axis=1.65)
   axis(side=2, at=c(0,0.5,1),cex.axis=1.65)
-  points(rep(2,length(r)),rm.postModProbs[i,r,1],col=gray.colors(N)[grad[r]],lwd=2)
-  segments(rep(1,length(r)), true.postModProbs[1,r], rep(2,length(r)), rm.postModProbs[i,r,1])
+  points(rep(2,N),rm.postModProbs[i,grad,1],col=gray.colors(N),lwd=2)
+  segments(rep(1,N), true.postModProbs[1,grad], rep(2,N), rm.postModProbs[i,grad,1],col=gray.colors(N))
 }
 dev.off()

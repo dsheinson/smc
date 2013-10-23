@@ -106,11 +106,11 @@ A single time series of data, $y_{1:T}$ with $T = 200$, was simulated from $M_2$
 \caption{95\% credible intervals (red lines) for $\phi|y_{1:t}$ for $t = 1, 2, \ldots, 200$. Black horizontal line indicates the true value used for simulation ($\phi = 1$).} \label{fig:sim-precision}
 \end{figure}
 
-To assess the variability of the approximation to the log marginal likelihood of the simulated data obtained using the resample-move particle filter, we ran the particle filter 20 times each using 100, 500, and 1000 particles. Figure \ref{fig:pf-hist} displays histograms of the log marginal likelihoods calculated from these particle filter runs.
+To assess the variability of the approximation to the log marginal likelihood of the simulated data obtained using the resample-move particle filter, we ran the particle filter 20 times each using 100, 500, 1000, 5000 particles. Figure \ref{fig:pf-hist} displays histograms of the log marginal likelihoods calculated from these particle filter runs.
 
 \begin{figure}
-\includegraphics[width=1.0\textwidth]{../graphs/10-23-13/mc_1sim_test-hist}
-\caption{Histograms of log marginal likelihoods of a single time series simulated from $M_2$, approximated assuming $M_2$ true using the resample-move particle filter, for each of 20 particle filter runs using 100 (white), 500 (gray), and 1000 (black) particles.} \label{fig:pf-hist}
+\includegraphics[width=1.0\textwidth]{../graphs/10-23-13/mc_1sim_hist}
+\caption{Histograms of log marginal likelihoods of a single time series simulated from $M_2$, approximated assuming $M_2$ true using the resample-move particle filter, for each of 20 particle filter runs using 100 (white), 500 (dark gray), 1000 (light gray), and 5000 (black) particles.} \label{fig:pf-hist}
 \end{figure}
 
 Next, we simulated 20 more data sets from $M_2$ with $\sigma^2 = 1$. For each data set, posterior probabilities among models $M_1$, $M_2$, and $M_3$ were calculated using the analytic calculation of the marginal likelihood as well as the resample-move particle filter with 100, 500, and 1000 particles.

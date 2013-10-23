@@ -14,7 +14,7 @@ mc_pf_test <- function(np, nsim, W)
   cat(np,nsim,W,'\n')
 }
 
-mydata = expand.grid(np=c(5000,10000),nsim=seq(1,20,1),W=c(.5,1,2),stringsAsFactors=FALSE)
+mydata = expand.grid(np=c(1000, 5000,10000),nsim=seq(1,20,1),W=c(.5,1,2),stringsAsFactors=FALSE)
 require(doMC)
 registerDoMC()
 require(plyr)

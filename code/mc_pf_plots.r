@@ -16,7 +16,7 @@ require(plyr)
 true.lmarglik = maply(expand.grid(nsim=seq(1,N,1),W=W.test), true_lmarglik)
 
 # Approximate (using resample-move particle filter) log marginal likelihoods for simulated data under different models
-np = c(100,500,1000)
+np = c(1000,5000,10000)
 nsim = seq(1,20,1)
 rm_lmarglik = function(np, nsim, W)
 {

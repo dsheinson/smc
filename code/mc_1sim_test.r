@@ -22,7 +22,7 @@ pf_lmarglik <- function(np, label)
 }
 
 # Apply pf_lmarglik for many pf runs with different number of particles
-mydata = data.frame(np = rep(c(100, 500, 1000, 5000, 10000), rep(25, 5)), label=rep(seq(1,25,1),5))
+mydata = data.frame(np = rep(c(100, 500, 1000, 5000), rep(25, 5)), label=rep(seq(1,25,1),5))
 require(doMC)
 registerDoMC()
 require(plyr)

@@ -38,14 +38,14 @@ legend("topright",legend=c("Truth","95% CI"),lty=c(1,1),col=c(1,2))
 dev.off()
 
 # Load approximate log marginal likelihoods for particle filter runs
-np = c(100, 500, 1000)
-N = 20
+np = c(100, 500, 1000, 5000)
+N = 25
 pf.margs = matrix(NA, nr=N, nc=length(np))
 for(i in 1:N)
 {
   for(j in 1:length(np))
   {
-    load(paste("../data/mc_1sim_test-",np[j],"-",20*(j-1)+i,".rdata",sep=""))
+    load(paste("../data/mc_1sim_test-",np[j],"-",i,".rdata",sep=""))
     pf.marg = pf.lmarglik(out)
     pf.margs[i,j] = pf.marg
   }
@@ -53,9 +53,10 @@ for(i in 1:N)
 
 # Plot histograms of of log marginal likelihoods for pfs compared with truth
 pdf(file="../graphs/mc_1sim_hist.pdf")
-hist(pf.margs[,1],breaks=5,main="Histogram of Log Marginal Likelihoods",xlab="Log Marginal Likelihood",xlim=c(min(pf.margs,true.marg),max(pf.margs,true.marg)))
-hist(pf.margs[,2],breaks=5,add=TRUE,col="gray")
-hist(pf.margs[,3],breaks=5,add=TRUE,col="black")
+hist(pf.margs[,1],breaks=4,main="Histogram of Log Marginal Likelihoods",xlab="Log Marginal Likelihood",ylim=c(0,12))
+hist(pf.margs[,2],breaks=4,add=TRUE,col="gray20")
+hist(pf.margs[,3],breaks=4,add=TRUE,col="gray70")
+hist(pf.margs[,4],breaks=4,add=TRUE,col="black")
 abline(v=true.marg,lwd=2,col=2)
-legend(-370,10,c("100 particles","500 particles","1000 particles","Truth"),fill=c("white","gray","black",NA),border=c("black","black","black","white"),lty=c(NA,NA,NA,1),lwd=c(NA,NA,NA,2),col=c(NA,NA,NA,2),cex=0.85)
+legend("topright",c("100 particles","500 particles","1000 particles","5000 particles","Truth"),fill=c("white","gray20","gray70","black",NA),border=c("black","black","black","black","white"),lty=c(NA,NA,NA,NA,1),lwd=c(NA,NA,NA,NA,2),col=c(NA,NA,NA,NA,2),cex=0.85)
 dev.off()

@@ -4,7 +4,7 @@
 #' @param dllik a function to evaluate the logarithm of the likelihood with arguments y, x, and theta for data, state, and fixed parameters respectively
 #' @param pstate a function to produce a point estimate of the state at time t+1 given the state at time t and fixed parameters theta, often the expectation
 #' @param revo a function to propagate the state with arguments x, the current state, and theta, the fixed parameters
-#' @param rprior a function to sample from the prior for the state and fixed parameters returns a list with elements x and theta; takes an integer argument corresponding to the particle number to give the user the option to load already sampled prior draws
+#' @param rprior a function to sample from the prior for the state and fixed parameters returns a list with elements x and theta
 #' @param delta the kernel density smoothing parameter in (0,1) usually, around 0.99
 #' @param n the number of particles
 #' @param progress a boolean to display progress bar if TRUE
@@ -28,7 +28,7 @@ kd_pf = function(y, dllik, pstate, revo, rprior, n, delta=0.99, progress = TRUE,
 
   # Find dimension of state
   current.seed = .Random.seed
-  tmp = rprior(1)
+  tmp = rprior()
   ns = length(tmp$x)
   np = length(tmp$theta)
   .Random.seed = current.seed
@@ -38,7 +38,7 @@ kd_pf = function(y, dllik, pstate, revo, rprior, n, delta=0.99, progress = TRUE,
   theta = array(NA, dim=c(np,n,nt+1))
   for (j in 1:n) 
   {
-    tmp = rprior(j)
+    tmp = rprior()
     state[,j,1] = tmp$x
     theta[,j,1] = tmp$theta
   }

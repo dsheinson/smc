@@ -7,7 +7,7 @@ mc_pf_test <- function(np, nsim, W)
 {
   revo1 <- function(x, theta) rnorm(1,x,sqrt(theta*W))
   a0 = b0 = 1
-  rprior1 <- function(j) rprior(j,a0,b0)
+  rprior1 <- function() rprior(a0,b0)
   rmove <- function(y, x, theta) rm_mcmc(y, x, theta, a0, b0, 1)
   out = rm_pf(sims$y[nsim,], dllik, revo1, rprior1, rmove, np, progress = FALSE, method="stratified", nonuniformity="ess", threshold=0.8, log=FALSE)
   save(out, file=paste("../data/mc_pf_test-",np,"-",nsim,"-",W,".rdata",sep=""))

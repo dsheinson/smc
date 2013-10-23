@@ -33,7 +33,7 @@ source("rm_pf.r")
 source("rm_test_functions.r")
 np = 100
 a0 = b0 = 1
-rprior1 <- function(j) rprior(j,a0,b0)
+rprior1 <- function() rprior(a0,b0)
 rmove <- function(y, x, theta) rm_mcmc(y, x, theta, a0, b0, 1)
 out = rm_pf(sim$y[,1], dllik, revo, rprior1, rmove, np, method="stratified", nonuniformity="ess", threshold=0.8, log=FALSE)
 pf.lmarglik(out)

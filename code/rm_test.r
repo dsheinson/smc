@@ -35,7 +35,7 @@ pf_run <- function(pf, np, a, b, label = "", ...){
   if(pf == "KD"){
     dllik <- function(y, x, theta) dnorm(y,x,sqrt(exp(theta)),log=TRUE)
     revo <- function(x, theta) rnorm(1,x,sqrt(exp(theta)))
-    rprior <- function(j)
+    rprior <- function()
     {
       mytheta = 1 / rgamma(1,a,b)
       mystate = rnorm(1,0,sqrt(mytheta))
@@ -47,14 +47,14 @@ pf_run <- function(pf, np, a, b, label = "", ...){
     save(out.kd,file=paste("../data/rm_test-KD-",np,"-",a,"-",b,"-",label,".rdata",sep=""))
   } else if(pf == "RM1") {
     source("rm_test_functions.r")
-    rprior1 <- function(j) rprior(j,a,b)
+    rprior1 <- function() rprior(a,b)
     rmove <- function(y, x, theta) return(list(state=x,theta=sample.theta(y, x, theta, a, b)))
     source("rm_pf.r")
     out.rm1 = rm_pf(y, dllik, revo, rprior1, rmove, np, ...)
     save(out.rm1,file=paste("../data/rm_test-RM1-",np,"-",a,"-",b,"-",label,".rdata",sep=""))
   } else if(pf == "RM2") {
     source("rm_test_functions.r")
-    rprior1 <- function(j) rprior(j,a,b)
+    rprior1 <- function() rprior(a,b)
     rmove <- function(y, x, theta) rm_mcmc(y, x, theta, a, b, 1)
     source("rm_pf.r")
     out.rm2 = rm_pf(y, dllik, revo, rprior1, rmove, np, ...)

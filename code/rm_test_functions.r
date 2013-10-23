@@ -6,7 +6,7 @@ dllik <- function(y, x, theta) dnorm(y,x,sqrt(theta),log=TRUE)
 
 revo <- function(x, theta) rnorm(1,x,sqrt(theta))
 
-rprior <- function(j,a,b)
+rprior <- function(a,b)
 {
   mytheta = 1 / rgamma(1,a,b)
   mystate = rnorm(1,0,sqrt(mytheta))

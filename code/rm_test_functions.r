@@ -2,9 +2,9 @@
 # Functions to use within particle filters
 ##########################################
 
-dllik <- function(y, x, theta) dnorm(y,x,sqrt(theta),log=TRUE)
+dllik <- function(y, x, theta, f = 1, v = 1) dnorm(y,f*x,sqrt(theta*v),log=TRUE)
 
-revo <- function(x, theta) rnorm(1,x,sqrt(theta))
+revo <- function(x, theta, g = 1, w = 1) rnorm(1,g*x,sqrt(theta*w))
 
 rprior <- function(a,b)
 {

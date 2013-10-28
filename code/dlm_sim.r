@@ -4,6 +4,7 @@ source("mc_functions.r")
 N = 20
 nt = 100
 F = G = V = W = sigma = 1
+true.params = list(F=F,G=G,V=V,W=W,sigma=sigma)
 x = matrix(NA, nr = N, nc = nt + 1)
 y = matrix(NA, nr = N, nc = nt)
 for(j in 1:N)
@@ -12,5 +13,7 @@ for(j in 1:N)
   x[j,] = sim$x[,1]
   y[j,] = sim$y[,1]
 }
-sims = list(x=x,y=y)
-save(sims, file="../data/mc_pf_test-sims.rdata")
+
+# Save data
+sims = list(x=x,y=y,true.params=true.params)
+save(sims, file=paste("../data/dlm_sim.rdata",sep=""))

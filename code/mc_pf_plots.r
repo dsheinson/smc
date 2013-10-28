@@ -1,29 +1,43 @@
 source("mc_functions.r")
 require(plyr)
 
-# Load simulated data sets
-load("../data/mc_pf_test-sims.rdata")
+# Load simulated data and approximate log marginal likelihoods
+load("../data/dlm_sim.rdata")
+nt = dim(sims$y)[2]
+load("../data/mc_pf_test.rdata")
+nsim = as.numeric(dimnames(rm.lmarglik)[[1]])
+np = as.numeric(dimnames(rm.lmarglik)[[2]])
+W = as.numeric(dimnames(rm.lmarglik)[[3]])
+N = length(nsim)
+
+# Calculate true log marginal likelihoods under each model
+true_lmarglik = function(nsim, W)
+{
+  post = dlm.post(sims$y[nsim,], sims[[3]]$F, sims[[3]]$G, sims[[3]]$V, W, 1, 1, 0, 1)
+  return(dlm.lmarglik(sims$y[nsim,], post$f[,1], post$Q[1,1,], post$a, post$b))
+}
+true.lmarglik = maply(expand.grid(nsim=nsim, W=W, stringsAsFactors=TRUE), true_lmarglik)
 
 # load log marginal likelihoods
-load("../data/mc_pf_lmarglik.rdata")
-nsim = as.numeric(rownames(lmarglik.out$true.lmarglik))
-W = as.numeric(colnames(lmarglik.out$true.lmarglik))
-np = as.numeric(rownames(lmarglik.out$rm.lmarglik))
+load("../data/mc_pf_test.rdata")
+nsim = as.numeric(dimnames(rm.lmarglik)[[1]])
+np = as.numeric(dimnames(rm.lmarglik)[[2]])
+W = as.numeric(dimnames(rm.lmarglik)[[3]])
 N = length(nsim)
 
 # Compute true posterior model probabilities
-true.postModProbs = apply(lmarglik.out$true.lmarglik, 1, function(x) postModProbs(x, rep(1/length(W), length(W))))
+true.postModProbs = aaply(true.lmarglik, 1, function(x) postModProbs(x, rep(1/length(W), length(W))))
 
 # Compute rm_pf approximate posterior model probabilities
-rm.postModProbs = aaply(lmarglik.out$rm.lmarglik, 1:2, function(x) postModProbs(x, rep(1/length(W), length(W))))
+rm.postModProbs = aaply(rm.lmarglik, 1:2, function(x) postModProbs(x, rep(1/length(W), length(W))))
 
 # 3-way contingency tables
-true.max = as.factor(apply(true.postModProbs, 2, function(x) which(x == max(x))))
+true.max = as.factor(apply(true.postModProbs, 1, function(x) which(x == max(x))))
 levels(true.max) = seq(1,length(W),1)
 rm.max = aaply(rm.postModProbs, 1:2, function(x) which(x == max(x)))
-for(i in 1:dim(rm.max)[1])
+for(i in 1:dim(rm.max)[2])
 {
-  rm.max.f = as.factor(rm.max[i,])
+  rm.max.f = as.factor(rm.max[,i])
   levels(rm.max.f) <- seq(1,length(W),1)
   tab = table(true.max, rm.max.f)
   dimnames(tab) = list(truth=c("M_1","M_2","M_3"),pf=c("M_1","M_2","M_3"))
@@ -33,14 +47,14 @@ for(i in 1:dim(rm.max)[1])
 
 # Plot ternary diagrams for posterior model probabilities
 require(compositions)
-grad = order(true.postModProbs[2,],decreasing=TRUE)
+grad = order(true.postModProbs[,2],decreasing=TRUE)
 pdf(file="../graphs/mc_pf_test-ternary.pdf",width=10,height=10)
 par(mfrow=c(2,2))
-plot(acomp(t(true.postModProbs)[grad,]),labels=c(expression(paste(tilde(W)," = 0.5",sep="")),expression(paste(tilde(W)," = 1",sep="")),expression(paste(tilde(W)," = 2",sep=""))),col=gray.colors(N),lwd=2)
+plot(acomp(true.postModProbs[grad,]),labels=c(expression(paste(tilde(W)," = 0.5",sep="")),expression(paste(tilde(W)," = 1",sep="")),expression(paste(tilde(W)," = 2",sep=""))),col=gray.colors(N),lwd=2)
 mtext("True Posterior",side=3,cex=2)
 for(i in 1:length(np))
 {
-  plot(acomp(rm.postModProbs[i,grad,]),labels=c(expression(paste(tilde(W)," = 0.5",sep="")),expression(paste(tilde(W)," = 1",sep="")),expression(paste(tilde(W)," = 2",sep=""))),col=gray.colors(N),lwd=2)
+  plot(acomp(rm.postModProbs[grad,i,]),labels=c(expression(paste(tilde(W)," = 0.5",sep="")),expression(paste(tilde(W)," = 1",sep="")),expression(paste(tilde(W)," = 2",sep=""))),col=gray.colors(N),lwd=2)
   mtext(paste(np[i]," particles",sep=""),side=3,cex=2)
 }
 dev.off()
@@ -50,27 +64,27 @@ dev.off()
 pdf(file="../graphs/mc_pf_test-binary.pdf",width=12,height=8)
 par(mfrow=c(2,length(np)),mar=c(5,6,4,1)+.1)
 ylabs=c(expression(paste("P(",tilde(W)," = 1) vs P(",tilde(W)," = 0.5)",sep="")),rep("",length(np)-1))
-true.postModProbs = apply(lmarglik.out$true.lmarglik[,1:2], 1, function(x) postModProbs(x, rep(1/length(W[1:2]), length(W[1:2]))))
-rm.postModProbs = aaply(lmarglik.out$rm.lmarglik[,,1:2], 1:2, function(x) postModProbs(x, rep(1/length(W[1:2]), length(W[1:2]))))
-grad = order(true.postModProbs[2,],decreasing=TRUE)
+true.postModProbs = aaply(true.lmarglik[,1:2], 1, function(x) postModProbs(x, rep(1/length(W[1:2]), length(W[1:2]))))
+rm.postModProbs = aaply(rm.lmarglik[,,1:2], 1:2, function(x) postModProbs(x, rep(1/length(W[1:2]), length(W[1:2]))))
+grad = order(true.postModProbs[,2],decreasing=TRUE)
 for(i in 1:length(np))
 {
-  plot(rep(1,N),true.postModProbs[2,grad],main=paste(np[i]," particles",sep=""),col=gray.colors(N),xaxt = 'n',yaxt='n',lwd=2,xlim=c(0.9,2.1),ylim=c(0,1),xlab="",ylab=ylabs[i],cex.lab=1.75,cex.main=1.75)
+  plot(rep(1,N),true.postModProbs[grad,2],main=paste(np[i]," particles",sep=""),col=gray.colors(N),xaxt = 'n',yaxt='n',lwd=2,xlim=c(0.9,2.1),ylim=c(0,1),xlab="",ylab=ylabs[i],cex.lab=1.75,cex.main=1.75)
   axis(side=1, at=c(1,2), labels=c("Direct Calculation","PF approx."),cex.axis=1.65)
   axis(side=2, at=c(0,0.5,1),cex.axis=1.65)
-  points(rep(2,N),rm.postModProbs[i,grad,2],col=gray.colors(N),lwd=2)
-  segments(rep(1,N), true.postModProbs[2,grad], rep(2,N), rm.postModProbs[i,grad,2],col=gray.colors(N))
+  points(rep(2,N),rm.postModProbs[grad,i,2],col=gray.colors(N),lwd=2)
+  segments(rep(1,N), true.postModProbs[grad,2], rep(2,N), rm.postModProbs[grad,i,2],col=gray.colors(N))
 }
 ylabs=c(expression(paste("P(",tilde(W)," = 1) vs P(",tilde(W)," = 2)",sep="")),rep("",length(np)-1))
-true.postModProbs = apply(lmarglik.out$true.lmarglik[,2:3], 1, function(x) postModProbs(x, rep(1/length(W[2:3]), length(W[2:3]))))
-rm.postModProbs = aaply(lmarglik.out$rm.lmarglik[,,2:3], 1:2, function(x) postModProbs(x, rep(1/length(W[2:3]), length(W[2:3]))))
-grad = order(true.postModProbs[1,],decreasing=TRUE)
+true.postModProbs = aaply(true.lmarglik[,2:3], 1, function(x) postModProbs(x, rep(1/length(W[2:3]), length(W[2:3]))))
+rm.postModProbs = aaply(rm.lmarglik[,,2:3], 1:2, function(x) postModProbs(x, rep(1/length(W[2:3]), length(W[2:3]))))
+grad = order(true.postModProbs[,1],decreasing=TRUE)
 for(i in 1:length(np))
 {
-  plot(rep(1,N),true.postModProbs[1,grad],col=gray.colors(N),xaxt = 'n',yaxt='n',lwd=2,xlim=c(0.9,2.1),ylim=c(0,1),xlab="",ylab=ylabs[i],cex.lab=1.75,cex.main=1.75)
+  plot(rep(1,N),true.postModProbs[grad,1],col=gray.colors(N),xaxt = 'n',yaxt='n',lwd=2,xlim=c(0.9,2.1),ylim=c(0,1),xlab="",ylab=ylabs[i],cex.lab=1.75,cex.main=1.75)
   axis(side=1, at=c(1,2), labels=c("Direct Calculation","PF approx."),cex.axis=1.65)
   axis(side=2, at=c(0,0.5,1),cex.axis=1.65)
-  points(rep(2,N),rm.postModProbs[i,grad,1],col=gray.colors(N),lwd=2)
-  segments(rep(1,N), true.postModProbs[1,grad], rep(2,N), rm.postModProbs[i,grad,1],col=gray.colors(N))
+  points(rep(2,N),rm.postModProbs[grad,i,1],col=gray.colors(N),lwd=2)
+  segments(rep(1,N), true.postModProbs[grad,1], rep(2,N), rm.postModProbs[grad,i,1],col=gray.colors(N))
 }
 dev.off()

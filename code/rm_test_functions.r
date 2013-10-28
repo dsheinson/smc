@@ -6,10 +6,10 @@ dllik <- function(y, x, theta, f = 1, v = 1) dnorm(y,f*x,sqrt(theta*v),log=TRUE)
 
 revo <- function(x, theta, g = 1, w = 1) rnorm(1,g*x,sqrt(theta*w))
 
-rprior <- function(a,b)
+rprior <- function(a,b,m0=0,C0=1)
 {
   mytheta = 1 / rgamma(1,a,b)
-  mystate = rnorm(1,0,sqrt(mytheta))
+  mystate = rnorm(1,m0,sqrt(C0*mytheta))
   return(list(x=mystate,theta=mytheta))
 }
 

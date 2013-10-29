@@ -47,27 +47,23 @@ In addition, we can calculate the one-step ahead predictive density $p(y_t|y_{1:
 
 \section{Resample-move algorithm} \label{sec:rm}
 
-%As mentioned in Section \ref{sec:estimation}, models of the form described by equations \eqref{eqn:obs} and \eqref{eqn:state} generally do not emit tractable forms of the posterior distribution $p(x_{1:t},\theta|y_{1:t})$. Thus, in many cases we must turn toward methods for approximating this distribution such as particle filtering. One specific type of particle filter known as the \emph{resample-move} algorithm was developed by \citet{Gilk:Berz:foll:2001, Berz:gilk:2001} and is summarized here.
-%
-%Let $y_{1:t} = (y_1,y_2,\ldots,y_t)'$ represent the vector of data observed up until time $t$ and let $\theta_t$ be a vector of unknown states and/or parameters at time $t$. We allow $\theta_t$ to change with time, and we consider in particular the case where the dimension of $\theta_t$ changes with time, e.g. if $\theta_t$ contains an evolving trajectory of states. Let $\theta^{+}_t$ be the (possibly empty) set of unknown states entering the model at time $t+1$. Then, we can define $\theta_{t+1} = (\theta_t,\theta^{+}_t)'$. For the DLM described in Section \ref{sec:model}, we might wish to keep track of the entire trajectory of unknown states up to time $t$, in which case $\theta_t = (x_0,x_1,\ldots,x_t,\sigma^2)'$ and $\theta^{+}_t = x_{t+1}$.
-
 As mentioned in Section \ref{sec:estimation}, models of the form described by equations \eqref{eqn:obs} and \eqref{eqn:state} generally do not emit tractable forms of the posterior distributions $p(x_{0:t},\theta|y_{1:t})$ or $p(x_t,\theta|y_{1:t})$. Thus, in many cases we must turn toward methods for approximating these distributions such as particle filtering.
 
-Using particle filtering we can approximate the posterior distribution $p(x_{0:t},\theta|y_{1:t})$ through a weighted sample approximation, each sample being termed a \emph{particle}. Let $x^j_{0:t}$ be the vector of unknown states up until time $t$ for particle $j$, $\theta^j_t$ be the values of the fixed parameters at time $t$ for particle $j$, and $w^j_t$ be the weight of particle $j$ at time $t$. We require that $\sum_{j=1}^J w^j_t = 1$, where $J$ is the total number of particles.
+Using particle filtering, we can approximate the posterior distribution $p(x_{0:t},\theta|y_{1:t})$ through a weighted sample approximation, each sample being termed a \emph{particle}. Let $x^{(j)}_{0:t}$ be the vector of unknown states up until time $t$ for particle $j$, $\theta^{(j)}_t$ be the values of the fixed parameters at time $t$ for particle $j$, and $w^{(j)}_t$ be the weight of particle $j$ at time $t$. We require that $\sum_{j=1}^J w^{(j)}_t = 1$, where $J$ is the total number of particles.
 
-We initialize the algorithm by drawing $(x^j_0, \theta^j_0)$ from some prior distribution $p(x_0,\theta_0)$ and setting $w^j_0 = 1 / J$ for $j = 1,\ldots,J$. Given a particle sample approximation of the posterior $p(x_{0:t-1},\theta|y_{1:t-1})$ - i.e. $(x^j_{0:t-1},\theta^j_{t-1})$ with associated weights $w^j_{t-1}$ for $j=1,\ldots,J$ - we move to a particle sample approximation of $p(x_{0:t},\theta|y_{1:t})$ by the following steps:
+We initialize the algorithm by drawing $\left(x^{(j)}_0, \theta^{(j)}_0\right)$ from some prior distribution $p(x_0,\theta_0)$ and setting $w^{(j)}_0 = 1 / J$ for $j = 1,\ldots,J$. Given a particle sample approximation of the posterior $p(x_{0:t-1},\theta|y_{1:t-1})$ - i.e. $\left(x^{(j)}_{0:t-1},\theta^{(j)}_{t-1}\right)$ with associated weights $w^{(j)}_{t-1}$ for $j=1,\ldots,J$ - we move to a particle sample approximation of $p(x_{0:t},\theta|y_{1:t})$ by the following steps:
 
 \begin{enumerate}
-\item Augmentation: For each $j = 1,\ldots,J$, draw $\tilde{x}^j_t$ from some state evolution distribution $p(x_t|x^j_{t-1},\theta^j_{t-1})$. Add $\tilde{x}^j_t$ to particle $j$ and denote the new augmented particle by $(\tilde{x}^j_{0:t},\theta^j_{t-1})$.
-\item Update weights: For each $j = 1,\ldots,J$, calculate the \emph{incremental weight} $\alpha^j_t = p(y_t|\tilde{x}^j_t,\theta^j_{t-1})$ and then the \emph{unnormalized weight} $\bar{w}^j_t = w^j_{t-1}\alpha_{j,t}$.
-\item Renormalize weights: For each $j = 1,2,\ldots,J$, calculate the \emph{normalized weights}, $\tilde{w}^j_t$ by setting $\tilde{w}^j_t = \bar{w}^j_t / \sum_{l=1}^J \bar{w}^l_t$.
-\item Resample (optional): For each $j$, sample an index $k_j$ from $\{1,2,\ldots,J\}$ with associated probabilities $\{\tilde{w}^1_t,\tilde{w}^2_t,\ldots,\tilde{w}^j_t,\ldots,\tilde{w}^J_t\}$.
-\item {\tt if(}resampling was performed{\tt )\{} \\
+\item Augmentation: For each $j = 1,\ldots,J$, draw $\tilde{x}^{(j)}_t$ from some state evolution distribution $p\left(x_t|x^{(j)}_{t-1},\theta^{(j)}_{t-1}\right)$. Add $\tilde{x}^{(j)}_t$ to particle $j$ and denote the new augmented particle by $\left(\tilde{x}^{(j)}_{0:t},\theta^{(j)}_{t-1}\right)$.
+\item Update weights: For each $j = 1,\ldots,J$, calculate the \emph{incremental weight} $\alpha^{(j)}_t = p\left(y_t|\tilde{x}^{(j)}_t,\theta^{(j)}_{t-1}\right)$ and then the \emph{unnormalized weight} $\bar{w}^{(j)}_t = w^{(j)}_{t-1}\alpha^{(j)}_t$.
+\item Renormalize weights: For each $j = 1,2,\ldots,J$, calculate the \emph{normalized weights}, $\tilde{w}^{(j)}_t$, by setting $\tilde{w}^{(j)}_t = \bar{w}^{(j)}_t / \sum_{l=1}^J \bar{w}^{(l)}_t$.
+\item Resample (optional): For each $j$, sample an index $k_j$ from $\{1,2,\ldots,j,\ldots,J\}$ with associated probabilities $\{\tilde{w}^{(1)}_t,\tilde{w}^{(2)}_t,\ldots,\tilde{w}^{(j)}_t,\ldots,\tilde{w}^{(J)}_t\}$.
+\item {\tt if( }resampling was performed{\tt )\{} \\
 \begin{enumerate}[label=\alph*.]
-\item Update weights: Set $w_{j,t} = 1 / J$ for all $j$.
-\item Move particles: For each $j = 1,2,\ldots,J$, draw a new particle $(x^j_{0:t},\theta^j_t)$ from some transition kernel $q(x_{0:t},\theta|\tilde{x}^j_{0:t},\theta^j_{t-1})$ with invariant distribution $p(x_{0:t},\theta|y_{1:t})$.
+\item Update weights: Set $w^{(j)}_t = 1 / J$ for all $j$.
+\item Move particles: For each $j = 1,2,\ldots,J$, draw a new particle $\left(x^{(j)}_{0:t},\theta^{(j)}_t\right)$ from some transition kernel $q\left(x_{0:t},\theta|\tilde{x}^{(j)}_{0:t},\theta^{(j)}_{t-1}\right)$ with invariant distribution $p(x_{0:t},\theta|y_{1:t})$.
 \end{enumerate}
-{\tt \} else \{} For each $j = 1,2,\ldots,J$, set $w_{j,t} = \tilde{w}^j_t$ and $(x^j_{0:t},\theta^j_t) = (\tilde{x}^j_{0:t},\theta^j_{t-1}$).\}
+{\tt \} else \{} For each $j = 1,2,\ldots,J$, set $w^{(j)}_t = \tilde{w}^{(j)}_t$ and $\left(x^{(j)}_{0:t},\theta^{(j)}_t\right) = \left(\tilde{x}^{(j)}_{0:t},\theta^{(j)}_{t-1}\right)$.{\tt\}}
 \end{enumerate}
 
 The `Resample' step is optional in the sense that if particle weights are not out of balance, it is not necessary to resample the particles because the weighted sample of particles would still provide a good approximation of the posterior. In this case, it would also not be necessary to move the particles, since the problem of degeneracy in the fixed parameters caused by resampling would not be present. By only resampling and moving particles at iterations of the particle filter for which it is necessary, we increase the efficiency of the algorithm. Measures of nonuniformity of particle weights such as effective sample size, coefficient of variation, and entropy can be used to determine when resampling should be performed \citep{Liu:Chen:Wong:reje:1998}. %We use an effective sample size threshold of 80\% of the total number of particles to determine when resample and move particles.
@@ -84,7 +80,7 @@ p(y_{1:t}) = p(y_t|y_{1:t-1})p(y_{1:t-1}) \label{eqn:marglik}
 
 \noindent Next, we note that an approximation of $p(y_t|y_{1:t-1})$ can be obtained from the weighted particle sample by
 \begin{equation}
-p(y_t|y_{1:t-1}) \approx \sum_{j=1}^J w_{j,t-1}\alpha_{j,t} \label{eqn:condmarg}
+p(y_t|y_{1:t-1}) \approx \sum_{j=1}^J w^{(j)}_{t-1}\alpha^{(j)}_t \label{eqn:condmarg}
 \end{equation}
 
 Having now prescribed a method for approximating $p(y_{1:t})$ sequentially within the resample-move algorithm, we can compare a set of possible models ${M_1,M_2,\ldots,M_p}$ by calculating posterior model probabilities by

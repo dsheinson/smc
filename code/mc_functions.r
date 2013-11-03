@@ -1,13 +1,13 @@
 # Function to simulate nt + 1 states (x_t) and nt observations (y_t) from a dlm with common state and observations variance factor sigma^2
 # y_t = Fx_t + v_t, v_t iid N(0,sigma^2*V)
 # x_t = Gx_t-1 + w_t, w_t iid N(0,sigma^2*W)
-dlm.sim <- function(nt, F, G, V, W, sigma)
+dlm.sim <- function(nt, F, G, V, W, sigma, m0, C0)
 {
   F =  as.matrix(F); G = as.matrix(G); V = as.matrix(V); W = as.matrix(W)
   stopifnot((dim(G)[1] == dim(G)[2]) & (dim(V)[1] == dim(V)[2]) & (dim(W)[1] == dim(W)[2]) & (dim(F)[1] == dim(V)[1]) & (dim(F)[2] == dim(G)[1]) & (dim(G)[1] == dim(W)[1]))
   p = dim(W)[1]; q = dim(V)[1]
-  chol.W = chol(W); chol.V = chol(V)
-  x0 = t(chol.W)%*%rnorm(p,0,sigma)
+  chol.C0 = chol(C0, pivot=TRUE); chol.V = chol(V, pivot=TRUE); chol.W = chol(W, pivot=TRUE)
+  x0 = t(chol.C0)%*%rnorm(p,m0,sigma)
   x = matrix(NA, nr = nt + 1, nc = p)
   y = matrix(NA, nr = nt, nc = q)
   x[1,] = x0
@@ -33,15 +33,17 @@ dlm.post <- function(y, F, G, V, W, a0, b0, m0, C0)
   a <- b <- rep(NA, nt + 1)
   f = matrix(NA, nr = nt, nc = q)
   Q = array(NA, dim = c(q, q, nt))
+  A = matrix(NA, nr = nt, nc = p)
+  R = array(NA, dim = c(p, p, nt))
   m[1,] = m0; C[,,1] = C0; a[1] = a0; b[1] = b0
   for(i in 1:nt)
   {
-    A = G%*%m[i,]; R = G%*%C[,,i]%*%t(G) + W
-    f[i,] = F%*%A; Q[,,i] = F%*%R%*%t(F) + V  
+    A[i,] = G%*%m[i,]; R[,,i] = G%*%C[,,i]%*%t(G) + W
+    f[i,] = F%*%A[i,]; Q[,,i] = F%*%R[,,i]%*%t(F) + V  
     e = y[i,] - f[i,]; Qinv = solve(Q[,,i])
-    RFQinv = R%*%t(F)%*%Qinv
-    m[i+1,] = A + RFQinv%*%e
-    C[,,i+1] = R - RFQinv%*%F%*%R
+    RFQinv = R[,,i]%*%t(F)%*%Qinv
+    m[i+1,] = A[i,] + RFQinv%*%e
+    C[,,i+1] = R[,,i] - RFQinv%*%F%*%R[,,i]
     a[i+1] = a[i] + q/2
     b[i+1] = b[i] + (1/2)%*%e%*%Qinv%*%e
   }
@@ -64,7 +66,7 @@ pf.lmarglik <- function(out)
 {
   nt = dim(out$increment)[2]
   log.marglik <- 0
-  for(i in 1:nt) log.marglik = log.marglik + log(sum(exp(out$increment[,i])*out$weight[,i]))
+  for(i in 1:nt) log.marglik = log.marglik + log(sum(exp(out$increment[,i]+log(out$weight[,i]))))
   return(log.marglik)
 }
 

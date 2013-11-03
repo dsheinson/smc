@@ -13,15 +13,15 @@ rprior <- function(a,b,m0=0,C0=1)
   return(list(x=mystate,theta=mytheta))
 }
 
-rm_mcmc <- function(y, x, theta, a0, b0, n.iter)
+rm_mcmc <- function(y, x, theta, a0, b0, mydlm, n.iter)
 {
   for(t in 1:n.iter)
   {
     # Sample theta from full conditional
-    theta = sample.theta(y, x, theta, a0, b0)
+    theta = sample.theta(y, x, theta, a0, b0, mydlm)
 
     # Sample states by FFBS
-    x = sample.states(y, theta)
+    x = sample.states(y, theta, mydlm)
   }
   return(list(state=x,theta=theta))
 }
@@ -30,20 +30,23 @@ rm_mcmc <- function(y, x, theta, a0, b0, n.iter)
 # Utility functions
 ###################
 
-sample.theta <- function(y, x, theta, a0, b0)
+sample.theta <- function(y, x, theta, a0, b0, mydlm)
 {
   K = length(y)
-  a = K + 1.5 + a0 - 1
-  b = .5*(sum((y - x[2:(K+1)])^2) + sum((x[2:(K+1)] - x[1:K])^2) + x[1]^2 + 2*b0)
+  F = mydlm$F; G = mydlm$G; V = mydlm$V; W = mydlm$W; m0 = mydlm$m0; C0 = mydlm$C0 
+  a = a0 + K + 0.5
+  b = (1/(2*V))*sum((y - x[2:(K+1)])^2) + (1/(2*W))*sum((x[2:(K+1)] - x[1:K])^2) + (1/(2*C0))*((x[1]-m0)^2) + b0
   return(1/rgamma(1,a,b))
 }
 
-sample.states <- function(y, theta)
+sample.states <- function(y, theta, mydlm)
 {
   # Initialize DLM
   nt = length(y)
-  W = V = theta
-  F = G = 1
+  F = mydlm$F
+  G = mydlm$G
+  V = theta*mydlm$V
+  W = theta*mydlm$W
 
   # Forward-filtering
   m = rep(NA, nt + 1)
@@ -52,7 +55,7 @@ sample.states <- function(y, theta)
   Q = rep(NA, nt)
   A = rep(NA, nt)
   R = rep(NA, nt)
-  m[1] = 0; C[1] = theta
+  m[1] = mydlm$m0; C[1] = theta*mydlm$C0
   for(i in 1:nt)
   {
     A[i] = G*m[i]; R[i] = G*C[i]*G + W

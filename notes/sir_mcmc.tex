@@ -80,13 +80,15 @@ p(i_t|s_t,x_{t-1},\theta) &= p(i_t|s_t,s_{t-1},i_{t-1},\theta) = N_{[0,1-s_t]}(i
 We can now express the full conditional distributions of the states $i_t$ and $s_t$ for $t = 0, 1, \ldots, T$ and unknown parameters $\beta$, $\gamma$, and $\nu$ up to a proportionality constant by
 
 \begin{align*}
-p(s_t|\hdots) &\propto p(i_{t+1}|i_t,s_{t+1},s_t,\theta)p(i_t|i_{t-1},s_t,s_{t-1},\theta)p(s_{t+1}|s_t,i_t,\theta)p(s_t|s_{t-1},i_{t-1},\theta) \mbox{, for } t = 1,\ldots,T \\
-p(s_t|\hdots) &\propto p(i_{t+1}|i_t,s_{t+1},s_t,\theta)p(s_{t+1}|s_t,i_t,\theta)p(i_0,s_0) \mbox{, for } t = 0 \\
+p(s_0|\hdots) &\propto p(i_1|i_0,s_1,s_0,\theta)p(s_1|s_0,i_0,\theta)p(i_0,s_0)\\
+p(s_t|\hdots) &\propto p(i_{t+1}|i_t,s_{t+1},s_t,\theta)p(i_t|i_{t-1},s_t,s_{t-1},\theta)p(s_{t+1}|s_t,i_t,\theta)p(s_t|s_{t-1},i_{t-1},\theta) \mbox{, for } t = 1,\ldots,T-1 \\
+p(s_T|\hdots) &\propto p(i_T|i_{T-1},s_T,s_{T-1},\theta)p(s_T|s_{T-1},i_{T-1},\theta) \\
+p(i_0|\hdots) &\propto p(i_1|i_0,s_1,s_0,\theta)p(s_1|s_0,i_0,\theta)p(i_0,s_0) \\
 p(i_t|\hdots) &\propto p(y_t|i_t)p(i_{t+1}|i_t,s_{t+1},s_t,\theta)p(i_t|i_{t-1},s_t,s_{t-1},\theta)p(s_{t+1}|s_t,i_t,\theta) \mbox{, for } t = 1,\ldots,T \\
-p(i_t|\hdots) &\propto p(i_{t+1}|i_t,s_{t+1},s_t,\theta)p(s_{t+1}|s_t,i_t,\theta)p(i_0,s_0) \mbox{, for } t = 0 \\
+p(i_T|\hdots) &\propto p(y_T|i_T)p(i_T|i_{T-1},s_T,s_{T-1},\theta) \\
 p(\beta|\hdots) &\propto \prod_{t-1}^T \{p(i_t|i_{t-1},s_t,s_{t-1},\theta)p(s_t|s_{t-1},i_{t-1},\theta)\}p(\beta) \\
 p(\gamma|\hdots) &\propto \prod_{t-1}^T \{p(i_t|i_{t-1},s_t,s_{t-1},\theta)p(s_t|s_{t-1},i_{t-1},\theta)\}p(\gamma) \\
 p(\nu|\hdots) &\propto \prod_{t-1}^T \{p(i_t|i_{t-1},s_t,s_{t-1},\theta)p(s_t|s_{t-1},i_{t-1},\theta)\}p(\nu)
 \end{align*}
 
-\end{document}
+\end{document} 

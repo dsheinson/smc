@@ -66,29 +66,25 @@ We can now derive full conditional distributions of the states and unknown param
 p(y_{1:T},x_{0:T},\theta) = \prod_{t = 1}^T \left\{p(y_t|x_t,\theta)p(x_t|x_{t-1},\theta)\right\}p(x_0,\theta) \label{eqn:joint}
 \end{equation}
 
-\noindent which, in our case, can be reduced to
-\[\prod_{t = 1}^T \left\{p(y_t|i_t)p(x_t|x_{t-1},\theta)\right\}p(x_0)p(\beta)p(\gamma)p(\nu)\]
-
-It is convenient for us to write the distribution $p(x_t|x_{t-1},\theta)$ as $p(i_t|s_t,x_{t-1},\theta)p(s_t|x_{t-1},\theta)$ since we will sample new states in the MCMC from the truncated bivariate normal distribution by first sampling $s_t$ from its marginal distribution and then sampling $i_t$ conditional on $s_t$. Thus, we derive the following distributions
+\noindent where $y_t = (y_{1,t},y_{2,t},\ldots,y_{L,t})'$ and
 
 \begin{align*}
-p(s_t|x_{t-1},\theta) &= p(s_t|s_{t-1},i_{t-1},\theta) = N_{[0,1]}(s_t; s_{t-1} - \beta i_{t-1}s^{\nu}_{t-1}, \beta / P^2) \\
-p(i_t|s_t,x_{t-1},\theta) &= p(i_t|s_t,s_{t-1},i_{t-1},\theta) = N_{[0,1-s_t]}(i_{t-1}(1 - \gamma) + s_{t-1} - s_t, \gamma / P^2)
+p(y_t|x_t) &= \prod_{l=1}^L \left(\emph{LN}(y_{l,t};b_li_t^{\varsigma_l},\sigma_l^2)\right) \\
+p(x_t|x_{t-1},\theta) &= p(s_t,i_t|s_{t-1},i_{t-1},\theta) = p(i_t|s_t,s_{t-1},i_{t-1},\theta)p(s_t|s_{t-1},i_{t-1},\theta) \\
+&= N_{[0,1-s_t]}(i_t;i_{t-1}(1 - \gamma) + s_{t-1} - s_t, \gamma / P^2)N_{[0,1]}(s_t; s_{t-1} - \beta i_{t-1}s^{\nu}_{t-1}, \beta / P^2) \\
+p(x_0,\theta) &= p(x_0)p(\beta)p(\gamma)p(\nu)
 \end{align*}
 
 \section{Full conditionals} \label{sec:fullcond}
-We can now express the full conditional distributions of the states $i_t$ and $s_t$ for $t = 0, 1, \ldots, T$ and unknown parameters $\beta$, $\gamma$, and $\nu$ up to a proportionality constant by
+We can now express the full conditional distributions of the states $x_t$ for $t = 0, 1, \ldots, T$ and unknown parameters $\beta$, $\gamma$, and $\nu$ up to a proportionality constant by
 
 \begin{align*}
-p(s_0|\hdots) &\propto p(i_1|i_0,s_1,s_0,\theta)p(s_1|s_0,i_0,\theta)p(i_0,s_0)\\
-p(s_t|\hdots) &\propto p(i_{t+1}|i_t,s_{t+1},s_t,\theta)p(i_t|i_{t-1},s_t,s_{t-1},\theta)p(s_{t+1}|s_t,i_t,\theta)p(s_t|s_{t-1},i_{t-1},\theta) \mbox{, for } t = 1,\ldots,T-1 \\
-p(s_T|\hdots) &\propto p(i_T|i_{T-1},s_T,s_{T-1},\theta)p(s_T|s_{T-1},i_{T-1},\theta) \\
-p(i_0|\hdots) &\propto p(i_1|i_0,s_1,s_0,\theta)p(s_1|s_0,i_0,\theta)p(i_0,s_0) \\
-p(i_t|\hdots) &\propto p(y_t|i_t)p(i_{t+1}|i_t,s_{t+1},s_t,\theta)p(i_t|i_{t-1},s_t,s_{t-1},\theta)p(s_{t+1}|s_t,i_t,\theta) \mbox{, for } t = 1,\ldots,T \\
-p(i_T|\hdots) &\propto p(y_T|i_T)p(i_T|i_{T-1},s_T,s_{T-1},\theta) \\
-p(\beta|\hdots) &\propto \prod_{t-1}^T \{p(i_t|i_{t-1},s_t,s_{t-1},\theta)p(s_t|s_{t-1},i_{t-1},\theta)\}p(\beta) \\
-p(\gamma|\hdots) &\propto \prod_{t-1}^T \{p(i_t|i_{t-1},s_t,s_{t-1},\theta)p(s_t|s_{t-1},i_{t-1},\theta)\}p(\gamma) \\
-p(\nu|\hdots) &\propto \prod_{t-1}^T \{p(i_t|i_{t-1},s_t,s_{t-1},\theta)p(s_t|s_{t-1},i_{t-1},\theta)\}p(\nu)
+p(x_0|\hdots) &\propto p(x_1|x_0,\theta)p(x_0) \\
+p(x_t|\hdots) &\propto p(y_t|x_t)p(x_{t+1}|x_t,\theta)p(x_t|x_{t-1},\theta) \mbox{, for } t = 1,\ldots,T-1 \\
+p(x_T|\hdots) &\propto p(y_T|x_T)p(x_T|x_{T-1},\theta) \\
+p(\beta|\hdots) &\propto \prod_{t=1}^T \{p(x_t|x_{t-1},\theta)\}p(\beta) \\
+p(\gamma|\hdots) &\propto \prod_{t=1}^T \{p(x_t|x_{t-1},\theta)\}p(\gamma) \\
+p(\nu|\hdots) &\propto \prod_{t=1}^T \{p(x_t|x_{t-1},\theta)\}p(\nu)
 \end{align*}
 
 \section{Gibbs Sampler} \label{sec:gibbs}
@@ -97,19 +93,11 @@ We use Gibbs sampling to obtain draws from the joint posterior distribution $p(x
 
 \begin{enumerate}
 \item Start with initial draws $x^{(0)}_{0:T} = (x^{(0)}_0,x^{(0)}_1,\ldots,x^{(0)}_T)'$, $\beta^{(0)}$, $\gamma^{(0)}$, and $\nu^{(0)}$. Set $j = 1$.
-\item Draw $x^{(j)}_{0:T}$ from the full conditional $p(x_{0:T}|x^{(j-1)}_{0:T},\beta^{(j-1)},\gamma^{(j-1)},\nu^{(j-1)},y_{1:T})$ \label{step:gibbs}
+\item \label{step:gibbs} For $k = 1, 2, \ldots, T$, draw $x^{(j)}_k$ from the full conditional \[p(x_k|x^{(j)}_0,x^{(j)}_1,\ldots,x^{(j)}_{k-1},x^{(j-1)}_k,x^{(j-1)}_{k+1},\ldots,x^{(j-1)}_{T-1},x^{(j-1)}_T,\beta^{(j-1)},\gamma^{(j-1)},\nu^{(j-1)})\].
 \item Draw $\beta^{(j)}$ from the full conditional $p(\beta|x^{(j)}_{0:T},\beta^{(j-1)},\gamma^{(j-1)},\nu^{(j-1)},y_{1:T})$
 \item Draw $\gamma^{(j)}$ from the full conditional $p(\gamma|x^{(j)}_{0:T},\beta^{(j)},\gamma^{(j-1)},\nu^{(j-1)},y_{1:T})$
 \item Draw $\nu^{(j)}$ from the full conditional $p(\nu|x^{(j)}_{0:T},\beta^{(j)},\gamma^{(j)},\nu^{(j-1)},y_{1:T})$
 \item Set $j = j + 1$ and go back to step \ref{step:gibbs}
-\end{enumerate}
-
-\noindent Step \ref{step:gibbs} of the algorithm can be expressed in further detail by
-
-\begin{enumerate}[label=\alph*.,leftmargin=2.75\parindent]
-\item Draw $x^{(j)}_0$ from the full conditional $p(x_0|x^{(j-1)}_{0:T},\beta^{(j-1)},\gamma^{(j-1)},\nu^{(j-1)})$. Set $k = 1$.
-\item Draw $x^{(j)}_k$ from the full conditional \[p(x_k|x^{(j)}_0,x^{(j)}_1,\ldots,x^{(j)}_{k-1},x^{(j-1)}_k,x^{(j-1)}_{k+1},\ldots,x^{(j-1)}_{T-1},x^{(j-1)}_T,\beta^{(j-1)},\gamma^{(j-1)},\nu^{(j-1)})\].
-\item If $k < T$, set $k = k + 1$ and go back to previous step.
 \end{enumerate}
 
 \section{Metropolis-Hastings}
@@ -119,7 +107,7 @@ To obtain the draws from the full conditional distributions at each step of the 
 \item Let $f(x) = f(x|\hdots)$ represent the full conditional distribution of interest expressed up to a proportionality constant (i.e. as in Section \ref{sec:fullcond}) and let $g(x|y)$ represent a symmetric proposal distribution, i.e. $g(x|y) = g(y|x)$.
 \item Given $x^{(i-1)}$, sample $x^*$ from $g(x|x^{(i-1)})$.
 \item Calculate the log of the Metropolis ratio, $R$, according to
-\[\log R = \log\left(f(x^*)\right) - \log\left(f(x^{(i-1)})\right)\]
+\[\log R = \log f(x^*) - \log f(x^{(i-1)})\]
 \item Sample $u$ from the continuous uniform distribution on $[0,1]$. If $\log u < \log R$, set $x^{(i)} = x^*$. Otherwise, set $x^{(i)} = x^{(i-1)}$.
 \end{enumerate}
 

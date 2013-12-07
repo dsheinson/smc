@@ -69,11 +69,13 @@ p(y_{1:T},x_{0:T},\theta) = \prod_{t = 1}^T \left\{p(y_t|x_t,\theta)p(x_t|x_{t-1
 \noindent where $y_t = (y_{1,t},y_{2,t},\ldots,y_{L,t})'$ and
 
 \begin{align*}
-p(y_t|x_t) &= \prod_{l=1}^L \left(\emph{LN}(y_{l,t};b_li_t^{\varsigma_l},\sigma_l^2)\right) \\
+p(y_t|x_t) &= \prod_{l=1}^L \left(LN(y_{l,t};b_li_t^{\varsigma_l},\sigma_l^2)\right) \\
 p(x_t|x_{t-1},\theta) &= p(s_t,i_t|s_{t-1},i_{t-1},\theta) = p(i_t|s_t,s_{t-1},i_{t-1},\theta)p(s_t|s_{t-1},i_{t-1},\theta) \\
 &= N_{[0,1-s_t]}(i_t;i_{t-1}(1 - \gamma) + s_{t-1} - s_t, \gamma / P^2)N_{[0,1]}(s_t; s_{t-1} - \beta i_{t-1}s^{\nu}_{t-1}, \beta / P^2) \\
 p(x_0,\theta) &= p(x_0)p(\beta)p(\gamma)p(\nu)
 \end{align*}
+
+\noindent In the above equations, $LN(.;\mu,\sigma^2)$ and $N(.;\mu,\sigma^2)$ represent the probability density functions of the lognormal and normal distributions, respectively, with mean $\mu$ and variance $\sigma^2$.
 
 \section{Full conditionals} \label{sec:fullcond}
 We can now express the full conditional distributions of the states $x_t$ for $t = 0, 1, \ldots, T$ and unknown parameters $\beta$, $\gamma$, and $\nu$ up to a proportionality constant by
@@ -87,32 +89,49 @@ p(\gamma|\hdots) &\propto \prod_{t=1}^T \{p(x_t|x_{t-1},\theta)\}p(\gamma) \\
 p(\nu|\hdots) &\propto \prod_{t=1}^T \{p(x_t|x_{t-1},\theta)\}p(\nu)
 \end{align*}
 
-\section{Gibbs Sampler} \label{sec:gibbs}
+\section{Gibbs Sampler and Metropolis-Hastings} \label{sec:gibbs}
 
-We use Gibbs sampling to obtain draws from the joint posterior distribution $p(x_{0:T},\theta|y_{1:T})$. The Gibbs sampling algorithm proceeds in the following manner:
+To obtain draws from the joint posterior distribution $p(x_{0:T},\theta|y_{1:T})$, we use Gibbs sampling where each step draws from the full conditional distribution using a random-walk Metropolis-Hastings proposal distribution. The algorithm proceeds in the following manner:
 
 \begin{enumerate}
-\item Start with initial draws $x^{(0)}_{0:T} = (x^{(0)}_0,x^{(0)}_1,\ldots,x^{(0)}_T)'$, $\beta^{(0)}$, $\gamma^{(0)}$, and $\nu^{(0)}$. Set $j = 1$.
-\item \label{step:gibbs} For $k = 1, 2, \ldots, T$, draw $x^{(j)}_k$ from the full conditional \[p(x_k|x^{(j)}_0,x^{(j)}_1,\ldots,x^{(j)}_{k-1},x^{(j-1)}_k,x^{(j-1)}_{k+1},\ldots,x^{(j-1)}_{T-1},x^{(j-1)}_T,\beta^{(j-1)},\gamma^{(j-1)},\nu^{(j-1)})\].
-\item Draw $\beta^{(j)}$ from the full conditional $p(\beta|x^{(j)}_{0:T},\beta^{(j-1)},\gamma^{(j-1)},\nu^{(j-1)},y_{1:T})$
-\item Draw $\gamma^{(j)}$ from the full conditional $p(\gamma|x^{(j)}_{0:T},\beta^{(j)},\gamma^{(j-1)},\nu^{(j-1)},y_{1:T})$
-\item Draw $\nu^{(j)}$ from the full conditional $p(\nu|x^{(j)}_{0:T},\beta^{(j)},\gamma^{(j)},\nu^{(j-1)},y_{1:T})$
+\item Start with initial draws $x^{(0)}_{0:T} = (x^{(0)}_0, x^{(0)}_1, \ldots, x^{(0)}_T)'$ and $\theta^{(0)} = (\beta^{(0)}, \gamma^{(0)}, \nu^{(0)})'$. Set $j = 1$.
+\item \label{step:gibbs} Sample the states, $x^{(j)}_k$, $k = 0,1,\ldots,T$, from their full conditional distributions. For $k = 1, 2, \ldots, T$,
+    \begin{enumerate}[label=\alph*.,leftmargin=1.75\parindent]
+    \item Draw $x^*_k \sim N(x^{(j-1)},\tau^2_{x_k})$.
+    \item Calculate Metropolis ratio, $R$ by
+    \[R = \qquad \left\{
+    \begin{array}{cc}
+    \frac{p(x^{(j-1)}_1|x^*_0,\theta^{(j-1)})p(x^*_0)}{p(x^{(j-1)}_1|x^{(j-1)}_0,\theta^{(j-1)})p(x^{(j-1)}_0)} & \mbox{, if } k = 0 \\
+    \frac{p(y_k|x^*_k)p(x^{(j-1)}_{k+1}|x^*_k,\theta^{(j-1)})p(x^*_k|x^{(j)}_{k-1},\theta^{(j-1)})}{p(y_k|x^{(j-1)}_k)p(x^{(j-1)}_{k+1}|x^{(j-1)}_k,\theta^{(j-1)})p(x^{(j-1)}_k|x^{(j)}_{k-1},\theta^{(j-1)})} & \mbox{, if } 1 \le k \le T-1 \\
+        \frac{p(y_T|x^*_T)p(x^*_T|x^{(j)}_{T-1},\theta^{(j-1)})}{p(y_T|x^{(j-1)}_T)p(x^{(j-1)}_T|x^{(j)}_{T-1},\theta^{(j-1)})}  & \mbox{, if } k = T
+    \end{array}
+    \right\}\].
+    \item Draw $u \sim \mbox{Unif}[0,1]$. If $u < \min\{1, R\}$, set $x^{(j)}_k = x^*_k$. Otherwise, set $x^{(j)}_k = x^{(j-1)}_k$.
+    \end{enumerate}
+\item Sample $\beta^{(j)}$ from its full conditional conditional distribution.
+    \begin{enumerate}[label=\alph*.,leftmargin=1.75\parindent]
+    \item Draw $\beta^* \sim N(\beta^{(j-1)},\tau^2_{\beta})$.
+    \item Calculate Metropolis ratio, $R$ by
+    \[R = \frac{\prod_{t=1}^T \{p(x^{(j)}_t|x^{(j)}_{t-1},\beta^*,\gamma^{(j-1)},\nu^{(j-1)})\}p(\beta^*)}{\prod_{t=1}^T \{p(x^{(j)}_t|x^{(j)}_{t-1},\theta^{(j-1)})\}p(\beta^{(j-1)})}\].
+    \item Draw $u \sim \mbox{Unif}[0,1]$. If $u < \min\{1, R\}$, set $\beta^{(j)} = \beta^*$. Otherwise, set $\beta^{(j)} = \beta^{(j-1)}$.
+    \end{enumerate}
+\item Sample $\gamma^{(j)}$ from its full conditional conditional distribution.
+    \begin{enumerate}[label=\alph*.,leftmargin=1.75\parindent]
+    \item Draw $\gamma^* \sim N(\gamma^{(j-1)},\tau^2_{\gamma})$.
+    \item Calculate Metropolis ratio, $R$ by
+    \[R = \frac{\prod_{t=1}^T \{p(x^{(j)}_t|x^{(j)}_{t-1},\beta^{(j)},\gamma^*,\nu^{(j-1)})\}p(\gamma^*)}{\prod_{t=1}^T \{p(x^{(j)}_t|x^{(j)}_{t-1},\beta^{(j)},\gamma^{(j-1)},\nu^{(j-1)})\}p(\gamma^{(j-1)})}\].
+    \item Draw $u \sim \mbox{Unif}[0,1]$. If $u < \min\{1, R\}$, set $\gamma^{(j)} = \gamma^*$. Otherwise, set $\gamma^{(j)} = \gamma^{(j-1)}$.
+    \end{enumerate}
+\item Sample $\nu^{(j)}$ from its full conditional conditional distribution.
+    \begin{enumerate}[label=\alph*.,leftmargin=1.75\parindent]
+    \item Draw $\nu^* \sim N(\nu^{(j-1)},\tau^2_{\nu})$.
+    \item Calculate Metropolis ratio, $R$ by
+    \[R = \frac{\prod_{t=1}^T \{p(x^{(j)}_t|x^{(j)}_{t-1},\beta^{(j)},\gamma^{(j)},\nu^*)\}p(\nu^*)}{\prod_{t=1}^T \{p(x^{(j)}_t|x^{(j)}_{t-1},\beta^{(j)},\gamma^{(j)},\nu^{(j-1)})\}p(\nu^{(j-1)})}\].
+    \item Draw $u \sim \mbox{Unif}[0,1]$. If $u < \min\{1, R\}$, set $\nu^{(j)} = \nu^*$. Otherwise, set $\nu^{(j)} = \nu^{(j-1)}$.
+    \end{enumerate}
 \item Set $j = j + 1$ and go back to step \ref{step:gibbs}
 \end{enumerate}
 
-\section{Metropolis-Hastings}
-To obtain the draws from the full conditional distributions at each step of the Gibbs sampler, we use a random-walk Metropolis Hastings algorithm. The algorithm proceeds as follows:
-
-\begin{enumerate}
-\item Let $f(x) = f(x|\hdots)$ represent the full conditional distribution of interest expressed up to a proportionality constant (i.e. as in Section \ref{sec:fullcond}) and let $g(x|y)$ represent a symmetric proposal distribution, i.e. $g(x|y) = g(y|x)$.
-\item Given $x^{(i-1)}$, sample $x^*$ from $g(x|x^{(i-1)})$.
-\item Calculate the log of the Metropolis ratio, $R$, according to
-\[\log R = \log f(x^*) - \log f(x^{(i-1)})\]
-\item Sample $u$ from the continuous uniform distribution on $[0,1]$. If $\log u < \log R$, set $x^{(i)} = x^*$. Otherwise, set $x^{(i)} = x^{(i-1)}$.
-\end{enumerate}
-
-\noindent For all steps of the Gibbs sampler described in Section \ref{sec:gibbs}, we use a Gaussian random walk proposal, i.e. $g(x|y) = N(x;y,\tau^2)$, where $\tau$ is known and adjusted during the burn-in period of the MCMC according to the acceptance rate (i.e., if $x^*$ is accepted, $\tau$ is multiplied by 1.1, and if $x^*$ is rejected, $\tau$ is divided by 1.1.
-
-When sampling an individual state vector $x_k$, $k \in \{1,\ldots,T\}$, $i_k$ and $s_k$ are sampled from independent Gaussian random-walk proposals, but the proposed $x^*_k = (s^*_k,i^*_k)'$ is accepted or rejected jointly. For $k = 0$, $i^*_0$ is sampled from a Gaussian random-walk proposal, and $s^*_0$ is set to $1 - i^*_0$.
+\noindent The standard deviation of the random-walk proposal distributions, i.e. $\tau_{x_k}$ for $k = 0,1,\ldots,T$, $\tau_{\beta}$, $\tau_{\gamma}$, and $\tau_{\nu}$, are tuning parameters that are adjusted during the burn-in period of the MCMC. During burn-in, if the proposed value of a state or parameter at any given step of the Gibbs sampler is accepted, the corresponding tuning parameter is adjusted by multiplying by 1.1. If the proposed value is rejected, the tuning parameter is adjusted by dividing by 1.1.
 
 \end{document} 

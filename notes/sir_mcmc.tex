@@ -134,4 +134,12 @@ To obtain draws from the joint posterior distribution $p(x_{0:T},\theta|y_{1:T})
 
 \noindent The standard deviation of the random-walk proposal distributions, i.e. $\tau_{x_k}$ for $k = 0,1,\ldots,T$, $\tau_{\beta}$, $\tau_{\gamma}$, and $\tau_{\nu}$, are tuning parameters that are adjusted during the burn-in period of the MCMC. During burn-in, if the proposed value of a state or parameter at any given step of the Gibbs sampler is accepted, the corresponding tuning parameter is adjusted by multiplying by 1.1. If the proposed value is rejected, the tuning parameter is adjusted by dividing by 1.1.
 
+\section{Slice Sampling}
+
+Instead of using a random-walk Metropolis-Hastings algorithm, we could alternately obtain draws from the full conditional distributions in the Gibbs sampler using slice sampling. The idea behind slice sampling is, given a current sample $x$ and target distribution $f$, to incorporate an auxiliary variable $u$ that is sampled from a uniform distribution along $[0,f(x)]$ and generate a new sample $x^*$ by taking a uniform draw over the set $A = \{x: u < f(x)\}$. We implement the ``stepping-out'' slice sampler using the following algorithm:
+
+%\begin{enumerate}
+%
+%\end{enumerate}
+
 \end{document} 

@@ -73,7 +73,7 @@ p(y_{1:T},x_{0:T},\theta) = \prod_{t = 1}^T \left\{p(y_t|x_t,\theta)p(x_t|x_{t-1
 p(y_t|x_t) &= \prod_{l=1}^L \left(LN(y_{l,t};b_li_t^{\varsigma_l},\sigma_l^2)\right) \\
 p(x_t|x_{t-1},\theta) &= p(s_t,i_t|s_{t-1},i_{t-1},\theta) = p(i_t|s_t,s_{t-1},i_{t-1},\theta)p(s_t|s_{t-1},i_{t-1},\theta) \\
 &= N_{[0,1-s_t]}(i_t;i_{t-1}(1 - \gamma) + s_{t-1} - s_t, \gamma / P^2)N_{[0,1]}(s_t; s_{t-1} - \beta i_{t-1}s^{\nu}_{t-1}, \beta / P^2) \\
-p(x_0,\theta) &= p(x_0)p(\beta)p(\gamma)p(\nu)
+p(x_0,\theta) &= p(x_0)p(\beta, \gamma)p(\nu)
 \end{align*}
 
 \noindent In the above equations, $LN(.;\mu,\sigma^2)$ and $N(.;\mu,\sigma^2)$ represent the probability density functions of the lognormal and normal distributions, respectively, with mean $\mu$ and variance $\sigma^2$.
@@ -85,8 +85,8 @@ We can now express the full conditional distributions of the states $x_t$ for $t
 p(x_0|\hdots) &\propto p(x_1|x_0,\theta)p(x_0) \\
 p(x_t|\hdots) &\propto p(y_t|x_t)p(x_{t+1}|x_t,\theta)p(x_t|x_{t-1},\theta) \mbox{, for } t = 1,\ldots,T-1 \\
 p(x_T|\hdots) &\propto p(y_T|x_T)p(x_T|x_{T-1},\theta) \\
-p(\beta|\hdots) &\propto \prod_{t=1}^T \{p(x_t|x_{t-1},\theta)\}p(\beta) \\
-p(\gamma|\hdots) &\propto \prod_{t=1}^T \{p(x_t|x_{t-1},\theta)\}p(\gamma) \\
+p(\beta|\hdots) &\propto \prod_{t=1}^T \{p(x_t|x_{t-1},\theta)\}p(\beta, \gamma) \\
+p(\gamma|\hdots) &\propto \prod_{t=1}^T \{p(x_t|x_{t-1},\theta)\}p(\beta, \gamma) \\
 p(\nu|\hdots) &\propto \prod_{t=1}^T \{p(x_t|x_{t-1},\theta)\}p(\nu)
 \end{align*}
 
@@ -113,14 +113,14 @@ To obtain draws from the joint posterior distribution $p(x_{0:T},\theta|y_{1:T})
     \begin{enumerate}[label=\alph*.,leftmargin=1.75\parindent]
     \item Draw $\beta^* \sim N(\beta^{(j-1)},\tau^2_{\beta})$.
     \item Calculate Metropolis ratio, $R$ by
-    \[R = \frac{\prod_{t=1}^T \{p(x^{(j)}_t|x^{(j)}_{t-1},\beta^*,\gamma^{(j-1)},\nu^{(j-1)})\}p(\beta^*)}{\prod_{t=1}^T \{p(x^{(j)}_t|x^{(j)}_{t-1},\theta^{(j-1)})\}p(\beta^{(j-1)})}\].
+    \[R = \frac{\prod_{t=1}^T \{p(x^{(j)}_t|x^{(j)}_{t-1},\beta^*,\gamma^{(j-1)},\nu^{(j-1)})\}p(\beta^*,\gamma)}{\prod_{t=1}^T \{p(x^{(j)}_t|x^{(j)}_{t-1},\theta^{(j-1)})\}p(\beta^{(j-1)},\gamma)}\].
     \item Draw $u \sim \mbox{Unif}[0,1]$. If $u < \min\{1, R\}$, set $\beta^{(j)} = \beta^*$. Otherwise, set $\beta^{(j)} = \beta^{(j-1)}$.
     \end{enumerate}
 \item Sample $\gamma^{(j)}$ from its full conditional conditional distribution.
     \begin{enumerate}[label=\alph*.,leftmargin=1.75\parindent]
     \item Draw $\gamma^* \sim N(\gamma^{(j-1)},\tau^2_{\gamma})$.
     \item Calculate Metropolis ratio, $R$ by
-    \[R = \frac{\prod_{t=1}^T \{p(x^{(j)}_t|x^{(j)}_{t-1},\beta^{(j)},\gamma^*,\nu^{(j-1)})\}p(\gamma^*)}{\prod_{t=1}^T \{p(x^{(j)}_t|x^{(j)}_{t-1},\beta^{(j)},\gamma^{(j-1)},\nu^{(j-1)})\}p(\gamma^{(j-1)})}\].
+    \[R = \frac{\prod_{t=1}^T \{p(x^{(j)}_t|x^{(j)}_{t-1},\beta^{(j)},\gamma^*,\nu^{(j-1)})\}p(\beta, \gamma^*)}{\prod_{t=1}^T \{p(x^{(j)}_t|x^{(j)}_{t-1},\beta^{(j)},\gamma^{(j-1)},\nu^{(j-1)})\}p(\beta, \gamma^{(j-1)})}\].
     \item Draw $u \sim \mbox{Unif}[0,1]$. If $u < \min\{1, R\}$, set $\gamma^{(j)} = \gamma^*$. Otherwise, set $\gamma^{(j)} = \gamma^{(j-1)}$.
     \end{enumerate}
 \item Sample $\nu^{(j)}$ from its full conditional conditional distribution.

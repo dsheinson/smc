@@ -54,9 +54,10 @@ We specify the following priors on the initial state $x_0$ and unknown parameter
 
 \begin{align*}
 p(x_0) &= p(i_0,s_0) = N(i_0;0.002,0.005^2)\delta_{1 - i_0}(s_0) \\
-p(\theta) &= p(\beta)p(\gamma)p(\nu) \\
-p(\beta) &= LN(\beta;-1.3296,0.3248^2) \\
+p(\theta) &= p(\beta,\gamma)p(\nu) \\
+p(\beta/\gamma) &= LN(R_0; 0.7520, 0.1768^2) \\
 p(\gamma) &= LN(\gamma;-2.1764,0.1183^2) \\
+p(\beta, \gamma) &\propto \frac{1}{\gamma} \exp\left(-\frac{1}{2} \left[\frac{1}{0.1768}(\log\frac{\beta}{\gamma} - 0.7520)^2 + \frac{1}{0.1183}(\log\frac{\beta}{\gamma} - [-2.1764])^2\right] \right) \\
 p(\nu) &= LN(\nu;0.1055,0.0800^2)
 \end{align*}
 
@@ -166,7 +167,7 @@ Instead of using a random-walk Metropolis-Hastings algorithm, we could alternate
        {\tt if(} $f(x^{(j)}_k) < f(x^{(j-1)}_k)${\tt)} Set $L = x^{(j)}_k$. \\
        Return to step \ref{step:samp} \\
        {\tt \}}
-      \end{enumerate}  
+      \end{enumerate}
 %    \item Draw $x^*_k \sim N(x^{(j-1)},\tau^2_{x_k})$.
 %    \item Calculate Metropolis ratio, $R$ by
 %    \[R = \qquad \left\{

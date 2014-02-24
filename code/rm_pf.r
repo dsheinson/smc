@@ -13,7 +13,7 @@
 #' @references Berzuini, C. and Gilks, W. Following a Moving Target-Monte Carlo Inference for Dynamic Bayesian Models. Journal of the Royal Statistical Society. Series B (Statistical Methodology), Vol. 63, No. 1 (2001), pp. 127-146
 #' @seealso \code{\link{resample}}
 #'
-rm_pf = function(y, dllik, revo, rprior, rmove, n, lag = NULL, progress = TRUE, ...)
+rm_pf = function(y, dllik, revo, rprior, rmove, n, lag = NULL, store.all = FALSE, progress = TRUE, ...)
 {
   require(smcUtils)
 
@@ -24,7 +24,6 @@ rm_pf = function(y, dllik, revo, rprior, rmove, n, lag = NULL, progress = TRUE, 
   if(lag < 1 | lag > nt) stop("lag must be between 1 and nt")
 
   # Find dimension of state
-  if(class(try(.Random.seed,silent=TRUE)) == "try-error") runif(1)
   current.seed = .Random.seed
   tmp = rprior()
   ns = length(tmp$x)
@@ -55,7 +54,6 @@ rm_pf = function(y, dllik, revo, rprior, rmove, n, lag = NULL, progress = TRUE, 
   for (i in 1:nt) 
   {
     if(progress) setTxtProgressBar(pb,i)
-
     # Augmentation and update weights
     state[[i+1]][,,1:i] = state[[i]]
     for(j in 1:n)
@@ -90,5 +88,13 @@ rm_pf = function(y, dllik, revo, rprior, rmove, n, lag = NULL, progress = TRUE, 
     parent[,i+1] = kk
   }
 
+  # Return entire state trajectories or only filtered states?
+  if(!store.all)
+  {
+    new.state = array(NA, dim = c(ns,n,nt+1))
+    for(i in 1:(nt+1)) new.state[,,i] = state[[i]][,,i]
+    state = new.state
+  }
+  
   return(list(state=state, theta=theta, weight=weight, increment=increment, parent=parent))
 }

@@ -16,7 +16,7 @@ y_t &= Fx_t + v_t \label{eqn:obs} \\
 x_t &= Gx_{t-1} + w_t \label{eqn:state}
 \end{align}
 
-\noindent where $v_t$ and $w_t$ are iid Gaussian random variables with mean 0 and covariance matrices $V$ and $W$, respectively. We also assume $v_t \perp w_{t'}$ for all $t$ and $t'$. $y_t$ is the observed data at time $t$, and $x_t$ is the unknown state at time $t$. We regard $F$ and $G$ as known, and consider the special case where $V = \sigma^2\tilde{V}$ and $W = \sigma^2\tilde{W}$, where $\tilde{V}$ and $\tilde{W}$ are known and $\sigma^2$ is an unknown parameter. A fully Bayesian model is specified by defining the prior $p(x_0,\sigma^2)$, which we give as \[\sigma^2 \sim \mbox{IG}(a_0,b_0) \qquad x_0|\sigma^2 \sim \mbox{N}(m_0,\sigma^2\tilde{C}_0)\]
+\noindent where $v_t$ and $w_t$ are iid Gaussian random variables with mean 0 and covariance matrices $V$ ($q$ by $q$) and $W$ ($p$ by $p$) , respectively. We also assume $v_t \perp w_{t'}$ for all $t$ and $t'$. $y_t$ ($q$ by $1$) is the observed data at time $t$, and $x_t$ ($p$ by $1$)  is the unknown state at time $t$. We regard $F$ ($q$ by $p$) and $G$ ($p$ by $p$) as known, and consider the special case where $V = \sigma^2\tilde{V}$ and $W = \sigma^2\tilde{W}$, where $\tilde{V}$ and $\tilde{W}$ are known and $\sigma^2$ is an unknown parameter. A fully Bayesian model is specified by defining the prior $p(x_0,\sigma^2)$, which we give as \[\sigma^2 \sim \mbox{IG}(a_0,b_0) \qquad x_0|\sigma^2 \sim \mbox{N}(m_0,\sigma^2\tilde{C}_0)\]
 \noindent where $\alpha_0$, $\beta_0$, $m_0$, and $\tilde{C}_0$ are known, $\mbox{IG}(a,b)$ represents the inverse-gamma distribution with shape parameter $a$ and rate parameter $b$, and $N(\mu,\sigma^2)$ represents the normal distribution with mean $\mu$ and variance $\sigma^2$. We could also define the model in terms of the precision, $\phi = 1 / \sigma^2$, and specify the prior $p(x_0,\phi)$ by \[\phi \sim \mbox{G}(\alpha_0,\beta_0) \qquad x_0|\phi \sim \mbox{N}(m_0,\phi^{-1}\tilde{C}_0)\]
 \noindent where $G(a,b)$ represents the gamma distribution with shape parameter $a$ and rate parameter $b$.
 
@@ -44,6 +44,29 @@ x_t|y_{1:t} \sim \mbox{T}(m_t,\tilde{C}_t \frac{\beta_t}{\alpha_t},2\alpha_t) \q
 
 In addition, we can calculate the one-step ahead predictive density $p(y_t|y_{1:t-1})$ using equations \eqref{eqn:state.pred} and \eqref{eqn:obs.pred} since \[y_t|y_{1:t-1} \sim \mbox{T}(f_t,\tilde{Q}_t \frac{\beta_{t-1}}{\alpha_{t-1}},2\alpha_{t-1})\]
 \noindent where $\mbox{T}(\mu,\Sigma,d)$ represents the non-standard student-t distribution with location parameter $\mu$, scale parameter $\Sigma$, and $d$ degrees of freedom.
+
+\section{Modified DLM}
+
+We allow additional covariates $U_t$ into the observation equation \eqref{eqn:obs} by including a term $U_t\beta$, where $U_t$ is a known $q$ by $d$ matrix and $\beta$ is an unknown $d$ by $1$ vector. In addition, we can allow $F$ to change over time. Thus, our DLM is now written as the following:
+
+\begin{align}
+y_t &= U_t\beta + F_tx_t + v_t \label{eqn:obs2} \\
+x_t &= Gx_{t-1} + w_t \label{eqn:state2}
+\end{align}
+
+\noindent Letting $\beta = 0$, $U_t = 0$ for all $t$, and $F_t = F$ independent of $t$, we have the DLM described by equations \eqref{eqn:obs} and \eqref{eqn:state}.
+
+%We can express the likelihood of the data observed up until time $t$, $y_{1:t}$, given the states $x_{0:t}$ and any unknown parameters $\theta$ by the following general form:
+%
+%\begin{equation}
+%p(y_{1:t}|x_{0:t},\theta) = \prod_{k=1}^t p(y_k|x_k,\theta)p(x_k|x_{k-1},\theta)p(x_0,\theta) \label{eqn:lik}
+%\end{equation}
+%
+%For the specific form of a DLM given by equations \eqref{eqn:obs2} and \eqref{eqn:state2}, we can express the likelihood by
+%
+%\begin{equation}
+%p(y_{1:t}|x_{0:t},\theta) \propto \prod_{k=1}^t p(y_k|x_k,\theta)p(x_k|x_{k-1},\theta)p(x_0,\theta) \label{eqn:lik2}
+%\end{equation}
 
 \section{Resample-move algorithm} \label{sec:rm}
 
@@ -95,38 +118,62 @@ Consider three models of the form described in \eqref{eqn:obs} and \eqref{eqn:st
 A single time series of data, $y_{1:T}$ with $T = 100$, was simulated from $M_2$ with common observation and state equation variance $\sigma^2$ set equal to 1. From this simulated data, we can calculate directly the marginal likelihood of observing this data under $M_2$ ($\log p(y_{1:200}) = -191.3302$). We can also calculate the marginal posterior distributions $p(x_t|y_{1:t})$ and one-step ahead predictive distributions $p(y_t|y_{1:t-1})$ for $t = 1,2,\ldots,200$. This allows us to compute 95\% credible intervals for the unknown states and parameter and 95\% one-step ahead prediction intervals for each data point, displayed in Figures \ref{fig:sim-states} and \ref{fig:sim-precision}.
 
 \begin{figure}
-\includegraphics[width=1.0\textwidth]{../graphs/10-23-13/mc_1sim_test-states}
+\includegraphics[width=1.0\textwidth]{../graphs/11-6-13/W-0.5-1-2/mc_1sim_test-states}
 \caption{95\% credible intervals (left, red lines) of $x_t|y_{1:t}$ and 95\% prediction intervals (right, blue lines) for $y_t|y_{1:t-1}$ calculated explicitly using the Student's-t distribution for $t = 1,2,\ldots,200$. Black lines indicated the true simulated states (left) and observations (right).} \label{fig:sim-states}
 \end{figure}
 
 \begin{figure}
-\includegraphics[width=1.0\textwidth]{../graphs/10-23-13/mc_1sim_test-precision}
+\includegraphics[width=1.0\textwidth]{../graphs/11-6-13/W-0.5-1-2/mc_1sim_test-precision}
 \caption{95\% credible intervals (red lines) for $\phi|y_{1:t}$ for $t = 1, 2, \ldots, 200$. Black horizontal line indicates the true value used for simulation ($\phi = 1$).} \label{fig:sim-precision}
 \end{figure}
 
-To assess the variability of the approximation to the log marginal likelihood of the simulated data obtained using the resample-move particle filter, we ran the particle filter 20 times each using 100, 500, 1000, 5000 particles. Figure \ref{fig:pf-hist} displays histograms of the log marginal likelihoods calculated from these particle filter runs.
+To assess the variability of the approximation to the log marginal likelihood of the simulated data obtained using the resample-move particle filter, we ran the particle filter 20 times each using 100, 500, 1000, 5000 particles. Figure \ref{fig:pf-hist} displays kernel density estimates of the distribution of log marginal likelihoods calculated from these particle filter runs, and Figure \ref{fig:pf-1sim-ternary} displays compositional plots of posterior model probabilities for each particle filter run compared with the true posterior model probabilities.
 
 \begin{figure}
-\includegraphics[width=1.0\textwidth]{../graphs/10-23-13/mc_1sim_hist}
-\caption{Histograms of log marginal likelihoods of a single time series simulated from $M_2$, approximated assuming $M_2$ true using the resample-move particle filter, for each of 20 particle filter runs using 100 (white), 500 (dark gray), 1000 (light gray), and 5000 (black) particles.} \label{fig:pf-hist}
+\includegraphics[width=1.0\textwidth]{../graphs/11-6-13/W-0.5-1-2/mc_1sim_test-histograms}
+\caption{Kernel density estimates of log marginal likelihoods of a single time series simulated from $M_2$, approximated assuming $M_2$ true using the resample-move particle filter, for each of 20 particle filter runs using 100 (white), 500 (dark gray), 1000 (light gray), and 5000 (black) particles.} \label{fig:pf-hist}
 \end{figure}
 
-Next, we simulated 20 more data sets from $M_2$ with $\sigma^2 = 1$. For each data set, the log marginal likelihoods and posterior model probabilities under models $M_1$, $M_2$, and $M_3$ were calculated analytically. In addition, particle filter runs with 1000, 5000, and 10000 particles under each of the three models for each simulated data set. Thus, for each time series of data, we can compare which model has the highest true posterior probability with the one that has highest posterior probability as approximated by the resample-move particle filter. Tables \ref{tab:cont-1000}, \ref{tab:cont-5000}, and \ref{tab:cont-10000} display this results for increasing number of particles used in the resample-move algorithm.
+\begin{figure}
+\includegraphics[width=1.0\textwidth]{../graphs/11-6-13/W-0.5-1-2/mc_1sim_test-ternary}
+\caption{Ternary compositional plots of posterior model probabilities of $M_1$ ($\tilde{W} = 0.5$), $M_2$ ($\tilde{W} = 1$), and $M_3$ ($\tilde{W} = 2$) approximated using the resample-move particle filter repeatedly on the same data set (black circles), compared with the true posterior model probabilities for that data set (red circle), for increasing number of particles (different plot panels). The probability of a model generating a time series of observations is visualized by each point's proximity to that model's corner of the triangle.} \label{fig:pf-1sim-ternary}
+\end{figure}
+
+Next, we simulated 20 more data sets from $M_2$ with $\sigma^2 = 1$. For each data set, the log marginal likelihoods and posterior model probabilities under models $M_1$, $M_2$, and $M_3$ were calculated analytically. In addition, particle filter runs with 1000, 5000, and 10000 particles under each of the three models for each simulated data set. Thus, for each time series of data, we can compare which model has the highest true posterior probability with the one that has highest posterior probability as approximated by the resample-move particle filter. Tables \ref{tab:cont-500}, \ref{tab:cont-1000}, and \ref{tab:cont-5000} display this results for increasing number of particles used in the resample-move algorithm.
 
 \begin{table}[h]
 \centering
-\caption{Contingency table of models with highest posterior model probability among three models calculated analytically and approximated using the resample-move particle filter with 1000 particles.} \label{tab:cont-1000}
+\caption{Contingency table of models with highest posterior model probability among three models calculated analytically and approximated using the resample-move particle filter with 500 particles.} \label{tab:cont-500}
 \begin{tabular}{|c|c|c|c|}
   \hline
  & \multicolumn{3}{|c|}{PF approximation} \\
  \hline
  True Posterior & $M_1$& $M_2$ & $M_3$ \\
   \hline
-$M_1$ &   0 &   3 &   0 \\
+$M_1$ &   3 &   2 &   0 \\
 \hline
-$M_2$ &   1 &   7 &   0 \\
+$M_2$ &   3 &   8 &   2 \\
 \hline
-$M_3$ &   0 &   8 &   1 \\
+$M_3$ &   0 &   1 &   1 \\
+   \hline
+\end{tabular}
+\end{table}
+
+\begin{table}[h]
+\centering
+\caption{Contingency table of models with highest posterior model probability among three models calculated analytically and approximated using the resample-move particle filter with 1000 particles.}
+\label{tab:cont-1000}
+\begin{tabular}{|c|c|c|c|}
+  \hline
+ & \multicolumn{3}{|c|}{PF approximation} \\
+ \hline
+ True Posterior & $M_1$& $M_2$ & $M_3$ \\
+  \hline
+$M_1$ &   4 &   1 &   0 \\
+\hline
+  $M_2$ &   5 &   8 &   0 \\
+  \hline
+  $M_3$ &   0 &   0 &   2 \\
    \hline
 \end{tabular}
 \end{table}
@@ -141,30 +188,11 @@ $M_3$ &   0 &   8 &   1 \\
  \hline
  True Posterior & $M_1$& $M_2$ & $M_3$ \\
   \hline
-$M_1$ &   0 &   3 &   0 \\
-\hline
-  $M_2$ &   1 &   7 &   0 \\
+$M_1$ &   4 &   1 &   0 \\
   \hline
-  $M_3$ &   0 &   8 &   1 \\
-   \hline
-\end{tabular}
-\end{table}
-
-\begin{table}[h]
-\centering
-\caption{Contingency table of models with highest posterior model probability among three models calculated analytically and approximated using the resample-move particle filter with 10000 particles.}
-\label{tab:cont-10000}
-\begin{tabular}{|c|c|c|c|}
+  $M_2$ &   2 &   10 &   1 \\
   \hline
- & \multicolumn{3}{|c|}{PF approximation} \\
- \hline
- True Posterior & $M_1$& $M_2$ & $M_3$ \\
-  \hline
-$M_1$ &   0 &   3 &   0 \\
-  \hline
-  $M_2$ &   2 &   6 &   0 \\
-  \hline
-  $M_3$ &   0 &   9 &   0 \\
+  $M_3$ &   0 &   0 &   2 \\
    \hline
 \end{tabular}
 \end{table}
@@ -172,12 +200,12 @@ $M_1$ &   0 &   3 &   0 \\
 We can also evaluate the particle filter approximation of posterior model probabilities by representing the set of probabilities of each model for a particular simulated time series as a point on a triangle where each corner represents one of the three models. Figure \ref{fig:ternary} displays this for the true posterior model probabilities as well as for particle filter approximations with increasing number of particles. Figure \ref{fig:binary} compares the particle filter approximation of posterior model probabilities with the truth when considering only pairwise comparisons of models $M_1$ and $M_3$ with the true model, $M_2$.
 
 \begin{figure}
-\includegraphics[width=1.0\textwidth]{../graphs/10-24-13/mc_pf_test-ternary}
+\includegraphics[width=1.0\textwidth]{../graphs/11-6-13/W-0.5-1-2/mc_pf_test-ternary}
 \caption{Ternary compositional plots of posterior model probabilities of $M_1$ ($\tilde{W} = 0.5$), $M_2$ ($\tilde{W} = 1$), and $M_3$ ($\tilde{W} = 2$) calculated analytically (top left) and approximated using the resample-move particle filter with increasing number of particles. Each point represents one simulated time series and the probability of a model generating a time series of observations is visualized by that point's proximity to that model's corner of the triangle. Points plotted in the same shade of gray correspond to the same simulation (to compare between plot panels).} \label{fig:ternary}
 \end{figure}
 
 \begin{figure}
-\includegraphics[width=1.0\textwidth]{../graphs/10-24-13/mc_pf_test-binary}
+\includegraphics[width=1.0\textwidth]{../graphs/11-6-13/W-0.5-1-2/mc_pf_test-binary}
 \caption{Posterior model probabilities calculated analytically (left side of plot panels) and approximated using the resample-move particle filter (right side of plot panels) with increasing number of particles (columns) when comparing $M_2$ against $M_1$ (top row) and $M_2$ against $M_3$ (bottom row). Calculations and particle filter runs were performed on 20 data sets simulated from $M_2$ with $\sigma^2 = 1$.} \label{fig:binary}
 \end{figure}
 

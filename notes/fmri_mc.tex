@@ -16,7 +16,7 @@ y_t &= Fx_t + v_t \label{eqn:obs} \\
 x_t &= Gx_{t-1} + w_t \label{eqn:state}
 \end{align}
 
-\noindent where $v_t$ and $w_t$ are iid Gaussian random variables with mean 0 and covariance matrices $V$ ($q \times q$) and $W$ ($p \times p$), respectively. We also assume $v_t \perp w_{t'}$ for all $t$ and $t'$. $y_t$ ($q \times 1$) is the observed data at time $t$, and $x_t$ ($p \times 1$) is the unknown state at time $t$.
+\noindent where $v_t$ and $w_t$ are iid Gaussian random variables with mean 0 and covariance matrices $V$ ($q \times q$) and $W$ ($p \times p$), respectively. We also assume $v_t \perp w_{t'}$ for all $t$ and $t'$. $y_t$ ($q \times 1$) is the observed data at time $t$, $x_t$ ($p \times 1$) is the unknown state at time $t$, and $F$ ($q \times p$) and $G$ ($p \times p$) are matrices that could contain unknown parameters. Lastly, we define the distribution of the prior state $x_0$ by $x_0 \sim \mbox{N}(m_0, C_0)$, where $\mbox{N}(\mu, \Sigma)$ represents the normal distribution with mean $\mu$ and covariance $\Sigma$.
 
 We can allow additional covariates $U_t$ into the observation equation \eqref{eqn:obs} by including a term $U_t \beta$, where $U_t$ is a $q$ by $d$ matrix and $\beta$ is a $d$ by $1$ vector. In addition, we can allow $F$ to change over time. Thus, our DLM is now written as the following:
 
@@ -29,7 +29,7 @@ x_t &= Gx_{t-1} + w_t \label{eqn:state2}
 
 \subsection{Regression with AR(p) errors}
 
-We will now consider a regression model with autoregressive error structure and separate observation and state noises. This specific model is a special case of the the DLM described in equations \eqref{eqn:obs2} and \eqref{eqn:state2}, where $G$ has the form given by
+We will now consider a regression model with autoregressive error structure and separate observation and state noises. This specific model is a special case of the the DLM described in equations \eqref{eqn:obs2} and \eqref{eqn:state2}. In this case, $G$ has the form given by
 
 \[G = \left(
 \begin{array}{ccccc}
@@ -41,19 +41,61 @@ We will now consider a regression model with autoregressive error structure and 
 \end{array}
 \right)\]
 
-\noindent and $W = \sigma^2_see'$, where $e$ is $p$-length vector with first element equal to 1 and the rest 0.
+\noindent In addition, we let $W = \sigma^2_see'$ and $V = \sigma^2_m\tilde{V}$, where $e$ is a $p$-length vector with first element equal to 1 and the rest 0, $\sigma^2_s$ is the state or process noise, and $\sigma^2_m$ is measurement noise. We assume that the prior state $x_0$ is drawn from the stationary distribution given by $x_0 \sim \mbox{N}(0, \sigma^2_s\tilde{C_0})$, where \[\mbox{vec}({\tilde{C_0}}) = (I - G \otimes G)^{-1}\mbox{vec}(ee')\]
 
-%We can express the likelihood of the data observed up until time $t$, $y_{1:t}$, given the states $x_{0:t}$ and any unknown parameters $\theta$ by the following general form:
-%
-%\begin{equation}
-%p(y_{1:t}|x_{0:t},\theta) = \prod_{k=1}^t p(y_k|x_k,\theta)p(x_k|x_{k-1},\theta)p(x_0,\theta) \label{eqn:lik}
-%\end{equation}
-%
-%For the specific form of a DLM given by equations \eqref{eqn:obs2} and \eqref{eqn:state2}, we can express the likelihood by
-%
-%\begin{equation}
-%p(y_{1:t}|x_{0:t},\theta) \propto \prod_{k=1}^t p(y_k|x_k,\theta)p(x_k|x_{k-1},\theta)p(x_0,\theta) \label{eqn:lik2}
-%\end{equation}
+\section{Estimation}
+
+Assume $\tilde{V}$, $U_t$, and $F_t$ known for all $t$. Let $\phi = (\phi_1,\ldots,\phi_p)'$, and let $\theta = (\beta', \phi', \sigma^2_m, \sigma^2_s)'$ be unknown. We now consider estimation of the joint posterior distribution of the states and unknown parameters using MCMC. Define $y_{1:t} = (y_1,\ldots,y_t)'$ to be the data observed up until time $t$. We can express the joint likelihood $p(y_{1:t},x_{0:t},\theta)$ by the following general form:
+
+\begin{equation}
+p(y_{1:t},x_{0:t},\theta) = \prod_{k=1}^t\left[p(y_k|x_k,\theta)p(x_k|x_{k-1},\theta)\right]p(x_0,\theta) \label{eqn:lik}
+\end{equation}
+
+\noindent We use independent priors on the components of $\theta$, i.e. $p(\theta) = p(\beta)p(\phi)p(\sigma^2_m)p(\sigma^2_s)$, where
+
+\begin{align*}
+&\beta \sim \mbox{N}(b_0, B_0) \qquad \sigma^2_m \sim \mbox{IG}(a_{m_0}, b_{m_0})\\
+&\phi \sim \mbox{N}_{S_\phi}(\phi_0, \Phi_0) \qquad \sigma^2_s \sim \mbox{IG}(a_{s_0}, b_{s_0})
+\end{align*}
+
+\noindent The hyperparameters $b_0$, $B_0$, $\phi_0$, $\Phi_0$, $a_{m_0}$, $b_{m_0}$, $a_{s_0}$, and $b_{s_0}$ are all assumed known. $\mbox{IG}(a,b)$ represents an inverse-gamma distribution with shape parameter $a$ and rate parameter $b$. $\mbox{N}_{\Omega}(\mu, \Sigma)$ represents the normal distribution truncated onto the set $\Omega$, with mean and covariance of its corresponding untruncated normal distribution given by $\mu$ and $\Sigma$, respectively. $S_{\phi}$ represents the set of all $\phi$ such that $x_t$ comes from a stationary distribution for all $t$.
+
+\subsection{Full conditional distributions}
+
+We derive the following full conditional distributions for the unknown parameters:
+
+\begin{itemize}
+\item $\beta|y_{1:t},x_{0:t},\phi,\sigma^2_m,\sigma^2_s \sim \mbox{N}(b_n,B_n)$, where
+\begin{align*}
+b_n &= B_n\left(\frac{1}{\sigma^2_m} \sum^t_{i=1} U_i'\tilde{V}^{-1}(y_i - F_ix_i) + B_0^{-1}b_0\right) \\
+B_n &= \left(\frac{1}{\sigma^2_m} \sum^t_{i=1} U_i'\tilde{V}^{-1}U_i + B_0^{-1}\right)^{-1}
+\end{align*}
+\item $\sigma^2_m|y_{1:t},x_{0:t},\beta,\phi,\sigma^2_s \sim \mbox{IG}(a_{m_n}, b_{m_n})$, where
+\begin{align*}
+a_{m_n} &= tq/2 + a_{m_0} \\
+b_{m_n} &= \frac{1}{2}\sum^t_{i=1} \left((y_i - U_i\beta - F_ix_i)'\tilde{V}^{-1}(y_i - U_i\beta - F_ix_i)\right) + b_{m_0}
+\end{align*}
+\item $p(\phi|y_{1:t},x_{0:t},\beta,\sigma^2_m,\sigma^2_s) = \Psi(\phi)\mbox{N}_{S_\phi}(\phi; \phi_n,\Phi_n)$, where
+\begin{align*}
+\phi_n &= \Phi_n\left(\frac{1}{\sigma^2_s} \sum^t_{i=1} \tilde{X}_i'\tilde{W}^{-1}x_i + \Phi_0^{-1}\phi_0\right) \\
+\Phi_n &= \left(\frac{1}{\sigma^2_s} \sum^t_{i=1} \tilde{X}_i'\tilde{V}^{-1}\tilde{X}_i + \Phi_0^{-1}\right)^{-1} \\
+\tilde{X}_i &= \left(\begin{array}{ccccc}
+x_{i-1,1} & x_{i-2,1} & \cdots & \cdots & x_{i-p,1} \\
+0 & x_{i-1,1} & \cdots & \cdots & x_{i-(p-1),1} \\
+\vdots & 0 & \ddots & & \vdots \\
+\vdots & \vdots & \ddots & \ddots & \vdots \\
+0 & 0 & \cdots & 0 & x_{t-1,1}
+\end{array}
+\right) \\
+\Psi(\phi) &= \left|\tilde{C_0}\right|^{-1/2}\exp\left(-\frac{1}{2\sigma^2_s}x_0'\tilde{C_0}x_0\right)
+\end{align*}
+\noindent and $\mbox{N}_{\Omega}(.;\mu,\Sigma)$ represents the pdf of the normal distribution truncated onto the set $\Omega$, with mean and covariance of its corresponding untruncated normal distribution given by $\mu$ and $\Sigma$, respectively.
+\item $\sigma^2_s|y_{1:t},x_{0:t},\beta,\phi,\sigma^2_m \sim \mbox{IG}(a_{s_n}, b_{s_n})$, where
+\begin{align*}
+a_{s_n} &= (p/2)(t+1) + a_{s_0} \\
+b_{s_n} &= \frac{1}{2}\sum^t_{i=1} \left((x_i - Gx_{i-1})'\tilde{W}^{-1}(x_i - Gx_{i-1})\right) + \frac{1}{2}x_0'\tilde{C_0}x_0 + b_{s_0}
+\end{align*}
+\end{itemize}
 
 \clearpage
 

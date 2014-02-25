@@ -1,0 +1,63 @@
+\documentclass{article}
+
+\usepackage{amsmath}
+\usepackage{natbib}
+\usepackage{enumitem}
+\usepackage{graphicx}
+
+\begin{document}
+
+\section{Model} \label{sec:model}
+
+We can represent a DLM as a state space model with observation and state equations given by
+
+\begin{align}
+y_t &= Fx_t + v_t \label{eqn:obs} \\
+x_t &= Gx_{t-1} + w_t \label{eqn:state}
+\end{align}
+
+\noindent where $v_t$ and $w_t$ are iid Gaussian random variables with mean 0 and covariance matrices $V$ ($q \times q$) and $W$ ($p \times p$), respectively. We also assume $v_t \perp w_{t'}$ for all $t$ and $t'$. $y_t$ ($q \times 1$) is the observed data at time $t$, and $x_t$ ($p \times 1$) is the unknown state at time $t$.
+
+We can allow additional covariates $U_t$ into the observation equation \eqref{eqn:obs} by including a term $U_t \beta$, where $U_t$ is a $q$ by $d$ matrix and $\beta$ is a $d$ by $1$ vector. In addition, we can allow $F$ to change over time. Thus, our DLM is now written as the following:
+
+\begin{align}
+y_t &= U_t\beta + F_tx_t + v_t \label{eqn:obs2} \\
+x_t &= Gx_{t-1} + w_t \label{eqn:state2}
+\end{align}
+
+\noindent Letting $\beta = 0$, $U_t = 0$ for all $t$, and $F_t = F$ independent of $t$, we have the DLM described by equations \eqref{eqn:obs} and \eqref{eqn:state}.
+
+\subsection{Regression with AR(p) errors}
+
+We will now consider a regression model with autoregressive error structure and separate observation and state noises. This specific model is a special case of the the DLM described in equations \eqref{eqn:obs2} and \eqref{eqn:state2}, where $G$ has the form given by
+
+\[G = \left(
+\begin{array}{ccccc}
+\phi_1 & 1 & 0 & \cdots & 0 \\
+\phi_2 & 0 & 1 & \cdots & 0 \\
+\vdots & \vdots & & \ddots & \vdots \\
+\phi_{p-1} & 0 & \multicolumn{2}{c}{\cdots} & 1 \\
+\phi_p & 0 & \multicolumn{2}{c}{\cdots} & 0
+\end{array}
+\right)\]
+
+\noindent and $W = \sigma^2_see'$, where $e$ is $p$-length vector with first element equal to 1 and the rest 0.
+
+%We can express the likelihood of the data observed up until time $t$, $y_{1:t}$, given the states $x_{0:t}$ and any unknown parameters $\theta$ by the following general form:
+%
+%\begin{equation}
+%p(y_{1:t}|x_{0:t},\theta) = \prod_{k=1}^t p(y_k|x_k,\theta)p(x_k|x_{k-1},\theta)p(x_0,\theta) \label{eqn:lik}
+%\end{equation}
+%
+%For the specific form of a DLM given by equations \eqref{eqn:obs2} and \eqref{eqn:state2}, we can express the likelihood by
+%
+%\begin{equation}
+%p(y_{1:t}|x_{0:t},\theta) \propto \prod_{k=1}^t p(y_k|x_k,\theta)p(x_k|x_{k-1},\theta)p(x_0,\theta) \label{eqn:lik2}
+%\end{equation}
+
+\clearpage
+
+\bibliographystyle{plainnat}
+\bibliography{jarad}
+
+\end{document} 

@@ -100,7 +100,7 @@ require(plyr)
 m_ply(data.frame(n.sim=1:nsims), cv_pf_quantiles)
 
 ## Plot kernel density estimates of log-likelihood under each model
-n.sim = 1
+n.sim = 3
 alpha = 0.05
 W = unique(mydata$W)
 F = mysims[[n.sim]]$true.params$F[1,1,1]
@@ -164,7 +164,7 @@ rm.postModProbs = aaply(rm.lmarglik, 1:2, function(x) postModProbs(x, rep(1/leng
 
 # How often does the pf pick the "right" model?
 rm.max = apply(rm.postModProbs, 1:2, function(x) which(x == max(x)))
-prob.matchTruth = apply(rm.max, 2, function(x) sum(x == which(true.postModProbs == max(true.postModProbs)))/length(nsim))
+prob.matchTruth = apply(rm.max, 2, function(x) sum(x == which(true.postModProbs == max(true.postModProbs)))/length(nsims))
 
 # Ternary diagrams of posterior model probabilities
 require(compositions)

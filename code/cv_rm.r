@@ -13,13 +13,13 @@ load(paste(dpath,"rw_sim.rdata",sep=""))
 # Function to run pfs
 pf_lmarglik <- function(n.sim, np, W, label, alpha = 0.05, progress = FALSE)
 {
+  rnorm(1)
   a0 = b0 = 1
   mydlm = list(F = 1, G = 1, V = 1, W = W, m0 = 0, C0 = 1)
   dllik1 = function(y, x, theta) dllik(y, x, sigma2 = theta)
   revo1 = function(x, theta) revo(x, sigma2 = theta)
   rprior1 <- function() rprior(a0,b0)
   rmove <- function(y, x, theta) rm_mcmc(y, x, theta, a0, b0, mydlm, 1)
-  rnorm(1)
   out = rm_pf(mysims[[n.sim]]$y, dllik1, revo1, rprior1, rmove, np, progress=progress, method="stratified", nonuniformity="ess", threshold=0.8, log=FALSE)
   
   # Calculate log-marginal likelihood
@@ -30,7 +30,7 @@ pf_lmarglik <- function(n.sim, np, W, label, alpha = 0.05, progress = FALSE)
   theta.quant = pf.quantile(1/out$theta, out$weight, function(x, param=1) x, c(alpha/2,1-alpha/2))
   
   pf.out = list(lmarglik=lmarglik, state.quant=state.quant, theta.quant=theta.quant)
-  cat(n.sim,np,W,seed,'\n')
+  cat(n.sim,np,W,label,'\n')
   save(pf.out, file=paste(dpath,"cv_pf-",n.sim,"-",np,"-",W,"-",label,"-",alpha,".rdata",sep=""))
 }
 

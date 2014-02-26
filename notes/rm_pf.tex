@@ -107,12 +107,12 @@ A single time series of data, $y_{1:T}$ with $T = 100$, was simulated from $M_2$
 To assess the variability of the approximation to the log marginal likelihood of the simulated data obtained using the resample-move particle filter, we ran the particle filter 20 times each using 100, 500, 1000, 5000 particles. Figure \ref{fig:pf-hist} displays kernel density estimates of the distribution of log marginal likelihoods calculated from these particle filter runs, and Figure \ref{fig:pf-1sim-ternary} displays compositional plots of posterior model probabilities for each particle filter run compared with the true posterior model probabilities.
 
 \begin{figure}
-\includegraphics[width=1.0\textwidth]{../graphs/cv_pf_loglik}
+\includegraphics[width=1.0\textwidth]{../graphs/cv_pf_loglik-1}
 \caption{Kernel density estimates of log marginal likelihoods of a single time series simulated from $M_2$, approximated assuming $M_2$ true using the resample-move particle filter, for each of 20 particle filter runs using 100 (red), 500 (green), 1000 (turquoise), and 5000 (blue) particles.} \label{fig:pf-hist}
 \end{figure}
 
 \begin{figure}
-\includegraphics[width=1.0\textwidth]{../graphs/cv_pf_ternary}
+\includegraphics[width=1.0\textwidth]{../graphs/cv_pf_ternary-1}
 \caption{Ternary compositional plots of posterior model probabilities of $M_1$ ($\tilde{W} = 0.5$), $M_2$ ($\tilde{W} = 1$), and $M_3$ ($\tilde{W} = 2$) approximated using the resample-move particle filter repeatedly on the same data set (black circles), compared with the true posterior model probabilities for that data set (red circle), for increasing number of particles (different plot panels). The probability of a model generating a time series of observations is visualized by each point's proximity to that model's corner of the triangle.} \label{fig:pf-1sim-ternary}
 \end{figure}
 

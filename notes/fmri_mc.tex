@@ -41,14 +41,14 @@ We will now consider a regression model with autoregressive error structure and 
 \end{array}
 \right)\]
 
-\noindent In addition, we let $W = \sigma^2_see'$ and $V = \sigma^2_m\tilde{V}$, where $e$ is a $p$-length vector with first element equal to 1 and the rest 0, $\sigma^2_s$ is the state or process noise, and $\sigma^2_m$ is measurement noise. We assume that the prior state $x_0$ is drawn from the stationary distribution given by $x_0 \sim \mbox{N}(0, \sigma^2_s\tilde{C_0})$, where \[\mbox{vec}({\tilde{C_0}}) = (I - G \otimes G)^{-1}\mbox{vec}(ee')\]
+\noindent In addition, we let $W = \sigma^2_see'$ and $V = \sigma^2_m\tilde{V}$, where $e$ is a $p$-length vector with first element equal to 1 and the rest 0, $\sigma^2_s$ is the variance of the state (i.e. process) noise, and $\sigma^2_m$ is the variance of the observation (i.e. measurement) noise. We assume that the prior state $x_0$ is drawn from the stationary distribution given by $x_0 \sim \mbox{N}(0, \sigma^2_s\tilde{C_0})$, where \[\mbox{vec}({\tilde{C_0}}) = (I - G \otimes G)^{-1}\mbox{vec}(ee')\]
 
 \section{Estimation}
 
-Assume $\tilde{V}$, $U_t$, and $F_t$ known for all $t$. Let $\phi = (\phi_1,\ldots,\phi_p)'$, and let $\theta = (\beta', \phi', \sigma^2_m, \sigma^2_s)'$ be unknown. We now consider estimation of the joint posterior distribution of the states and unknown parameters using MCMC. Define $y_{1:t} = (y_1,\ldots,y_t)'$ to be the data observed up until time $t$. We can express the joint likelihood $p(y_{1:t},x_{0:t},\theta)$ by the following general form:
+Assume $\tilde{V}$, $U_t$, and $F_t$ known for all $t$. Let $\phi = (\phi_1,\ldots,\phi_p)'$, and let $\theta = (\beta', \phi', \sigma^2_m, \sigma^2_s)'$ be unknown. We now consider estimation of the joint posterior distribution of the states and unknown parameters using a Gibbs sampling algorithm. Define $y_{1:t} = (y_1,\ldots,y_t)'$ and $x_{0:t} = (x_0,x_1,\ldots,x_t)'$ to be the observed data and unobserved states, respectively, up until time $t$. We can express the joint likelihood $p(y_{1:t},x_{0:t},\theta)$ by the following general form:
 
 \begin{equation}
-p(y_{1:t},x_{0:t},\theta) = \prod_{k=1}^t\left[p(y_k|x_k,\theta)p(x_k|x_{k-1},\theta)\right]p(x_0,\theta) \label{eqn:lik}
+p(y_{1:t},x_{0:t},\theta) = \prod_{k=1}^t\left[p(y_k|x_k,\theta)p(x_k|x_{k-1},\theta)\right]p(x_0|\theta)p(\theta) \label{eqn:lik}
 \end{equation}
 
 \noindent We use independent priors on the components of $\theta$, i.e. $p(\theta) = p(\beta)p(\phi)p(\sigma^2_m)p(\sigma^2_s)$, where
@@ -58,9 +58,19 @@ p(y_{1:t},x_{0:t},\theta) = \prod_{k=1}^t\left[p(y_k|x_k,\theta)p(x_k|x_{k-1},\t
 &\phi \sim \mbox{N}_{S_\phi}(\phi_0, \Phi_0) \qquad \sigma^2_s \sim \mbox{IG}(a_{s_0}, b_{s_0})
 \end{align*}
 
-\noindent The hyperparameters $b_0$, $B_0$, $\phi_0$, $\Phi_0$, $a_{m_0}$, $b_{m_0}$, $a_{s_0}$, and $b_{s_0}$ are all assumed known. $\mbox{IG}(a,b)$ represents an inverse-gamma distribution with shape parameter $a$ and rate parameter $b$. $\mbox{N}_{\Omega}(\mu, \Sigma)$ represents the normal distribution truncated onto the set $\Omega$, with mean and covariance of its corresponding untruncated normal distribution given by $\mu$ and $\Sigma$, respectively. $S_{\phi}$ represents the set of all $\phi$ such that $x_t$ comes from a stationary distribution for all $t$.
+\noindent The hyperparameters $b_0$, $B_0$, $\phi_0$, $\Phi_0$, $a_{m_0}$, $b_{m_0}$, $a_{s_0}$, and $b_{s_0}$ are all assumed known. $\mbox{IG}(a,b)$ represents an inverse-gamma distribution with shape parameter $a$ and rate parameter $b$. $\mbox{N}_{\Omega}(\mu, \Sigma)$ represents the normal distribution truncated onto the set $\Omega$, with mean and covariance of its corresponding untruncated normal distribution given by $\mu$ and $\Sigma$, respectively. $S_{\phi}$ represents the set of all $\phi$ such that $x_t$ follows a stationary distribution.
 
-\subsection{Full conditional distributions}
+To implement a Gibbs sampling algorithm that generates MCMC samples from the joint posterior distribution $p(x_{0:t},\theta|y_{1:t})$, we must draw from the following full conditional distributions given here in general and described in more detail in Section  \ref{sec:fullcond}:
+
+\begin{align*}
+p(\beta|y_{1:t},x_{0:t},\phi,\sigma^2_m,\sigma^2_s) &\propto p(y_{1:t},x_{0:t},\theta) \propto \prod_{k=1}^t\left[p(y_k|x_k,\beta,\sigma^2_m)\right]p(\beta) \\
+p(\sigma^2_m|y_{1:t},x_{0:t},\beta,\phi,\sigma^2_s) &\propto p(y_{1:t},x_{0:t},\theta) \propto \prod_{k=1}^t\left[p(y_k|x_k,\beta,\sigma^2_m)\right]p(\sigma^2_m) \\
+p(\phi|y_{1:t},x_{0:t},\beta,\sigma^2_m,\sigma^2_s) &\propto p(y_{1:t},x_{0:t},\theta) \propto \prod_{k=1}^t\left[p(x_k|x_{k-1},\phi,\sigma^2_s)\right]p(x_0|\phi,\sigma^2_s)p(\phi) \\
+p(\sigma^2_s|y_{1:t},x_{0:t},\beta,\phi,\sigma^2_m) &\propto p(y_{1:t},x_{0:t},\theta) \propto \prod_{k=1}^t\left[p(x_k|x_{k-1},\phi,\sigma^2_s)\right]p(x_0|\phi,\sigma^2_s)p(\sigma^2_s) \\
+p(x_{0:t}|y_{1:t},\theta) &\propto p(y_{1:t},x_{0:t},\theta) \propto \prod_{k=1}^t\left[p(y_k|x_k,\theta)p(x_k|x_{k-1},\theta)\right]p(x_0|\theta)
+\end{align*}
+
+\subsection{Full conditional distributions} \label{sec:fullcond}
 
 We derive the following full conditional distributions for the unknown parameters:
 
@@ -84,12 +94,30 @@ x_{i-1,1} & x_{i-2,1} & \cdots & \cdots & x_{i-p,1} \\
 0 & x_{i-1,1} & \cdots & \cdots & x_{i-(p-1),1} \\
 \vdots & 0 & \ddots & & \vdots \\
 \vdots & \vdots & \ddots & \ddots & \vdots \\
-0 & 0 & \cdots & 0 & x_{t-1,1}
+0 & 0 & \cdots & 0 & x_{i-1,1}
 \end{array}
-\right) \\
+\right) \mbox{ with } x_i = \left(\begin{array}{c} x_{i,1} \\ x_{i,2} \\ \vdots \\ x_{i,p} \end{array}\right)\\
 \Psi(\phi) &= \left|\tilde{C_0}\right|^{-1/2}\exp\left(-\frac{1}{2\sigma^2_s}x_0'\tilde{C_0}x_0\right)
 \end{align*}
-\noindent and $\mbox{N}_{\Omega}(.;\mu,\Sigma)$ represents the pdf of the normal distribution truncated onto the set $\Omega$, with mean and covariance of its corresponding untruncated normal distribution given by $\mu$ and $\Sigma$, respectively.
+\noindent and $\mbox{N}_{\Omega}(.;\mu,\Sigma)$ represents the pdf of the normal distribution truncated onto the set $\Omega$, with mean and covariance of its corresponding untruncated normal distribution given by $\mu$ and $\Sigma$, respectively. To construct $\tilde{X}_i$ for $i = 0$, the pre-sample states $\{x_{-1,1}, x_{-2,1}, \ldots, x_{-(p-1),1}\}$ need to be calculated. These can be obtained by pulling from the first column of the matrix \[X_0 = \left(
+\begin{array}{ccccc}
+x_{0,1} & x_{0,2} & \cdots & \cdots & x_{0,p} \\
+x_{-1,1} & 0 & x_{-1,3} & \cdots & x_{-1,p} \\
+\vdots & \vdots & \ddots & \ddots & \vdots \\
+x_{-(p-2),1} & 0 & \cdots & 0 & x_{-(p-2),p} \\
+x_{-(p-1),1} & 0 & \cdots & \cdots & 0
+\end{array}
+\right)\]
+\noindent calculated by the following recursive procedure: \\
+\\
+For each $j \in \{1,2,\ldots,p-1\}$:
+\begin{enumerate}
+\item Calculate $x_{-j,1} = x_{1-j,p} / \phi_p$
+\item For each $k \in \{p,p-1,\ldots,3\}$:
+\begin{enumerate}
+\item Calculate $x_{-j,k} = x_{1-j,k-1} - \phi_{k-1}x_{-j,1}$
+\end{enumerate}
+\end{enumerate}
 \item $\sigma^2_s|y_{1:t},x_{0:t},\beta,\phi,\sigma^2_m \sim \mbox{IG}(a_{s_n}, b_{s_n})$, where
 \begin{align*}
 a_{s_n} &= (p/2)(t+1) + a_{s_0} \\

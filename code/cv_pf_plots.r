@@ -12,9 +12,9 @@ load(paste(dpath,"rw_sim.rdata",sep=""))
 N = length(mysims)
 
 # Create data set of names of rm pf runs
-data1 = expand.grid(n.sim=rep(1,20),np=c(100,500,1000,5000), W=c(0.5,1,2), stringsAsFactors=FALSE)
+data1 = expand.grid(n.sim=rep(c(1,2,3),c(20,20,20)),np=c(100, 500, 1000, 5000), W=c(0.5,1,2), stringsAsFactors=FALSE)
 data1 = data.frame(data1, label = 1:dim(data1)[1])
-data2 = expand.grid(n.sim=2:20,np=c(100,500,1000,5000), W=c(0.5,1,2), stringsAsFactors=FALSE)
+data2 = expand.grid(n.sim=4:20,np=c(100, 500, 1000, 5000), W=c(0.5,1,2), stringsAsFactors=FALSE)
 data2 = data.frame(data2, label = (dim(data1)[1] + 1:dim(data2)[1]))
 mydata = rbind(data1,data2)
 np = unique(mydata$np)
@@ -104,8 +104,6 @@ m_ply(expand.grid(n.sim=nsims, W=W), cv_pf_quantiles)
 ## Plot kernel density estimates of log-likelihood under each model
 cv_pf_loglik <- function(n.sim, alpha = 0.05)
 {
-  #n.sim = 1
-  #alpha = 0.05
   F = mysims[[n.sim]]$true.params$F[1,1,1]
   G = mysims[[n.sim]]$true.params$G[1,1]
   V = mysims[[n.sim]]$true.params$V[1,1]
@@ -184,7 +182,7 @@ cv_pf_loglik <- function(n.sim, alpha = 0.05)
   dev.off()
 }
 
-m_ply(data.frame(n.sim = 1),cv_pf_loglik)
+m_ply(data.frame(n.sim = c(1,2,3)),cv_pf_loglik)
 
 ## Plots analyzing rm pf runs between simulations
 # Calculate true log marginal likelihoods under each model

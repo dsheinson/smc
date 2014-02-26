@@ -20,7 +20,7 @@ revo <- function(x, phi = 1, sigma2 = 1, W = 1)
   stopifnot(length(phi) == p & dim(W)[1] == p & dim(W)[2] == p)
   
   G = makeG(phi)
-  return(rep(G%*%x + t(chol(W))%*%rnorm(p,0,1),1))
+  return(rep(G%*%x + t(chol(W))%*%rnorm(p,0,sqrt(sigma2)),1))
 }
 
 ###################

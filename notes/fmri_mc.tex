@@ -148,16 +148,21 @@ a_{s_t}^{(i)} &= (p/2)(t+1) + a_{s_0} \\
 b_{s_t}^{(i)} &= \frac{1}{2}\mbox{SS}_x + \frac{1}{2}{x_0^{(i-1)}}'\tilde{C_0}(\phi^{(i)})x_0^{(i-1)} + b_{s_0} \\
 \mbox{SS}_x &= \sum^t_{k=1} \left((x_k^{(i-1)} - G(\phi^{(i)})x_{k-1}^{(i-1)})'\tilde{W}^{-1}(x_k^{(i-1)} - G(\phi^{(i)})x_{k-1}^{(i-1)})\right)
 \end{align*}
-\noindent Here, $G(\phi^{(i)})$ and $\tilde{C_0}(\phi^{(i)})$ imply that the matrices $G$ and $C_0$ are constructed using $\phi{(i)}$.
+\noindent Here, $G(\phi^{(i)})$ and $\tilde{C_0}(\phi^{(i)})$ imply that the matrices $G$ and $\tilde{C_0}$ are constructed using $\phi^{(i)}$.
 \item Sample $x_{0:t}^{(i)}$ using the following forward filtering backward sampling (FFBS) algorithm \citep{petris2009dynamic}:
 \begin{enumerate}
 \item Starting with initial values $m_0$ and $C_0 = {\sigma^2_s}^{(i)}\tilde{C_0}$, calculate the quantities $a_k$, $R_k$, $f_k$, $Q_k$, $m_k$, and $C_k$ for $k = 1,2,\ldots,t$ using the following recursive equations (known as the Kalman filter):
     \begin{align*}
     a_k &= Gm_{k-1} &\qquad R_k &= GC_{k-1}G' + W^{(i)} \\
-    f_k &= F_ka_k &\qquad Q_k &= F_kR_kF_k' + V^{(i)} \\
+    f_k &= U_k\beta^{(i)} + F_ka_k &\qquad Q_k &= F_kR_kF_k' + V^{(i)} \\
     m_k &= a_k + R_kF_k'Q_k^{-1}(y_k-f_k) &\qquad C_k &= R_k - R_kF_k'Q_k^{-1}F_kR_k
     \end{align*}
     \noindent where $W^{(i)} = {\sigma^2_s}^{(i)}ee'$ and $V^{(i)} = {\sigma^2_m}^{(i)}\tilde{V}$.
+\item Draw $x_t^{(i)} \sim \mbox{N}(m_t,C_t)$. Then, for $k = t-1,\ldots,0$, draw $x_k^{(i)} \sim \mbox{N}(h_k,H_k)$, where
+    \begin{align*}
+    h_k &= m_k + C_kG'R_{k+1}^{-1}(x_{k+1}^{(i)} - a_{k+1}) \\
+    H_k &= C_k - C_kG'R_{k+1}^{-1}GC_k
+    \end{align*}
 \end{enumerate}
 \end{enumerate}
 

@@ -83,7 +83,8 @@ B_t &= \left(\frac{1}{\sigma^2_m} \sum^t_{k=1} U_k'\tilde{V}^{-1}U_k + B_0^{-1}\
 \item $\sigma^2_m|y_{1:t},x_{0:t},\beta,\phi,\sigma^2_s \sim \mbox{IG}(a_{m_t}, b_{m_t})$, where
 \begin{align*}
 a_{m_t} &= tq/2 + a_{m_0} \\
-b_{m_t} &= \frac{1}{2}\sum^t_{k=1} \left((y_k - U_k\beta - F_kx_k)'\tilde{V}^{-1}(y_k - U_k\beta - F_kx_k)\right) + b_{m_0}
+b_{m_t} &= \frac{1}{2}\mbox{SS}_y + b_{m_0} \\
+\mbox{SS}_y &= \sum^t_{k=1} \left((y_k - U_k\beta - F_kx_k)'\tilde{V}^{-1}(y_k - U_k\beta - F_kx_k)\right)
 \end{align*}
 \item $p(\phi|y_{1:t},x_{0:t},\beta,\sigma^2_m,\sigma^2_s) = \Psi(\phi)\mbox{N}_{S_\phi}(\phi; \phi_t,\Phi_t)$, where
 \begin{align*}
@@ -109,7 +110,8 @@ For each $k \in \{1,2,\ldots,p-1\}$:
 \item $\sigma^2_s|y_{1:t},x_{0:t},\beta,\phi,\sigma^2_m \sim \mbox{IG}(a_{s_t}, b_{s_t})$, where
 \begin{align*}
 a_{s_t} &= (p/2)(t+1) + a_{s_0} \\
-b_{s_t} &= \frac{1}{2}\sum^t_{k=1} \left((x_k - Gx_{k-1})'\tilde{W}^{-1}(x_k - Gx_{k-1})\right) + \frac{1}{2}x_0'\tilde{C_0}x_0 + b_{s_0}
+b_{s_t} &= \frac{1}{2}\mbox{SS}_x + \frac{1}{2}x_0'\tilde{C_0}x_0 + b_{s_0} \\
+\mbox{SS}_x &= \sum^t_{k=1} \left((x_k - Gx_{k-1})'\tilde{W}^{-1}(x_k - Gx_{k-1})\right)
 \end{align*}
 \end{itemize}
 
@@ -127,7 +129,8 @@ B_n^{(i)} &= \left(\frac{1}{{\sigma^2_m}^{(i-1)}} \sum^t_{k=1} U_k'\tilde{V}^{-1
 \item Sample ${\sigma^2_m}^{(i)}|\cdots \sim \mbox{IG}(a_{m_t}^{(i)}, b_{m_t}^{(i)})$, where
 \begin{align*}
 a_{m_t}^{(i)} &= tq/2 + a_{m_0} \\
-b_{m_t}^{(i)} &= \frac{1}{2}\sum^t_{k=1} \left((y_k - U_k\beta^{(i)} - F_kx_k^{(i-1)})'\tilde{V}^{-1}(y_k - U_k\beta^{(i)} - F_kx_k^{(i-1)})\right) + b_{m_0}
+b_{m_t}^{(i)} &= \frac{1}{2}\mbox{SS}_y + b_{m_0} \\
+\mbox{SS}_y &= \sum^t_{k=1} \left((y_k - U_k\beta^{(i)} - F_kx_k^{(i-1)})'\tilde{V}^{-1}(y_k - U_k\beta^{(i)} - F_kx_k^{(i-1)})\right)
 \end{align*}
 \item Sample $\phi^{(i)}$ using the following Metropolis-Hastings step:
 \begin{enumerate}
@@ -145,7 +148,17 @@ a_{s_t}^{(i)} &= (p/2)(t+1) + a_{s_0} \\
 b_{s_t}^{(i)} &= \frac{1}{2}\mbox{SS}_x + \frac{1}{2}{x_0^{(i-1)}}'\tilde{C_0}(\phi^{(i)})x_0^{(i-1)} + b_{s_0} \\
 \mbox{SS}_x &= \sum^t_{k=1} \left((x_k^{(i-1)} - G(\phi^{(i)})x_{k-1}^{(i-1)})'\tilde{W}^{-1}(x_k^{(i-1)} - G(\phi^{(i)})x_{k-1}^{(i-1)})\right)
 \end{align*}
-%\noindent Here, $G(\phi^{(i)}$ and $\tilde{C_0}^{
+\noindent Here, $G(\phi^{(i)})$ and $\tilde{C_0}(\phi^{(i)})$ imply that the matrices $G$ and $C_0$ are constructed using $\phi{(i)}$.
+\item Sample $x_{0:t}^{(i)}$ using the following forward filtering backward sampling (FFBS) algorithm \citep{petris2009dynamic}:
+\begin{enumerate}
+\item Starting with initial values $m_0$ and $C_0 = {\sigma^2_s}^{(i)}\tilde{C_0}$, calculate the quantities $a_k$, $R_k$, $f_k$, $Q_k$, $m_k$, and $C_k$ for $k = 1,2,\ldots,t$ using the following recursive equations (known as the Kalman filter):
+    \begin{align*}
+    a_k &= Gm_{k-1} &\qquad R_k &= GC_{k-1}G' + W^{(i)} \\
+    f_k &= F_ka_k &\qquad Q_k &= F_kR_kF_k' + V^{(i)} \\
+    m_k &= a_k + R_kF_k'Q_k^{-1}(y_k-f_k) &\qquad C_k &= R_k - R_kF_k'Q_k^{-1}F_kR_k
+    \end{align*}
+    \noindent where $W^{(i)} = {\sigma^2_s}^{(i)}ee'$ and $V^{(i)} = {\sigma^2_m}^{(i)}\tilde{V}$.
+\end{enumerate}
 \end{enumerate}
 
 \clearpage

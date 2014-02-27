@@ -75,55 +75,78 @@ p(x_{0:t}|y_{1:t},\theta) &\propto p(y_{1:t},x_{0:t},\theta) \propto \prod_{k=1}
 We derive the following full conditional distributions for the unknown parameters:
 
 \begin{itemize}
-\item $\beta|y_{1:t},x_{0:t},\phi,\sigma^2_m,\sigma^2_s \sim \mbox{N}(b_n,B_n)$, where
+\item $\beta|y_{1:t},x_{0:t},\phi,\sigma^2_m,\sigma^2_s \sim \mbox{N}(b_t,B_t)$, where
 \begin{align*}
-b_n &= B_n\left(\frac{1}{\sigma^2_m} \sum^t_{i=1} U_i'\tilde{V}^{-1}(y_i - F_ix_i) + B_0^{-1}b_0\right) \\
-B_n &= \left(\frac{1}{\sigma^2_m} \sum^t_{i=1} U_i'\tilde{V}^{-1}U_i + B_0^{-1}\right)^{-1}
+b_t &= B_t\left(\frac{1}{\sigma^2_m} \sum^t_{k=1} U_k'\tilde{V}^{-1}(y_k - F_kx_k) + B_0^{-1}b_0\right) \\
+B_t &= \left(\frac{1}{\sigma^2_m} \sum^t_{k=1} U_k'\tilde{V}^{-1}U_k + B_0^{-1}\right)^{-1}
 \end{align*}
-\item $\sigma^2_m|y_{1:t},x_{0:t},\beta,\phi,\sigma^2_s \sim \mbox{IG}(a_{m_n}, b_{m_n})$, where
+\item $\sigma^2_m|y_{1:t},x_{0:t},\beta,\phi,\sigma^2_s \sim \mbox{IG}(a_{m_t}, b_{m_t})$, where
 \begin{align*}
-a_{m_n} &= tq/2 + a_{m_0} \\
-b_{m_n} &= \frac{1}{2}\sum^t_{i=1} \left((y_i - U_i\beta - F_ix_i)'\tilde{V}^{-1}(y_i - U_i\beta - F_ix_i)\right) + b_{m_0}
+a_{m_t} &= tq/2 + a_{m_0} \\
+b_{m_t} &= \frac{1}{2}\sum^t_{k=1} \left((y_k - U_k\beta - F_kx_k)'\tilde{V}^{-1}(y_k - U_k\beta - F_kx_k)\right) + b_{m_0}
 \end{align*}
-\item $p(\phi|y_{1:t},x_{0:t},\beta,\sigma^2_m,\sigma^2_s) = \Psi(\phi)\mbox{N}_{S_\phi}(\phi; \phi_n,\Phi_n)$, where
+\item $p(\phi|y_{1:t},x_{0:t},\beta,\sigma^2_m,\sigma^2_s) = \Psi(\phi)\mbox{N}_{S_\phi}(\phi; \phi_t,\Phi_t)$, where
 \begin{align*}
-\phi_n &= \Phi_n\left(\frac{1}{\sigma^2_s} \sum^t_{i=1} \tilde{X}_i'\tilde{W}^{-1}x_i + \Phi_0^{-1}\phi_0\right) \\
-\Phi_n &= \left(\frac{1}{\sigma^2_s} \sum^t_{i=1} \tilde{X}_i'\tilde{V}^{-1}\tilde{X}_i + \Phi_0^{-1}\right)^{-1} \\
-\tilde{X}_i &= \left(\begin{array}{ccccc}
-x_{i-1,1} & x_{i-2,1} & \cdots & \cdots & x_{i-p,1} \\
-0 & x_{i-1,1} & \cdots & \cdots & x_{i-(p-1),1} \\
+\phi_t &= \Phi_t\left(\frac{1}{\sigma^2_s} \sum^t_{k=1} \tilde{X}_k'\tilde{W}^{-1}x_k + \Phi_0^{-1}\phi_0\right) \\
+\Phi_t &= \left(\frac{1}{\sigma^2_s} \sum^t_{k=1} \tilde{X}_k'\tilde{V}^{-1}\tilde{X}_k + \Phi_0^{-1}\right)^{-1} \\
+\tilde{X}_k &= \left(\begin{array}{ccccc}
+x_{k-1,1} & x_{k-2,1} & \cdots & \cdots & x_{k-p,1} \\
+0 & x_{k-1,1} & \cdots & \cdots & x_{k-(p-1),1} \\
 \vdots & 0 & \ddots & & \vdots \\
 \vdots & \vdots & \ddots & \ddots & \vdots \\
-0 & 0 & \cdots & 0 & x_{i-1,1}
+0 & 0 & \cdots & 0 & x_{k-1,1}
 \end{array}
-\right) \mbox{ with } x_i = \left(\begin{array}{c} x_{i,1} \\ x_{i,2} \\ \vdots \\ x_{i,p} \end{array}\right)\\
+\right) \mbox{ with } x_k = \left(\begin{array}{c} x_{k,1} \\ x_{k,2} \\ \vdots \\ x_{k,p} \end{array}\right)\\
 \Psi(\phi) &= \left|\tilde{C_0}\right|^{-1/2}\exp\left(-\frac{1}{2\sigma^2_s}x_0'\tilde{C_0}x_0\right)
 \end{align*}
-\noindent and $\mbox{N}_{\Omega}(.;\mu,\Sigma)$ represents the pdf of the normal distribution truncated onto the set $\Omega$, with mean and covariance of its corresponding untruncated normal distribution given by $\mu$ and $\Sigma$, respectively. To construct $\tilde{X}_i$ for $i = 0$, the pre-sample states $\{x_{-1,1}, x_{-2,1}, \ldots, x_{-(p-1),1}\}$ need to be calculated. These can be obtained by pulling from the first column of the matrix \[X_0 = \left(
-\begin{array}{ccccc}
-x_{0,1} & x_{0,2} & \cdots & \cdots & x_{0,p} \\
-x_{-1,1} & 0 & x_{-1,3} & \cdots & x_{-1,p} \\
-\vdots & \vdots & \ddots & \ddots & \vdots \\
-x_{-(p-2),1} & 0 & \cdots & 0 & x_{-(p-2),p} \\
-x_{-(p-1),1} & 0 & \cdots & \cdots & 0
-\end{array}
-\right)\]
-\noindent calculated by the following recursive procedure: \\
+\noindent and $\mbox{N}_{\Omega}(.;\mu,\Sigma)$ represents the pdf of the normal distribution truncated onto the set $\Omega$, with mean and covariance of its corresponding untruncated normal distribution given by $\mu$ and $\Sigma$, respectively. If $p > 1$, the pre-sample states $\{x_{-1,1}, x_{-2,1}, \ldots, x_{-(p-1),1}\}$ need to be calculated in order to construct $\tilde{X}_k$ for $k = 1$. These can be obtained by the following recursive procedure: \\
 \\
-For each $j \in \{1,2,\ldots,p-1\}$:
+For each $k \in \{1,2,\ldots,p-1\}$:
 \begin{enumerate}
-\item Calculate $x_{-j,1} = x_{1-j,p} / \phi_p$
-\item For each $k \in \{p,p-1,\ldots,3\}$:
-\begin{enumerate}
-\item Calculate $x_{-j,k} = x_{1-j,k-1} - \phi_{k-1}x_{-j,1}$
+\item Calculate $x_{-k,1} = x_{1-k,p} / \phi_p$. If $k = p - 1$, stop. Otherwise, proceed to Step \ref{step:recurse}.
+\item For each $j \in \{p,p-1,\ldots,3\}$, calculate $x_{-k,j} = x_{1-k,j-1} - \phi_{j-1}x_{-k,1}$. \label{step:recurse}
 \end{enumerate}
-\end{enumerate}
-\item $\sigma^2_s|y_{1:t},x_{0:t},\beta,\phi,\sigma^2_m \sim \mbox{IG}(a_{s_n}, b_{s_n})$, where
+\item $\sigma^2_s|y_{1:t},x_{0:t},\beta,\phi,\sigma^2_m \sim \mbox{IG}(a_{s_t}, b_{s_t})$, where
 \begin{align*}
-a_{s_n} &= (p/2)(t+1) + a_{s_0} \\
-b_{s_n} &= \frac{1}{2}\sum^t_{i=1} \left((x_i - Gx_{i-1})'\tilde{W}^{-1}(x_i - Gx_{i-1})\right) + \frac{1}{2}x_0'\tilde{C_0}x_0 + b_{s_0}
+a_{s_t} &= (p/2)(t+1) + a_{s_0} \\
+b_{s_t} &= \frac{1}{2}\sum^t_{k=1} \left((x_k - Gx_{k-1})'\tilde{W}^{-1}(x_k - Gx_{k-1})\right) + \frac{1}{2}x_0'\tilde{C_0}x_0 + b_{s_0}
 \end{align*}
 \end{itemize}
+
+\subsection{Gibbs sampler}
+
+We generate samples from the joint posterior distribution $p(x_{0:t},\theta|y_{1:t})$ using the following MCMC algorithm:
+
+\begin{enumerate}
+\item Set $i = 0$ and draw initial values $x_{0:t}^{(i)} = \left(x_0^{(i)},x_1^{(i)},\ldots,x_t^{(i)}\right)'$ and $\theta^{(i)} = \left({\beta^{(i)}}', {\phi^{(i)}}', {\sigma^2_m}^{(i)}, {\sigma^2_s}^{(i)}\right)$. Set $i = 1$.
+\item Sample $\beta^{(i)}|\cdots \sim \mbox{N}(b_n^{(i)}, B_n^{(i)})$, where
+\begin{align*}
+b_n^{(i)} &= B_n^{(i)}\left(\frac{1}{{\sigma^2_m}^{(i-1)}} \sum^t_{k=1} U_k'\tilde{V}^{-1}(y_k - F_kx_k^{(i-1)}) + B_0^{-1}b_0\right) \\
+B_n^{(i)} &= \left(\frac{1}{{\sigma^2_m}^{(i-1)}} \sum^t_{k=1} U_k'\tilde{V}^{-1}U_k + B_0^{-1}\right)^{-1}
+\end{align*}
+\item Sample ${\sigma^2_m}^{(i)}|\cdots \sim \mbox{IG}(a_{m_t}^{(i)}, b_{m_t}^{(i)})$, where
+\begin{align*}
+a_{m_t}^{(i)} &= tq/2 + a_{m_0} \\
+b_{m_t}^{(i)} &= \frac{1}{2}\sum^t_{k=1} \left((y_k - U_k\beta^{(i)} - F_kx_k^{(i-1)})'\tilde{V}^{-1}(y_k - U_k\beta^{(i)} - F_kx_k^{(i-1)})\right) + b_{m_0}
+\end{align*}
+\item Sample $\phi^{(i)}$ using the following Metropolis-Hastings step:
+\begin{enumerate}
+\item Draw $\phi^* \sim \mbox{N}(\phi_t^{(i)},\Phi_t^{(i)})$, where
+\begin{align*}
+\phi_t^{(i)} &= \Phi_t^{(i)}\left(\frac{1}{{\sigma^2_s}^{(i-1)}} \sum^t_{k=1} \tilde{X}_k'\tilde{W}^{-1}x_k^{(i)} + \Phi_0^{-1}\phi_0\right) \\
+\Phi_t^{(i)} &= \left(\frac{1}{{\sigma^2_s}^{(i-1)}} \sum^t_{k=1} \tilde{X}_k'\tilde{V}^{-1}\tilde{X}_k + \Phi_0^{-1}\right)^{-1}
+\end{align*} \label{step:phi}
+\item If $\phi^* \in S_{\phi}$, go to Step \ref{step:mh}. Otherwise, go back to step \ref{step:phi}.
+\item Calculate $R = \mbox{min}\left\{\frac{\Psi(\phi*)}{\Psi(\phi^{(i-1)})}, 1\right\}$ and draw $u \sim \mbox{Unif}[0,1]$. If $u < R$, set $\phi^{(i)} = \phi^*$. Otherwise, set $\phi^{(i)} = \phi^{(i-1)}$. \label{step:mh}
+\end{enumerate}
+\item Sample ${\sigma^2_s}^{(i)}|\cdots \sim \mbox{IG}(a_{s_t}^{(i)}, b_{s_t}^{(i)})$, where
+\begin{align*}
+a_{s_t}^{(i)} &= (p/2)(t+1) + a_{s_0} \\
+b_{s_t}^{(i)} &= \frac{1}{2}\mbox{SS}_x + \frac{1}{2}{x_0^{(i-1)}}'\tilde{C_0}(\phi^{(i)})x_0^{(i-1)} + b_{s_0} \\
+\mbox{SS}_x &= \sum^t_{k=1} \left((x_k^{(i-1)} - G(\phi^{(i)})x_{k-1}^{(i-1)})'\tilde{W}^{-1}(x_k^{(i-1)} - G(\phi^{(i)})x_{k-1}^{(i-1)})\right)
+\end{align*}
+%\noindent Here, $G(\phi^{(i)}$ and $\tilde{C_0}^{
+\end{enumerate}
 
 \clearpage
 

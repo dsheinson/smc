@@ -100,12 +100,12 @@ x_{k-1,1} & x_{k-2,1} & \cdots & \cdots & x_{k-p,1} \\
 \right) \mbox{ with } x_k = \left(\begin{array}{c} x_{k,1} \\ x_{k,2} \\ \vdots \\ x_{k,p} \end{array}\right)\\
 \Psi(\phi) &= \left|\tilde{C_0}\right|^{-1/2}\exp\left(-\frac{1}{2\sigma^2_s}x_0'\tilde{C_0}x_0\right)
 \end{align*}
-\noindent and $\mbox{N}_{\Omega}(.;\mu,\Sigma)$ represents the pdf of the normal distribution truncated onto the set $\Omega$, with mean and covariance of its corresponding untruncated normal distribution given by $\mu$ and $\Sigma$, respectively. If $p > 1$, the pre-sample states $\{x_{-1,1}, x_{-2,1}, \ldots, x_{-(p-1),1}\}$ need to be calculated in order to construct $\tilde{X}_k$ for $k < p$. These can be obtained by the following recursive procedure: \\
+\noindent and $\mbox{N}_{\Omega}(.;\mu,\Sigma)$ represents the pdf of the normal distribution truncated onto the set $\Omega$, with mean and covariance of its corresponding untruncated normal distribution given by $\mu$ and $\Sigma$, respectively. If $p > 1$, the pre-sample states $\{x_{-1,1}, x_{-2,1}, \ldots, x_{-(p-1),1}\}$ need to be calculated in order to construct $\tilde{X}_k$ for $k < p$. $X_k$ for $k = 1,2,\ldots,p-1$ can be obtained by the following recursive procedure: \\
 \\
-For each $k \in \{1,2,\ldots,p-1\}$:
+For each $i \in \{k,k+1,\ldots,p-1\}$:
 \begin{enumerate}
-\item Calculate $x_{-k,1} = x_{1-k,p} / \phi_p$. If $k = p - 1$, stop. Otherwise, proceed to Step \ref{step:recurse}.
-\item For each $j \in \{p,p-1,\ldots,3\}$, calculate $x_{-k,j} = x_{1-k,j-1} - \phi_{j-1}x_{-k,1}$. \label{step:recurse}
+\item Calculate $x_{-i,1} = x_{1-i,p} / \phi_p$. If $i = p - 1$, stop. Otherwise, proceed to Step \ref{step:recurse}.
+\item For each $j \in \{p,p-1,\ldots,3\}$, calculate $x_{-i,j} = x_{1-i,j-1} - \phi_{j-1}x_{-i,1}$. \label{step:recurse}
 \end{enumerate}
 \item $\sigma^2_s|y_{1:t},x_{0:t},\beta,\phi,\sigma^2_m \sim \mbox{IG}(a_{s_t}, b_{s_t})$, where
 \begin{align*}

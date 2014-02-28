@@ -239,7 +239,7 @@ wlabels = rep(NA,length(W))
 for(i in 1:length(W)) wlabels[i] = as.expression(bquote(paste(tilde(W)," = ",sep="") ~ .(W[i])))
 pdf(file=paste(gpath,"cv_pf_ternary-bw.pdf",sep=""),width=10,height=10)
 par(mfrow=c(2,2))
-plot(acomp(true.postModProbs[grad,]),labels=labels,col=gray.colors(N),lwd=2)
+plot(acomp(true.postModProbs[grad,]),labels=wlabels,col=gray.colors(N),lwd=2)
 mtext("True Posterior",side=3,cex=2)
 for(i in 2:length(np))
 {

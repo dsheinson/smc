@@ -105,7 +105,7 @@ x_{k-1,1} & x_{k-2,1} & \cdots & \cdots & x_{k-p,1} \\
 For each $i \in \{k,k+1,\ldots,p-1\}$:
 \begin{enumerate}
 \item Calculate $x_{-i,1} = x_{1-i,p} / \phi_p$. If $i = p - 1$, stop. Otherwise, proceed to Step \ref{step:recurse}.
-\item For each $j \in \{p,p-1,\ldots,3\}$, calculate $x_{-i,j} = x_{1-i,j-1} - \phi_{j-1}x_{-i,1}$. \label{step:recurse}
+\item For each $j \in \{p,p-1,\ldots,i+2\}$, calculate $x_{-i,j} = x_{1-i,j-1} - \phi_{j-1}x_{-i,1}$. \label{step:recurse}
 \end{enumerate}
 \item $\sigma^2_s|y_{1:t},x_{0:t},\beta,\phi,\sigma^2_m \sim \mbox{IG}(a_{s_t}, b_{s_t})$, where
 \begin{align*}

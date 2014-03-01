@@ -41,7 +41,7 @@ We will now consider a regression model with autoregressive error structure and 
 \end{array}
 \right)\]
 
-\noindent In addition, we let $W = \sigma^2_see'$ and $V = \sigma^2_m\tilde{V}$, where $e$ is a $p$-length vector with first element equal to 1 and the rest 0, $\sigma^2_s$ is the variance of the state (i.e. process) noise, and $\sigma^2_m$ is the variance of the observation (i.e. measurement) noise. We assume that the prior state $x_0$ is drawn from the stationary distribution given by $x_0 \sim \mbox{N}(0, \sigma^2_s\tilde{C_0})$, where \[\mbox{vec}({\tilde{C_0}}) = (I - G \otimes G)^{-1}\mbox{vec}(ee')\]
+\noindent In addition, we let $W = \sigma^2_see'$ and $V = \sigma^2_m\tilde{V}$, where $e$ is a $p$-length vector with first element equal to 1 and the rest 0, $\sigma^2_s$ is the variance of the state (i.e. process) noise, and $\sigma^2_m$ is the variance of the observation (i.e. measurement) noise. We assume that the prior state $x_0$ is drawn from the stationary distribution given by $x_0 \sim \mbox{N}(m_0, \sigma^2_s\tilde{C_0})$, where \[\mbox{vec}({\tilde{C_0}}) = (I - G \otimes G)^{-1}\mbox{vec}(ee')\]
 
 \section{Estimation}
 
@@ -58,7 +58,7 @@ p(y_{1:t},x_{0:t},\theta) = \prod_{k=1}^t\left[p(y_k|x_k,\theta)p(x_k|x_{k-1},\t
 &\phi \sim \mbox{N}_{S_\phi}(\phi_0, \Phi_0) \qquad \sigma^2_s \sim \mbox{IG}(a_{s_0}, b_{s_0})
 \end{align*}
 
-\noindent The hyperparameters $b_0$, $B_0$, $\phi_0$, $\Phi_0$, $a_{m_0}$, $b_{m_0}$, $a_{s_0}$, and $b_{s_0}$ are all assumed known. $\mbox{IG}(a,b)$ represents an inverse-gamma distribution with shape parameter $a$ and rate parameter $b$. $\mbox{N}_{\Omega}(\mu, \Sigma)$ represents the normal distribution truncated onto the set $\Omega$, with mean and covariance of its corresponding untruncated normal distribution given by $\mu$ and $\Sigma$, respectively. $S_{\phi}$ represents the set of all $\phi$ such that $x_t$ follows a stationary distribution.
+\noindent The hyperparameters $b_0$, $B_0$, $\phi_0$, $\Phi_0$, $a_{m_0}$, $b_{m_0}$, $a_{s_0}$, $b_{s_0}$, $m_0$, and $C_0$ are all assumed known. $\mbox{IG}(a,b)$ represents an inverse-gamma distribution with shape parameter $a$ and rate parameter $b$. $\mbox{N}_{\Omega}(\mu, \Sigma)$ represents the normal distribution truncated onto the set $\Omega$, with mean and covariance of its corresponding untruncated normal distribution given by $\mu$ and $\Sigma$, respectively. $S_{\phi}$ represents the set of all $\phi$ such that $x_t$ follows a stationary distribution.
 
 To implement a Gibbs sampling algorithm that generates MCMC samples from the joint posterior distribution $p(x_{0:t},\theta|y_{1:t})$, we must draw from the following full conditional distributions given here in general and described in more detail in Section  \ref{sec:fullcond}:
 
@@ -88,30 +88,29 @@ b_{m_t} &= \frac{1}{2}\mbox{SS}_y + b_{m_0} \\
 \end{align*}
 \item $p(\phi|y_{1:t},x_{0:t},\beta,\sigma^2_m,\sigma^2_s) = \Psi(\phi)\mbox{N}_{S_\phi}(\phi; \phi_t,\Phi_t)$, where
 \begin{align*}
-\phi_t &= \Phi_t\left(\frac{1}{\sigma^2_s} \sum^t_{k=1} \tilde{X}_k'\tilde{W}^{-1}x_k + \Phi_0^{-1}\phi_0\right) \\
-\Phi_t &= \left(\frac{1}{\sigma^2_s} \sum^t_{k=1} \tilde{X}_k'\tilde{V}^{-1}\tilde{X}_k + \Phi_0^{-1}\right)^{-1} \\
-\tilde{X}_k &= \left(\begin{array}{ccccc}
-x_{k-1,1} & x_{k-2,1} & \cdots & \cdots & x_{k-p,1} \\
-0 & x_{k-1,1} & \cdots & \cdots & x_{k-(p-1),1} \\
-\vdots & 0 & \ddots & & \vdots \\
-\vdots & \vdots & \ddots & \ddots & \vdots \\
-0 & 0 & \cdots & 0 & x_{k-1,1}
-\end{array}
-\right) \mbox{ with } x_k = \left(\begin{array}{c} x_{k,1} \\ x_{k,2} \\ \vdots \\ x_{k,p} \end{array}\right)\\
-\Psi(\phi) &= \left|\tilde{C_0}\right|^{-1/2}\exp\left(-\frac{1}{2\sigma^2_s}x_0'\tilde{C_0}x_0\right)
+\phi_t &= \Phi_t\left(\frac{1}{\sigma^2_s} \tilde{X}'\tilde{x} + \Phi_0^{-1}\phi_0\right) \\
+\Phi_t &= \left(\frac{1}{\sigma^2_s} \tilde{X}'\tilde{X} + \Phi_0^{-1}\right)^{-1} \\
+\tilde{X} &= \left(\begin{array}{ccccc}
+x_{0,1} & x_{-1,1} & \cdots & x_{1-p,1} \\
+x_{1,1} & x_{0,1} & \cdots & x_{2-p,1} \\
+\vdots & \vdots & & \vdots \\
+x_{t-1,1} & x_{t-1,1} & \cdots & x_{t-p,1}
+\end{array} \quad
+\right) \tilde{x} = \left(\begin{array}{c} x_{1,1} \\ x_{2,1} \\ \vdots \\ x_{t,1} \end{array}\right)
+\mbox{ with } x_k = \left(\begin{array}{c} x_{k,1} \\ x_{k,2} \\ \vdots \\ x_{k,p} \end{array}\right) \\
+\Psi(\phi) &= \left|\tilde{C_0}\right|^{-1/2}\exp\left(-\frac{1}{2\sigma^2_s}(x_0-m_0)'\tilde{C_0}(x_0-m_0)\right)
 \end{align*}
-\noindent and $\mbox{N}_{\Omega}(.;\mu,\Sigma)$ represents the pdf of the normal distribution truncated onto the set $\Omega$, with mean and covariance of its corresponding untruncated normal distribution given by $\mu$ and $\Sigma$, respectively. If $p > 1$, the pre-sample states $\{x_{-1,1}, x_{-2,1}, \ldots, x_{-(p-1),1}\}$ need to be calculated in order to construct $\tilde{X}_k$ for $k < p$. $X_k$ for $k = 1,2,\ldots,p-1$ can be obtained by the following recursive procedure: \\
+\noindent and $\mbox{N}_{\Omega}(.;\mu,\Sigma)$ represents the pdf of the normal distribution truncated onto the set $\Omega$, with mean and covariance of its corresponding untruncated normal distribution given by $\mu$ and $\Sigma$, respectively. If $p > 1$, the pre-sample states $\{x_{-1,1}, x_{-2,1}, \ldots, x_{-(p-1),1}\}$ need to be calculated in order to construct $\tilde{X}$. These can be obtained by the following recursive procedure: \\
 \\
-For each $i \in \{k,k+1,\ldots,p-1\}$:
+For each $k \in \{1,2,\ldots,p-1\}$
 \begin{enumerate}
-\item Calculate $x_{k-i-1,1} = x_{k-i,p} / \phi_p$. If $i = p - 1$, stop. Otherwise, proceed to Step \ref{step:recurse}.
-\item For each $j \in \{p,p-1,\ldots,i+2\}$, calculate $x_{k-i-1,j} = x_{k-i,j-1} - \phi_{j-1}x_{k-i-1,1}$. \label{step:recurse}
+\item Calculate $x_{-k,1} = x_{1-k,p} / \phi_p$. If $k = p - 1$, stop. Otherwise, proceed to Step \ref{step:recurse}.
+\item For each $j \in \{p,p-1,\ldots,k+2\}$, calculate $x_{-k,j} = x_{1-k,j-1} - \phi_{j-1}x_{-k,1}$. \label{step:recurse}
 \end{enumerate}
 \item $\sigma^2_s|y_{1:t},x_{0:t},\beta,\phi,\sigma^2_m \sim \mbox{IG}(a_{s_t}, b_{s_t})$, where
 \begin{align*}
 a_{s_t} &= (p/2)(t+1) + a_{s_0} \\
-b_{s_t} &= \frac{1}{2}\mbox{SS}_x + \frac{1}{2}x_0'\tilde{C_0}x_0 + b_{s_0} \\
-\mbox{SS}_x &= \sum^t_{k=1} \left((x_k - Gx_{k-1})'\tilde{W}^{-1}(x_k - Gx_{k-1})\right)
+b_{s_t} &= \frac{1}{2}\tilde{X}'\tilde{X} + \frac{1}{2}(x_0-m_0)'\tilde{C_0}(x_0-m_0) + b_{s_0}
 \end{align*}
 \end{itemize}
 
@@ -145,10 +144,9 @@ b_{m_t}^{(i)} &= \frac{1}{2}\mbox{SS}_y + b_{m_0} \\
 \item Sample ${\sigma^2_s}^{(i)}|\cdots \sim \mbox{IG}(a_{s_t}^{(i)}, b_{s_t}^{(i)})$, where
 \begin{align*}
 a_{s_t}^{(i)} &= (p/2)(t+1) + a_{s_0} \\
-b_{s_t}^{(i)} &= \frac{1}{2}\mbox{SS}_x + \frac{1}{2}{x_0^{(i-1)}}'\tilde{C_0}(\phi^{(i)})x_0^{(i-1)} + b_{s_0} \\
-\mbox{SS}_x &= \sum^t_{k=1} \left((x_k^{(i-1)} - G(\phi^{(i)})x_{k-1}^{(i-1)})'\tilde{W}^{-1}(x_k^{(i-1)} - G(\phi^{(i)})x_{k-1}^{(i-1)})\right)
+b_{s_t}^{(i)} &= \frac{1}{2}\tilde{X}'\tilde{X} + \frac{1}{2}(x_0^{(i-1)}-m_0)'\tilde{C_0}(\phi^{(i)})(x_0^{(i-1)}-m_0) + b_{s_0}
 \end{align*}
-\noindent Here, $G(\phi^{(i)})$ and $\tilde{C_0}(\phi^{(i)})$ imply that the matrices $G$ and $\tilde{C_0}$ are constructed using $\phi^{(i)}$.
+\noindent Here, $\tilde{C_0}(\phi^{(i)})$ implies that the matrix $\tilde{C_0}$ is constructed using $\phi^{(i)}$.
 \item Sample $x_{0:t}^{(i)}$ using the following forward filtering backward sampling (FFBS) algorithm \citep{petris2009dynamic}:
 \begin{enumerate}
 \item Starting with initial values $m_0$ and $C_0 = {\sigma^2_s}^{(i)}\tilde{C_0}$, calculate the quantities $a_k$, $R_k$, $f_k$, $Q_k$, $m_k$, and $C_k$ for $k = 1,2,\ldots,t$ using the following recursive equations (known as the Kalman filter):

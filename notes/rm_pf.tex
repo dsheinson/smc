@@ -123,15 +123,29 @@ Next, we simulated 19 more data sets from $M_2$ with $\sigma^2 = 1$ (making 20 t
 \caption{Contingency table of models with highest posterior model probability calculated analytically (rows) and approximated using the resample-move particle filter (columns) with increasing number of particles (tables).} \label{tab:cont}
 \begin{tabular}{|c|c|c|c|}
   \hline
+{\bf 100 Particles} & \multicolumn{3}{|c|}{PF approximation} \\
+ \hline
+ True Posterior & $M_1$& $M_2$ & $M_3$ \\
+  \hline
+$M_1$ &   1 &   1 &   0 \\
+\hline
+$M_2$ &   2 &   7 &   1 \\ 
+\hline
+$M_3$ &   0 &   4 &   4 \\
+   \hline
+\end{tabular}
+\quad
+\begin{tabular}{|c|c|c|c|}
+  \hline
 {\bf 500 Particles} & \multicolumn{3}{|c|}{PF approximation} \\
  \hline
  True Posterior & $M_1$& $M_2$ & $M_3$ \\
   \hline
-$M_1$ &   3 &   2 &   0 \\
+$M_1$ &   2 &   0 &   0 \\
 \hline
-$M_2$ &   3 &   8 &   2 \\
+$M_2$ &   1 &   7 &   2 \\
 \hline
-$M_3$ &   0 &   1 &   1 \\
+$M_3$ &   0 &   2 &   6 \\
    \hline
 \end{tabular}
 %\end{table}
@@ -145,11 +159,11 @@ $M_3$ &   0 &   1 &   1 \\
  \hline
  True Posterior & $M_1$& $M_2$ & $M_3$ \\
   \hline
-$M_1$ &   4 &   1 &   0 \\
+$M_1$ &   2 &   0 &   0 \\
 \hline
-  $M_2$ &   5 &   8 &   0 \\
+  $M_2$ &   1 &   7 &   2 \\
   \hline
-  $M_3$ &   0 &   0 &   2 \\
+  $M_3$ &   0 &  2 &   6 \\
    \hline
 \end{tabular}
 %\end{table}
@@ -163,11 +177,11 @@ $M_1$ &   4 &   1 &   0 \\
  \hline
  True Posterior & $M_1$& $M_2$ & $M_3$ \\
   \hline
-$M_1$ &   4 &   1 &   0 \\
+$M_1$ &   2 &   0 &   0 \\
   \hline
-  $M_2$ &   2 &   10 &   1 \\
+  $M_2$ &   1 &   7 &   2 \\
   \hline
-  $M_3$ &   0 &   0 &   2 \\
+  $M_3$ &   0 &   3 &   5 \\
    \hline
 \end{tabular}
 \end{table}

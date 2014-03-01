@@ -98,6 +98,18 @@ sample.sigma2s <- function(y, x, theta, psi, prior)
   return(1/rgamma(1,asn,bsn))
 }
 
+sample.states <- function(y, x, theta, psi, prior)
+{
+  # Extract dlm components
+  p = length(theta$phi)
+  G = makeG(theta$phi)
+  V = theta$sigma2m*psi$V
+  sf = c(1,rep(0,p-1))
+  W = theta$sigma2s*sf%*%t(sf)
+  C0 = makeC0(phi)
+  return(ffbs(y, psi$U, theta$beta, psi$F, G, V, W, prior$m0, C0))
+}
+
 ###################
 # Utility Functions
 ###################
@@ -174,6 +186,49 @@ check.dim <- function(y, x, theta, psi, prior)
   prior = checked.prior
      
   return(list(y=y,x=x,theta=theta,psi=psi,prior=prior))
+}
+
+ffbs <- function(y, U, beta, F, G, V, W, m0, C0)
+{
+  nt = dim(y)[2]
+  p = length(m0)
+  q = dim(y)[1]
+  d = length(beta)
+  stopifnot((dim(G)[1] == dim(G)[2]) & (dim(V)[1] == dim(V)[2]) & (dim(W)[1] == dim(W)[2]) & (dim(C0)[1] == dim(C0)[2]))
+  stopifnot((dim(C0)[1] == p) & (dim(G)[1] == p & (dim(F)[1] == q) & (dim(F)[2] == p) & (dim(F)[3] == nt) & (dim(V)[1] == q) & (dim(W)[1] == p))
+  stopifnot(dim(U)[1] == q & dim(U)[2] == d & dim(U)[3] == nt)
+            
+  # Initialize output arrays
+  m = matrix(NA, nr = p, nc = nt + 1)
+  C = array(NA, dim = c(p, p, nt + 1))
+  f = matrix(NA, nr = q, nc = nt)
+  Q = array(NA, dim = c(q, q, nt))
+  A = matrix(NA, nr = p, nc = nt)
+  R = array(NA, dim = c(p, p, nt))
+  m[1,] = m0; C[,,1] = C0
+  
+  # Forward-filtering
+  for(i in 1:nt)
+  {
+    A[,i] = G%*%m[,i]; R[,,i] = G%*%C[,,i]%*%t(G) + W
+    f[,i] = U[,,i]%*%beta + F[,,i]%*%A[,i]; Q[,,i] = F[,,i]%*%R[,,i]%*%t(F[,,i]) + V
+    e = y[,i] - f[,i]; Qinv = solve(Q[,,i])
+    RFQinv = R[,,i]%*%t(F[,,i])%*%Qinv
+    m[,i+1] = A[,i] + RFQinv%*%e
+    C[,,i+1] = R[,,i] - RFQinv%*%F[,,i]%*%R[,,i]
+  }
+  
+  # Backward-sampling
+  x = matrix(NA, nr=p, nc=nt+1)
+  x[,nt+1] = t(chol(C[,,nt+1]))%*%rnorm(p,m[,nt+1],1)
+  for(i in nt:1)
+  {
+    CGRinv = C[,,i]%*%t(G)%*%solve(R[,,i])
+    h = m[,i] + CGRinv%*%(x[,i+1] - A[i,])
+    H = C[,,i] - CGRinv%*%G%*%C[,,i]
+    x[,i] = t(chol(H))%*%rnorm(p, h, 1)
+  }
+  return(x)
 }
 
 makee <- function(y, F, x)

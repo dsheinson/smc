@@ -58,7 +58,7 @@ p(y_{1:t},x_{0:t},\theta) = \prod_{k=1}^t\left[p(y_k|x_k,\theta)p(x_k|x_{k-1},\t
 &\phi \sim \mbox{N}_{S_\phi}(\phi_0, \Phi_0) \qquad \sigma^2_s \sim \mbox{IG}(a_{s_0}, b_{s_0})
 \end{align*}
 
-\noindent The hyperparameters $b_0$, $B_0$, $\phi_0$, $\Phi_0$, $a_{m_0}$, $b_{m_0}$, $a_{s_0}$, $b_{s_0}$, $m_0$, and $C_0$ are all assumed known. $\mbox{IG}(a,b)$ represents an inverse-gamma distribution with shape parameter $a$ and rate parameter $b$. $\mbox{N}_{\Omega}(\mu, \Sigma)$ represents the normal distribution truncated onto the set $\Omega$, with mean and covariance of its corresponding untruncated normal distribution given by $\mu$ and $\Sigma$, respectively. $S_{\phi}$ represents the set of all $\phi$ such that $x_t$ follows a stationary distribution.
+\noindent The hyperparameters $b_0$, $B_0$, $\phi_0$, $\Phi_0$, $a_{m_0}$, $b_{m_0}$, $a_{s_0}$, $b_{s_0}$, $m_0$, and $\tilde{C_0}$ are all assumed known. $\mbox{IG}(a,b)$ represents an inverse-gamma distribution with shape parameter $a$ and rate parameter $b$. $\mbox{N}_{\Omega}(\mu, \Sigma)$ represents the normal distribution truncated onto the set $\Omega$, with mean and covariance of its corresponding untruncated normal distribution given by $\mu$ and $\Sigma$, respectively. $S_{\phi}$ represents the set of all $\phi$ such that $x_t$ follows a stationary distribution.
 
 To implement a Gibbs sampling algorithm that generates MCMC samples from the joint posterior distribution $p(x_{0:t},\theta|y_{1:t})$, we must draw from the following full conditional distributions given here in general and described in more detail in Section  \ref{sec:fullcond}:
 
@@ -114,7 +114,11 @@ b_{s_t} &= \frac{1}{2}\tilde{X}'\tilde{X} + \frac{1}{2}(x_0-m_0)'\tilde{C_0}(x_0
 \end{align*}
 \end{itemize}
 
-\subsection{Gibbs sampler}
+The full conditional distribution of the states, $p(x_{0:t}|y_{1:t},\theta)$, can be calculated by
+\[p(x_{0:t}|y_{1:t},\theta) = \prod_{k=0}^t p(x_k|y_{1:k},x_{k+1},\theta)\]
+where the last product is simply $p(x_t|y_{1:t},\theta)$. The distributions $p(x_k|y_{1:k},x_{k+1},\theta)$ for $k = 0,1,\ldots,t$ can be computed using the Kalman filter and smoothing recursions \citep{petris2009dynamic}, described in detail in Section \ref{sec:gibbs}.
+
+\subsection{Gibbs sampler} \label{sec:gibbs}
 
 We generate samples from the joint posterior distribution $p(x_{0:t},\theta|y_{1:t})$ using the following MCMC algorithm:
 

@@ -4,6 +4,83 @@
 # psi is a list with components V q by q covariance matrix, U a q by d by nt array of beta covariates, and F a q by p by nt array of state covariates
 # prior is a list with components b0, B0 (mean and covariance on normal prior for beta), phi0, Phi0 (mean and covariance on truncated normal prior for phi), am0, bm0 (shape and rate for inverse-gamma prior on sigma2m), as0, bs0 (shape and rate for inverse-gamma prior on sigma2s), m0, and C0 (mean and covariance on normal prior for initial state)
 
+fmri_mcmc <- function(y, psi, prior, initial, mcmc.details, steps, progress=TRUE, print.iter=FALSE) {
+  # Initial values of x and theta
+  if(missing(initial)) {
+    # Set up initial values    
+  } else {
+    x = initial$x
+    theta = initial$theta
+  }
+  
+  # Check dimensions
+  check = check.dim(y, x, theta, psi, prior)
+  y = check$y
+  x = check$x
+  theta = check$theta
+  psi = check$psi
+  prior = check$prior
+  nt = dim(y)[2]
+  p = dim(x)[1]
+  q = dim(y)[1]
+  d = dim(psi$U)[2]
+  
+  # MCMC details
+  if(missing(mcmc.details)) {
+    n.thin <- 1   # save every n.thin(th) iteration
+    n.sims <- 10
+    n.burn <- 0
+  } else {
+    n.thin = mcmc.details$n.thin
+    n.sims = mcmc.details$n.sims
+    n.burn = mcmc.details$n.burn
+  }
+  if (missing(steps)) {
+    steps=c('beta','sigma2m','phi','sigma2s','x')
+  } 
+  
+  # save structures
+  n.iter <- (n.sims - n.burn)%/%n.thin
+  keep.beta <- matrix(NA, n.iter, d)
+  keep.sigma2m <- rep(NA, n.iter)
+  keep.phi <- matrix(NA, n.iter, p)
+  keep.sigma2s <- rep(NA, n.iter)
+  keep.x  <- array(NA, c(n.iter, p, nt + 1))
+  accept.phi <- 0
+  
+  # Run mcmc
+  if(progress & !print.iter) pb = txtProgressBar(0,n.sims,style=3)
+  for (i in 1:n.sims) {
+    if(print.iter & (i %% n.thin == 0))
+    {
+      print(i)
+    } else if(progress) {
+      setTxtProgressBar(pb,i)
+    }
+    
+    if('beta' %in% steps) theta$beta = sample.beta(y, x, theta, psi, prior)
+    if('sigma2m' %in% steps) theta$sigma2m = sample.sigma2m(y, x, theta, psi, prior)
+    if('phi' %in% steps){
+      samp.phi = sample.phi(y, x, theta, psi, prior)
+      theta$phi = samp.phi$phi
+      accept.phi = accept.phi + samp.phi$accept
+    }
+    if('sigma2s' %in% steps) theta$sigma2s = sample.sigma2m(y, x, theta, psi, prior)
+    if('x' %in% steps) x = sample.states(y, x, theta, psi, prior)
+    
+    # Only save every n.thin iteration
+    if (ii <- save.iteration(i,n.burn,n.thin)) {
+      keep.beta[ii,] = theta$beta
+      keep.sigma2m[ii] = theta$sigma2m
+      keep.phi[ii,] = theta$phi
+      keep.sigma2s[ii] = theta$sigma2s
+      keep.x[ii,,] = x
+    }
+  }
+  
+  return(list(beta = keep.beta, sigma2m = keep.sigma2m, phi = keep.phi, sigma2s = keep.sigma2s, x = keep.x, accept.phi=accept.phi, mcmc.details=list(n.sims=n.sims,n.thin=n.thin,n.burn=n.burn)))
+}
+
 sample.beta <- function(y, x, theta, psi, prior)
 {
   nt = dim(y)[2]
@@ -75,9 +152,14 @@ sample.phi <- function(y, x, theta, psi, prior)
   while(!is.stationary(phi.p)) phi.p = rep(t(chol(Phi_n))%*%rnorm(p,phi_n,1),1)
   
   # Perform MH step
+  accept = FALSE
   logMH <- Psi(x[,1], psi$m0, phi.p, theta$sigma2s) - Psi(x[,1], psi$m0, theta$phi, theta$sigma2s)
-  if (log(runif(1)) < logMH) theta$phi <- phi.p
-  return(theta$phi)
+  if (log(runif(1)) < logMH)
+  {
+    theta$phi <- phi.p
+    accept = TRUE
+  }
+  return(list(phi=theta$phi,accept=accept))
 }
 
 sample.sigma2s <- function(y, x, theta, psi, prior)
@@ -114,13 +196,23 @@ sample.states <- function(y, x, theta, psi, prior)
 # Utility Functions
 ###################
 
+save.iteration <- function(current.iter, n.burn, n.thin) {
+  if (current.iter<n.burn | ((current.iter-n.burn)%%n.thin)!=0) {
+    return(0)
+  } else {
+    return((current.iter-n.burn)/n.thin)
+  }
+}
+
 # check.dim() checks that y, x, and components of theta, psi, and prior are of correct dimensions
 check.dim <- function(y, x, theta, psi, prior)
 {
   # Data and states
+  if(is.null(dim(y))) y = matrix(y, nr=1)
   y = as.matrix(y)
   q = dim(y)[1]
   nt = dim(y)[2]
+  if(is.null(dim(x))) x = matrix(x, nr=1)
   x = as.matrix(x)
   p = dim(x)[1]
   stopifnot(dim(x)[2] == nt + 1)
@@ -153,7 +245,7 @@ check.dim <- function(y, x, theta, psi, prior)
   } else {
     stopifnot(length(dim(F) == 3) & dim(F)[1] == q & dim(F)[2] == p & dim(F)[3] == nt)
   }
-    psi = list(V = V, U = U, F = F)
+  psi = list(V = V, U = U, F = F)
     
   # Prior hyperparameters
   checked.prior = list()

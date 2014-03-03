@@ -45,7 +45,7 @@ dlm.sim <- function(nt, F, G, V, W, x0, beta, U = 0)
   for(i in 1:nt)
   {
     x[,i+1] = G%*%x[,i] + t(chol.W[,oo.W])%*%rnorm(p,0,1)
-    y[,i] = U[,,i]%*%beta + F[,,i]%*%x[,i+1] + t(chol.V[,oo.V])%*%rnorm(q,0,1)
+    y[,i] = matrix(U[,,i],nr=q,nc=d)%*%beta + matrix(F[,,i],nr=q,nc=p)%*%x[,i+1] + t(chol.V[,oo.V])%*%rnorm(q,0,1)
   }
   return(list(y = y, x = x, true.params = list(F=F,G=G,V=V,W=W,beta=beta,U=U)))
 }

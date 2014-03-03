@@ -90,6 +90,7 @@ sample.beta <- function(y, x, theta, psi, prior)
   nt = dim(y)[2]
   p = dim(x)[1]
   q = dim(y)[1]
+  d = dim(psi$U)[2]
   Vinv = solve(psi$V)
   
   # Subtract states from data
@@ -100,27 +101,27 @@ sample.beta <- function(y, x, theta, psi, prior)
   UVe <- rep(0,d)
   for(k in 1:nt)
   {
-    UVU = UVU + t(psi$U[,,k])%*%Vinv%*%psi$U[,,k]
-    UVe = UVe + t(psi$U[,,k])%*%Vinv%*%e[,k]
+    Uk = matrix(psi$U[,,k],nr=q,nc=d)
+    UVU = UVU + t(Uk)%*%Vinv%*%Uk
+    UVe = UVe + t(Uk)%*%Vinv%*%e[,k]
   }
-  UVUinv = solve(UVU)
     
   # If sigma2m = 0, betas are completely determined given the states
   if(theta$sigma2m == 0)
   {    
-    return(UVUinv%*%UVe)
+    return(solve(UVU)%*%UVe)
   } else { # sample beta from full conditional (normal distribution)
     B0.prec = solve(prior$B0)
-    Bn = solve((1/theta$sigma2m)*UVUinv + B0.prec)
+    Bn = solve((1/theta$sigma2m)*UVU + B0.prec)
     bn = Bn%*%((1/theta$sigma2m)*UVe + B0.prec%*%prior$b0)
-    return(rep(t(chol(Bn))%*%rnorm(q,bn,1),1))
+    return(rep(bn + t(chol(Bn))%*%rnorm(d,0,1),1))
   }
 }
 
 sample.sigma2m <- function(y, x, theta, psi, prior)
 {
   nt = dim(y)[2]
-  p = dim(X)[1]
+  p = dim(x)[1]
   q = dim(y)[1]
   Vinv = solve(psi$V)
 
@@ -192,7 +193,7 @@ sample.states <- function(y, x, theta, psi, prior)
   V = theta$sigma2m*psi$V
   sf = c(1,rep(0,p-1))
   W = theta$sigma2s*sf%*%t(sf)
-  C0 = makeC0(phi)
+  C0 = makeC0(theta$phi)
   return(ffbs(y, psi$U, theta$beta, psi$F, G, V, W, prior$m0, C0))
 }
 
@@ -304,12 +305,13 @@ ffbs <- function(y, U, beta, F, G, V, W, m0, C0)
   # Forward-filtering
   for(i in 1:nt)
   {
+    Ui = matrix(U[,,i],nr=q,nc=d); Fi = matrix(F[,,i],nr=q,nc=p)
     A[,i] = G%*%m[,i]; R[,,i] = G%*%C[,,i]%*%t(G) + W
-    f[,i] = U[,,i]%*%beta + F[,,i]%*%A[,i]; Q[,,i] = F[,,i]%*%R[,,i]%*%t(F[,,i]) + V
+    f[,i] = Ui%*%beta + Fi%*%A[,i]; Q[,,i] = Fi%*%R[,,i]%*%t(Fi) + V
     e = y[,i] - f[,i]; Qinv = solve(Q[,,i])
-    RFQinv = R[,,i]%*%t(F[,,i])%*%Qinv
+    RFQinv = R[,,i]%*%t(Fi)%*%Qinv
     m[,i+1] = A[,i] + RFQinv%*%e
-    C[,,i+1] = R[,,i] - RFQinv%*%F[,,i]%*%R[,,i]
+    C[,,i+1] = R[,,i] - RFQinv%*%Fi%*%R[,,i]
   }
   
   # Backward-sampling
@@ -318,7 +320,7 @@ ffbs <- function(y, U, beta, F, G, V, W, m0, C0)
   for(i in nt:1)
   {
     CGRinv = C[,,i]%*%t(G)%*%solve(R[,,i])
-    h = m[,i] + CGRinv%*%(x[,i+1] - A[i,])
+    h = m[,i] + CGRinv%*%(x[,i+1] - A[,i])
     H = C[,,i] - CGRinv%*%G%*%C[,,i]
     x[,i] = t(chol(H))%*%rnorm(p, h, 1)
   }
@@ -333,7 +335,7 @@ makee <- function(y, F, x)
   stopifnot(dim(x)[2] == nt+1 & dim(F)[1] == q & dim(F)[2] == p & dim(F)[3] == nt)
   
   e = matrix(NA, nr=q, nc=nt)
-  for(i in 1:nt) e[,i] = y[,i] - F[,,i]%*%x[,i+1]
+  for(i in 1:nt) e[,i] = y[,i] - matrix(F[,,i],nr=q,nc=p)%*%x[,i+1]
   return(e)
 }
 
@@ -347,7 +349,7 @@ makeE <- function(y, U, beta, F, x)
   stopifnot(dim(x)[2] == nt+1 & dim(F)[1] == q & dim(F)[2] == p & dim(F)[3] == nt)
   
   E = matrix(NA, nr=q, nc=nt)
-  for(i in 1:nt) E[,i] = y[,i] - U[,,i]%*%beta - F[,,i]%*%x[,i+1]
+  for(i in 1:nt) E[,i] = y[,i] - matrix(U[,,i],nr=q,nc=d)%*%beta - matrix(F[,,i],nr=q,nc=p)%*%x[,i+1]
   return(E)
 }
 

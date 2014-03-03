@@ -1,8 +1,4 @@
-# y is a q by nt matrix of data
-# x is a p by nt + 1 matrix of states
-# theta is d + p + 2 vector of fixed parameters
-# psi is a list with components V q by q covariance matrix, U a q by d by nt array of beta covariates, and F a q by p by nt array of state covariates
-# prior is a list with components b0, B0 (mean and covariance on normal prior for beta), phi0, Phi0 (mean and covariance on truncated normal prior for phi), am0, bm0 (shape and rate for inverse-gamma prior on sigma2m), as0, bs0 (shape and rate for inverse-gamma prior on sigma2s), m0, and C0 (mean and covariance on normal prior for initial state)
+source("dlm_ar_functions.r")
 
 fmri_mcmc <- function(y, psi, prior, initial, mcmc.details, steps, progress=TRUE, print.iter=FALSE) {
   # Initial values of x and theta
@@ -80,6 +76,14 @@ fmri_mcmc <- function(y, psi, prior, initial, mcmc.details, steps, progress=TRUE
   
   return(list(beta = keep.beta, sigma2m = keep.sigma2m, phi = keep.phi, sigma2s = keep.sigma2s, x = keep.x, accept.phi=accept.phi, mcmc.details=list(n.sims=n.sims,n.thin=n.thin,n.burn=n.burn)))
 }
+
+# Functions to sample from full conditional distributions
+# Inputs:
+# y is a q by nt matrix of data
+# x is a p by nt + 1 matrix of states
+# theta is d + p + 2 vector of fixed parameters
+# psi is a list with components V q by q covariance matrix, U a q by d by nt array of beta covariates, and F a q by p by nt array of state covariates
+# prior is a list with components b0, B0 (mean and covariance on normal prior for beta), phi0, Phi0 (mean and covariance on truncated normal prior for phi), am0, bm0 (shape and rate for inverse-gamma prior on sigma2m), as0, bs0 (shape and rate for inverse-gamma prior on sigma2s), m0, and C0 (mean and covariance on normal prior for initial state)
 
 sample.beta <- function(y, x, theta, psi, prior)
 {
@@ -388,28 +392,9 @@ makex0 <- function(x, phi)
   return(x0)
 }
 
-makeG <- function(phi)
-{
-  m = length(phi)
-  G <- diag(0,m)
-  G[,1] <- phi
-  G[-m,-1] <- diag(1,m-1)
-  return(G)
-}
-
 is.stationary <- function(phi)
 {
   return(all(Mod(polyroot(c(1,-phi)))>1))
-}
-
-makeC0 <- function(phi)
-{
-  p <- length(phi)
-  G <- makeG(phi)
-  f <- c(1,rep(0,p-1))
-  vv <- solve(diag(p^2)-G%x%G)%*%as.numeric(f%*%t(f))
-  nr <- sqrt(length(vv))
-  return(matrix(vv,nr,nr))
 }
 
 Psi <- function(x0, m0, phi, sigma2s, log=TRUE) 

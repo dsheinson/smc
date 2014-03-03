@@ -61,7 +61,7 @@ fmri_mcmc <- function(y, psi, prior, initial, mcmc.details, steps, progress=TRUE
       theta$phi = samp.phi$phi
       accept.phi = accept.phi + samp.phi$accept
     }
-    if('sigma2s' %in% steps) theta$sigma2s = sample.sigma2m(y, x, theta, psi, prior)
+    if('sigma2s' %in% steps) theta$sigma2s = sample.sigma2s(y, x, theta, psi, prior)
     if('x' %in% steps) x = sample.states(y, x, theta, psi, prior)
     
     # Only save every n.thin iteration
@@ -170,9 +170,9 @@ sample.phi <- function(y, x, theta, psi, prior)
 sample.sigma2s <- function(y, x, theta, psi, prior)
 {
   nt = dim(y)[2]
-  p = dim(X)[1]
+  p = dim(x)[1]
   q = dim(y)[1]
-  C0 = makeC0(phi)
+  C0 = makeC0(theta$phi)
   
   # Calculate SSx
   X = makeXtilde(x, theta$phi)
@@ -181,7 +181,7 @@ sample.sigma2s <- function(y, x, theta, psi, prior)
   
   # Sample from inverse gamma
   asn = (p/2)*(nt + 1) + prior$as0
-  bsn = (SSx + t(x[,1]-psi$m0)%*%solve(C0)%*%(x[,1]-psi$m0))/2 + prior$bs0
+  bsn = (SSx + t(x[,1]-prior$m0)%*%solve(C0)%*%(x[,1]-prior$m0))/2 + prior$bs0
   return(1/rgamma(1,asn,bsn))
 }
 
@@ -300,8 +300,8 @@ ffbs <- function(y, U, beta, F, G, V, W, m0, C0)
   Q = array(NA, dim = c(q, q, nt))
   A = matrix(NA, nr = p, nc = nt)
   R = array(NA, dim = c(p, p, nt))
-  m[1,] = m0; C[,,1] = C0
-  
+  m[,1] = m0; C[,,1] = C0
+
   # Forward-filtering
   for(i in 1:nt)
   {
@@ -316,13 +316,28 @@ ffbs <- function(y, U, beta, F, G, V, W, m0, C0)
   
   # Backward-sampling
   x = matrix(NA, nr=p, nc=nt+1)
-  x[,nt+1] = t(chol(C[,,nt+1]))%*%rnorm(p,m[,nt+1],1)
+  oo = 1:p
+  chol.C0 = try(chol(C[,,nt+1]),silent=TRUE)
+  if(class(chol.C0) == "try-error")
+  {
+    chol.C0 = chol(C[,,nt+1],pivot=TRUE)
+    oo = order(attr(chol.C0, "pivot"))
+  }
+  x[,nt+1] = m[,nt+1] + t(as.matrix(chol.C0)[,oo])%*%rnorm(p,0,1)
   for(i in nt:1)
   {
     CGRinv = C[,,i]%*%t(G)%*%solve(R[,,i])
     h = m[,i] + CGRinv%*%(x[,i+1] - A[,i])
     H = C[,,i] - CGRinv%*%G%*%C[,,i]
-    x[,i] = t(chol(H))%*%rnorm(p, h, 1)
+    
+    oo = 1:p
+    chol.H = try(chol(H),silent=TRUE)
+    if(class(chol.H) == "try-error")
+    {
+      chol.H = chol(H,pivot=TRUE)
+      oo = order(attr(chol.H, "pivot"))
+    }
+    x[,i] = h + t(as.matrix(chol.H)[,oo])%*%rnorm(p, 0, 1)
   }
   return(x)
 }

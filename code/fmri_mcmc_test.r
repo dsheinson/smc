@@ -18,4 +18,7 @@ psi = list(V=V,U=U,F=F)
 initial = list(x=mysims[[1]]$x, theta = list(beta = mysims[[1]]$true.params$beta, sigma2m = mysims[[1]]$true.params$V[1,1], phi = mysims[[1]]$true.params$G[1,1], sigma2s = mysims[[1]]$true.params$W[1,1]))
 prior = list(m0 = 0, phi0 = 0, Phi0 = 1e6)
 
-out = fmri_mcmc(y, psi, prior, initial, steps = 'phi')
+mcmc.details = list(n.sims = 21000, n.thin = 1, n.burn = 1000)
+out = fmri_mcmc(y, psi, prior, initial, mcmc.details, 'phi')
+
+hist(out$phi)

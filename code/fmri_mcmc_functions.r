@@ -152,7 +152,7 @@ sample.phi <- function(y, x, theta, psi, prior)
   Phi0.prec = solve(prior$Phi0)
   Phin = solve((1/theta$sigma2s)*XX + Phi0.prec)
   phin = Phin%*%((1/theta$sigma2s)*Xx1 + Phi0.prec%*%prior$phi0)
-  phi.p = rep(t(chol(Phin))%*%rnorm(p,phin,1),1) 
+  phi.p = rep(phin + t(chol(Phin))%*%rnorm(p),1) 
   while(!is.stationary(phi.p)) phi.p = rep(t(chol(Phin))%*%rnorm(p,phin,1),1)
   
   # Perform MH step
@@ -402,6 +402,6 @@ Psi <- function(x0, m0, phi, sigma2s, log=TRUE)
   
   C0 <- makeC0(phi)
   C0.prec <- solve(C0)
-  logPsi <- -(log(det(C0))-(1/sigma2s)*t(x0-m0)%*%C0.prec%*%(x0-m0))/2
+  logPsi <- -.5*(log(det(C0))-(1/sigma2s)*t(x0-m0)%*%C0.prec%*%(x0-m0))/2
   return(ifelse(log, logPsi, exp(logPsi)))
 }

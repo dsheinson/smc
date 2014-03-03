@@ -58,7 +58,7 @@ p(y_{1:t},x_{0:t},\theta) = \prod_{k=1}^t\left[p(y_k|x_k,\theta)p(x_k|x_{k-1},\t
 &\phi \sim \mbox{N}_{S_\phi}(\phi_0, \Phi_0) \qquad \sigma^2_s \sim \mbox{IG}(a_{s_0}, b_{s_0})
 \end{align*}
 
-\noindent The hyperparameters $b_0$, $B_0$, $\phi_0$, $\Phi_0$, $a_{m_0}$, $b_{m_0}$, $a_{s_0}$, $b_{s_0}$, $m_0$, and $\tilde{C_0}$ are all assumed known. $\mbox{IG}(a,b)$ represents an inverse-gamma distribution with shape parameter $a$ and rate parameter $b$. $\mbox{N}_{\Omega}(\mu, \Sigma)$ represents the normal distribution truncated onto the set $\Omega$, with mean and covariance of its corresponding untruncated normal distribution given by $\mu$ and $\Sigma$, respectively. $S_{\phi}$ represents the set of all $\phi$ such that $x_t$ follows a stationary distribution.
+\noindent The hyperparameters $b_0$, $B_0$, $\phi_0$, $\Phi_0$, $a_{m_0}$, $b_{m_0}$, $a_{s_0}$, $b_{s_0}$, and $m_0$ are all assumed known. $\mbox{IG}(a,b)$ represents an inverse-gamma distribution with shape parameter $a$ and rate parameter $b$. $\mbox{N}_{\Omega}(\mu, \Sigma)$ represents the normal distribution truncated onto the set $\Omega$, with mean and covariance of its corresponding untruncated normal distribution given by $\mu$ and $\Sigma$, respectively. $S_{\phi}$ represents the set of all $\phi$ such that $x_t$ follows a stationary distribution.
 
 To implement a Gibbs sampling algorithm that generates MCMC samples from the joint posterior distribution $p(x_{0:t},\theta|y_{1:t})$, we must draw from the following full conditional distributions given here in general and described in more detail in Section  \ref{sec:fullcond}:
 
@@ -139,8 +139,8 @@ b_{m_t}^{(i)} &= \frac{1}{2}\mbox{SS}_y + b_{m_0} \\
 \begin{enumerate}
 \item Draw $\phi^* \sim \mbox{N}(\phi_t^{(i)},\Phi_t^{(i)})$, where
 \begin{align*}
-\phi_t^{(i)} &= \Phi_t^{(i)}\left(\frac{1}{{\sigma^2_s}^{(i-1)}} \sum^t_{k=1} \tilde{X}_k'\tilde{W}^{-1}x_k^{(i)} + \Phi_0^{-1}\phi_0\right) \\
-\Phi_t^{(i)} &= \left(\frac{1}{{\sigma^2_s}^{(i-1)}} \sum^t_{k=1} \tilde{X}_k'\tilde{V}^{-1}\tilde{X}_k + \Phi_0^{-1}\right)^{-1}
+\phi_t &= \Phi_t\left(\frac{1}{\sigma^2_s} \tilde{X}'\tilde{x} + \Phi_0^{-1}\phi_0\right) \\
+\Phi_t &= \left(\frac{1}{\sigma^2_s} \tilde{X}'\tilde{X} + \Phi_0^{-1}\right)^{-1}
 \end{align*} \label{step:phi}
 \item If $\phi^* \in S_{\phi}$, go to Step \ref{step:mh}. Otherwise, go back to step \ref{step:phi}.
 \item Calculate $R = \mbox{min}\left\{\frac{\Psi(\phi*)}{\Psi(\phi^{(i-1)})}, 1\right\}$ and draw $u \sim \mbox{Unif}[0,1]$. If $u < R$, set $\phi^{(i)} = \phi^*$. Otherwise, set $\phi^{(i)} = \phi^{(i-1)}$. \label{step:mh}

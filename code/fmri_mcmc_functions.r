@@ -83,7 +83,7 @@ fmri_mcmc <- function(y, psi, prior, initial, mcmc.details, steps, progress=TRUE
 # x is a p by nt + 1 matrix of states
 # theta is d + p + 2 vector of fixed parameters
 # psi is a list with components V q by q covariance matrix, U a q by d by nt array of beta covariates, and F a q by p by nt array of state covariates
-# prior is a list with components b0, B0 (mean and covariance on normal prior for beta), phi0, Phi0 (mean and covariance on truncated normal prior for phi), am0, bm0 (shape and rate for inverse-gamma prior on sigma2m), as0, bs0 (shape and rate for inverse-gamma prior on sigma2s), m0, and C0 (mean and covariance on normal prior for initial state)
+# prior is a list with components b0, B0 (mean and covariance on normal prior for beta), phi0, Phi0 (mean and covariance on truncated normal prior for phi), am0, bm0 (shape and rate for inverse-gamma prior on sigma2m), as0, bs0 (shape and rate for inverse-gamma prior on sigma2s), and m0 (mean on normal prior for initial state; covariance matrix is constructed using makeC0() to ensure initial state comes from a stationary distribution)
 
 sample.beta <- function(y, x, theta, psi, prior)
 {
@@ -145,19 +145,19 @@ sample.phi <- function(y, x, theta, psi, prior)
   # Make X
   X = makeXtilde(x, theta$phi)
   x1 = x[1,2:(nt+1)]
-  XXinv = solve(t(X)%*%X)
+  XX = t(X)%*%X
   Xx1 = t(X)%*%x1
   
   # Calculate phin and Phin and sample phi
   Phi0.prec = solve(prior$Phi0)
-  Phin = solve((1/theta$sigma2s)*XXinv + Phi0.prec)
+  Phin = solve((1/theta$sigma2s)*XX + Phi0.prec)
   phin = Phin%*%((1/theta$sigma2s)*Xx1 + Phi0.prec%*%prior$phi0)
   phi.p = rep(t(chol(Phin))%*%rnorm(p,phin,1),1) 
-  while(!is.stationary(phi.p)) phi.p = rep(t(chol(Phi_n))%*%rnorm(p,phi_n,1),1)
+  while(!is.stationary(phi.p)) phi.p = rep(t(chol(Phin))%*%rnorm(p,phin,1),1)
   
   # Perform MH step
   accept = FALSE
-  logMH <- Psi(x[,1], psi$m0, phi.p, theta$sigma2s) - Psi(x[,1], psi$m0, theta$phi, theta$sigma2s)
+  logMH <- Psi(x[,1], prior$m0, phi.p, theta$sigma2s) - Psi(x[,1], prior$m0, theta$phi, theta$sigma2s)
   if (log(runif(1)) < logMH)
   {
     theta$phi <- phi.p
@@ -224,11 +224,11 @@ check.dim <- function(y, x, theta, psi, prior)
   # Unknown parameters
   if(is.null(theta$beta)) beta = 0 else beta = rep(theta$beta, 1)
   d = length(beta)
-  if(is.null(theta$phi) phi = rep(0,p) else phi = rep(theta$phi, 1)
-  stopifnot(length(phi == p))
+  if(is.null(theta$phi)) phi = rep(0,p) else phi = rep(theta$phi, 1)
+  stopifnot(length(phi) == p)
   if(is.null(theta$sigma2m)) sigma2m = 0 else sigma2m = theta$sigma2m[1]
   if(is.null(theta$sigma2s)) sigma2s = 0 else sigma2s = theta$sigma2s[1]
-  theta = list(beta = beta, phi = phi, sigma2m = sigma2m, sigma2s)
+  theta = list(beta = beta, phi = phi, sigma2m = sigma2m, sigma2s = sigma2s)
   
   # Known parameters
   if(is.null(psi$V)) V = as.matrix(diag(q)) else V = as.matrix(psi$V)
@@ -255,8 +255,6 @@ check.dim <- function(y, x, theta, psi, prior)
   checked.prior = list()
   checked.prior$m0 = rep(prior$m0,1)
   stopifnot(length(checked.prior$m0) == p)
-  checked.prior$C0 = as.matrix(prior$C0)
-  stopifnot(dim(checked.prior$C0)[1] == p & dim(checked.prior$C0)[2] == p)
   if(!is.null(prior$b0) & !is.null(prior$B0))
   {
     checked.prior$b0 = rep(prior$b0,1)
@@ -269,12 +267,12 @@ check.dim <- function(y, x, theta, psi, prior)
     checked.prior$Phi0 = as.matrix(prior$Phi0)
     stopifnot(length(checked.prior$phi0) == p & dim(checked.prior$Phi0)[1] == p & dim(checked.prior$Phi0)[2] == p)
   }
-  if(!is.null(prior$am0) & !is.null(bm0))
+  if(!is.null(prior$am0) & !is.null(prior$bm0))
   {
     checked.prior$am0 = rep(prior$am0,1)[1]
     checked.prior$bm0 = rep(prior$bm0,1)[1]
   }
-  if(!is.null(prior$as0) & !is.null(bs0))
+  if(!is.null(prior$as0) & !is.null(prior$bs0))
   {
     checked.prior$as0 = rep(prior$as0,1)[1]
     checked.prior$bs0 = rep(prior$bs0,1)[1]
@@ -291,7 +289,7 @@ ffbs <- function(y, U, beta, F, G, V, W, m0, C0)
   q = dim(y)[1]
   d = length(beta)
   stopifnot((dim(G)[1] == dim(G)[2]) & (dim(V)[1] == dim(V)[2]) & (dim(W)[1] == dim(W)[2]) & (dim(C0)[1] == dim(C0)[2]))
-  stopifnot((dim(C0)[1] == p) & (dim(G)[1] == p & (dim(F)[1] == q) & (dim(F)[2] == p) & (dim(F)[3] == nt) & (dim(V)[1] == q) & (dim(W)[1] == p))
+  stopifnot((dim(C0)[1] == p) & (dim(G)[1] == p) & (dim(F)[1] == q) & (dim(F)[2] == p) & (dim(F)[3] == nt) & (dim(V)[1] == q) & (dim(W)[1] == p))
   stopifnot(dim(U)[1] == q & dim(U)[2] == d & dim(U)[3] == nt)
             
   # Initialize output arrays
@@ -362,7 +360,7 @@ makeXtilde <- function(x, phi)
   
   if(p == 1)
   {
-    Xtilde[,p] == x[,1:nt] 
+    Xtilde[,p] = x[,1:nt] 
   } else {
     for(i in 1:nt) if(i == 1) Xtilde[i,] = makex0(x, phi) else Xtilde[i,] = c(x[1,i], Xtilde[i-1,1:(p-1)])
   }

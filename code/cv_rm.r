@@ -35,9 +35,9 @@ pf_lmarglik <- function(n.sim, np, W, label, alpha = 0.05, progress = FALSE)
 }
 
 # Apply pf_lmarglik for many pf runs with different number of particles and values of W
-data1 = expand.grid(n.sim=rep(c(1,2,3),c(20,20,20)),np=c(10000, 20000), W=c(0.5,1,2), stringsAsFactors=FALSE)
+data1 = expand.grid(n.sim=rep(c(1,2,3),c(20,20,20)),np=10000, W=2, stringsAsFactors=FALSE)
 data1 = data.frame(data1, label = 1:dim(data1)[1])
-data2 = expand.grid(n.sim=4:20,np=c(10000, 20000), W=c(0.5,1,2), stringsAsFactors=FALSE)
+data2 = expand.grid(n.sim=4:20,np=10000, W=c(0.5,1,2), stringsAsFactors=FALSE)
 data2 = data.frame(data2, label = (dim(data1)[1] + 1:dim(data2)[1]))
 mydata = rbind(data1,data2)
 require(doMC)

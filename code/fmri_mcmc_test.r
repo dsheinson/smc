@@ -4,7 +4,7 @@ source("fmri_mcmc_functions.r")
 dpath = "../data/"
 gpath = "../graphs/"
 
-fmri_mcmc_test <- function(n.sim, mod, n.chain, x, beta, sigma2m, phi, sigma2s, progress, print.iter)
+fmri_mcmc_test <- function(n.sim, mod, n.chain, x=1, beta=1, sigma2m=1, phi=1, sigma2s=1, progress=FALSE, print.iter=TRUE)
 {
   # Load data
   load(paste(dpath,"dlm_ar_sim-20-",mod,".rdata",sep=""))
@@ -24,8 +24,19 @@ fmri_mcmc_test <- function(n.sim, mod, n.chain, x, beta, sigma2m, phi, sigma2s, 
   steps = c('x','beta','sigma2m','phi','sigma2s')
   params.est <- which(as.logical(c(x,beta,sigma2m,phi,sigma2s)))
   steps = steps[params.est]
-  mcmc.details = list(n.sims = 110, n.thin = 1, n.burn = 10)
-  out = fmri_mcmc(y, psi, prior, initial, mcmc.details, steps)
+  mcmc.details = list(n.sims = 11000, n.thin = 1, n.burn = 1000)
+  out = fmri_mcmc(y, psi, prior, initial, mcmc.details, steps, progress, print.iter)
   
-  save(out, file = paste(dpath,"fmri_mcmc_test-",paste(mod,n.chain,beta,sigma2m,phi,sigma2s,sep="-"),sep=""))
+  cat(n.sim,mod,n.chain,beta,sigma2m,phi,sigma2s,"\n",sep=" ")
+  save(out, file = paste(dpath,"fmri_mcmc_test-",paste(n.sim,mod,n.chain,beta,sigma2m,phi,sigma2s,sep="-"),".rdata",sep=""))
 }
+
+require(plyr)
+require(doMC)
+registerDoMC()
+mydata = expand.grid(n.chain = 1:3, n.sim = 1:20, mod = c("M101"), print.iter = FALSE, stringsAsFactors=FALSE)
+sigma2m = rep(1,dim(mydata)[1])
+sigma2m[which(mydata$mod == "M010")] = 0
+mydata = data.frame(mydata, sigma2m)
+set.seed(78)
+m_ply(mydata, fmri_mcmc_test, .parallel = TRUE)

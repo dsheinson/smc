@@ -12,7 +12,7 @@ dlm.sim <- function(nt, F, G, V, W, x0, beta, U = 0)
   if(is.null(dim(F))) F = array(F,c(q,p,nt))
   if(is.matrix(F)) F = array(rep(F,nt),dim=c(dim(F)[1],dim(F)[2],nt)) else stopifnot(length(dim(F) == 3) & dim(F)[1] == q & dim(F)[2] == p & dim(F)[3] == nt)
   
-  if(missing(beta)) beta = rep(0,1)
+  if(missing(beta)) beta = 0
   d = length(beta)
   if(is.null(dim(U))) U = array(U,c(q,d,nt))
   if(is.matrix(U))
@@ -23,7 +23,7 @@ dlm.sim <- function(nt, F, G, V, W, x0, beta, U = 0)
     stopifnot(length(dim(U) == 3) & dim(U)[1] == q & dim(U)[2] == d & dim(U)[3] == nt)
   }
   
-  # Compute choleski decompositions of CO, V, W and check if semi-positive definite
+  # Compute choleski decompositions of V and W and check if semi-positive definite
   oo.V <- 1:q; oo.W <- 1:p
   chol.V = try(chol(V),silent=TRUE)
   if(class(chol.V) == "try-error")

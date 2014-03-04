@@ -5,7 +5,7 @@ dpath = "../data/"
 
 # Simulate data
 N = 20
-nt = 200
+nt = 150
 F = G = V = W = C0 = 1
 x0 = 0
 mysims = list()

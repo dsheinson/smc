@@ -13,6 +13,7 @@ load(paste(dpath,"rw_sim.rdata",sep=""))
 # Function to run pfs
 pf_lmarglik <- function(n.sim, n.run, W, np, alpha = 0.05, progress = FALSE)
 {
+  rnorm(1)
   a0 = b0 = 1
   mydlm = list(F = 1, G = 1, V = 1, W = W, m0 = 0, C0 = 1)
   dllik1 = function(y, x, theta) dllik(y, x, sigma2 = theta)

@@ -15,12 +15,14 @@ cv_test <- function(n.sim, alpha = 0.05, burn = 1)
   G = mysims[[n.sim]]$true.params$G
   V = mysims[[n.sim]]$true.params$V
   W = mysims[[n.sim]]$true.params$W
-  m0 = mysims[[n.sim]]$true.params$m0
-  C0 = mysims[[n.sim]]$true.params$C0
+  a0 = 1
+  b0 = 1
+  m0 = 0
+  C0 = 1
   nt = dim(mysims[[n.sim]]$y)[2]
 
   # Calculate sufficient statistics of filtered distributions
-  post = cv.post(mysims[[n.sim]]$y, F, G, V, W, 1, 1, m0, C0)
+  post = cv.post(mysims[[n.sim]]$y, F, G, V, W, a0, b0, m0, C0)
 
   # Calculatue 95% credible intervals for filtered states, precision, and one-step ahead predictions
   lk = qt(alpha/2,2*post$a)*sqrt(post$C[1,1,]*(post$b/post$a)) + post$m[1,]
@@ -95,16 +97,15 @@ F = mysims[[n.sim]]$true.params$F
 G = mysims[[n.sim]]$true.params$G
 V = mysims[[n.sim]]$true.params$V
 W = mysims[[n.sim]]$true.params$W
-m0 = mysims[[n.sim]]$true.params$m0
-C0 = mysims[[n.sim]]$true.params$C0
+m0 = 0
+C0 = 1
 np = 100
 a0 = b0 = 1
 dllik1 = function(y, x, theta) dllik(y, x, sigma2 = theta)
 revo1 = function(x, theta) revo(x, sigma2 = theta)
 rprior1 <- function() rprior(a0,b0)
-mydlm = list(F=F[1,1,1],G=G[1,1],V=V[1,1],W=W[1,1],m0=m0,C0=C0[1,1])
+mydlm = list(F=F[1,1,1],G=G[1,1],V=V[1,1],W=W[1,1],m0=m0,C0=C0)
 rmove <- function(y, x, theta) rm_mcmc(y, x, theta, a0, b0, mydlm, 1)
-set.seed(60)
 out = rm_pf(mysims[[n.sim]]$y, dllik1, revo1, rprior1, rmove, np, method="stratified", nonuniformity="ess", threshold=0.8, log=FALSE)
 pf.lmarglik(out)
 

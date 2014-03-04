@@ -14,10 +14,16 @@ N = length(mysims)
 # Create data set of names of rm pf runs
 data1 = expand.grid(n.sim=rep(c(1,2,3),c(20,20,20)),np=c(100, 500, 1000, 5000), W=c(0.5,1,2), stringsAsFactors=FALSE)
 data1 = data.frame(data1, label = 1:dim(data1)[1])
-data2 = expand.grid(n.sim=4:20,np=c(100, 500, 1000, 5000), W=c(0.5,1,2), stringsAsFactors=FALSE)
-data2 = data.frame(data2, label = (dim(data1)[1] + 1:dim(data2)[1]))
-mydata = rbind(data1,data2)
-np = unique(mydata$np)
+data2 = expand.grid(n.sim=rep(c(1,2,3),c(20,20,20)),np=c(10000,20000), W=c(0.5,1,2), stringsAsFactors=FALSE)
+data2 = data.frame(data2, label = 1:dim(data2)[1])
+data2 = data2[data2$n.sim == 1 & data2$np == 10000 & data2$W != 2,]
+data3 = expand.grid(n.sim=rep(c(1,2,3),c(20,20,20)),np=10000, W=2, stringsAsFactors=FALSE)
+data3 = data.frame(data3, label = 1:dim(data3)[1])
+data3 = data3[data3$n.sim == 1,]
+data4 = expand.grid(n.sim=4:20,np=c(100, 500, 1000, 5000), W=c(0.5,1,2), stringsAsFactors=FALSE)
+data4 = data.frame(data4, label = (dim(data1)[1] + 1:dim(data4)[1]))
+mydata = rbind(data1,data2,data3,data4)
+np = unique(mydata$np)[-1]
 W = unique(mydata$W)
 nsims = unique(mydata$n.sim)
 cols = rainbow(length(np))
@@ -99,7 +105,7 @@ cv_pf_quantiles <- function(n.sim, W, alpha = 0.05, burn.k = 1, burn.p = 5)
 }
 
 require(plyr)
-m_ply(expand.grid(n.sim=nsims, W=W), cv_pf_quantiles)
+m_ply(expand.grid(n.sim=1, W=W), cv_pf_quantiles)
 
 ## Plot kernel density estimates of log-likelihood under each model
 cv_pf_loglik <- function(n.sim, alpha = 0.05)
@@ -182,7 +188,7 @@ cv_pf_loglik <- function(n.sim, alpha = 0.05)
   dev.off()
 }
 
-m_ply(data.frame(n.sim = c(1,2,3)),cv_pf_loglik)
+m_ply(data.frame(n.sim = 1),cv_pf_loglik)
 
 ## Plots analyzing rm pf runs between simulations
 # Calculate true log marginal likelihoods under each model
@@ -198,6 +204,7 @@ true_lmarglik = function(n.sim, W)
 true.lmarglik = maply(expand.grid(n.sim=nsims, W=W), true_lmarglik)
 
 # Load approximate log marginal likelihoods for particle filter runs
+np = c(100, 500, 1000, 5000)
 alpha = 0.05
 rm.lmarglik = array(NA, c(length(nsims),length(np),length(W)))
 for(j in 1:length(np))

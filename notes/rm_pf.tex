@@ -104,11 +104,11 @@ A single time series of data, $y_{1:T}$ with $T = 100$, was simulated from $M_2$
 \caption{On left, sequential 95\% credible intervals (red lines) for $x_t|y_{1:t}$ and 95\% prediction intervals (blue lines) for $y_t|y_{1:t-1}$ (right) for $t = 1, 2, \ldots, 100$. On right, sequential 95\% credible intervals (red lines) for $\phi|y_{1:t}$ for $t = 1, 2, \ldots, 100$. Black horizontal lines indicate the true simulated states (left) the true precision (right) used for simulation ($\phi = 1$) . Black points in left picture represent simulated data points. Credible intervals were calculated analytically using the student-t distribution.} \label{fig:sim}
 \end{figure}
 
-To assess the variability of the approximation to the log marginal likelihood of the simulated data obtained using the resample-move particle filter, we ran the particle filter 20 times each using 100, 500, 1000, 5000 particles. Figure \ref{fig:pf-hist} displays kernel density estimates of the distribution of log marginal likelihoods calculated from these particle filter runs, and Figure \ref{fig:pf-1sim-ternary} displays compositional plots of posterior model probabilities for each particle filter run compared with the true posterior model probabilities.
+To assess the variability of the approximation to the log marginal likelihood of the simulated data obtained using the resample-move particle filter, we ran the particle filter 20 times each using 100, 500, 1000, 5000, and 10000 particles. Figure \ref{fig:pf-hist} displays kernel density estimates of the distribution of log marginal likelihoods calculated from these particle filter runs, and Figure \ref{fig:pf-1sim-ternary} displays compositional plots of posterior model probabilities for each particle filter run compared with the true posterior model probabilities.
 
 \begin{figure}
 \includegraphics[width=1.0\textwidth]{../graphs/cv_pf_loglik-1}
-\caption{Kernel density estimates of log marginal likelihoods of a single time series simulated from $M_2$, approximated assuming $M_2$ true using the resample-move particle filter, for each of 20 particle filter runs using 100 (red), 500 (green), 1000 (turquoise), and 5000 (blue) particles.} \label{fig:pf-hist}
+\caption{Kernel density estimates of log marginal likelihoods of a single time series simulated from $M_2$, approximated assuming $M_2$ true using the resample-move particle filter, for each of 20 particle filter runs using 500 (red), 1000 (green), 5000 (turquoise), and 10000 (blue) particles.} \label{fig:pf-hist}
 \end{figure}
 
 \begin{figure}
@@ -129,7 +129,7 @@ Next, we simulated 19 more data sets from $M_2$ with $\sigma^2 = 1$ (making 20 t
   \hline
 $M_1$ &   1 &   1 &   0 \\
 \hline
-$M_2$ &   2 &   7 &   1 \\ 
+$M_2$ &   2 &   7 &   1 \\
 \hline
 $M_3$ &   0 &   4 &   4 \\
    \hline

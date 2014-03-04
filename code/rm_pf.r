@@ -31,16 +31,22 @@ rm_pf = function(y, dllik, revo, rprior, rmove, n, lag = NULL, store.all = FALSE
   .Random.seed = current.seed
 
   # Set up initial state
-  state = list(); length(state) = nt + 1
-  for(i in 1:(nt + 1)) state[[i]] = array(NA, dim=c(ns,n,i))
+  state = array(NA, dim=c(ns,n,nt+1))
+#  state = list(); length(state) = nt + 1
+#  for(i in 1:(nt + 1)) state[[i]] = array(NA, dim=c(ns,n,i))
   theta = array(NA, dim=c(np,n,nt+1))
   for (j in 1:n) 
   {
     tmp = rprior()
-    state[[1]][,j,] = tmp$x
+    state[,j,1] = tmp$x
     theta[,j,1] = tmp$theta
   }
-
+  if(store.all)
+  {
+    state.all = list()
+    state.all[[1]] = array(state[,,1], dim=c(ns,n,1))
+  }
+    
   # Initialize weights
   weight = matrix(NA, n, nt+1)
   increment = matrix(NA, n, nt)
@@ -55,11 +61,11 @@ rm_pf = function(y, dllik, revo, rprior, rmove, n, lag = NULL, store.all = FALSE
   {
     if(progress) setTxtProgressBar(pb,i)
     # Augmentation and update weights
-    state[[i+1]][,,1:i] = state[[i]]
+#    state[[i+1]][,,1:i] = state[[i]]
     for(j in 1:n)
     {
-      state[[i+1]][,j,i+1] = revo(state[[i]][,j,i],theta[,j,i])
-      increment[j,i] = dllik(y[,i],state[[i+1]][,j,i+1],theta[,j,i])
+      state[,j,i+1] = revo(state[,j,i],theta[,j,i])
+      increment[j,i] = dllik(y[,i],state[,j,i+1],theta[,j,i])
       weight[j,i+1] = log(weight[j,i]) + increment[j,i]
     }
     
@@ -77,24 +83,21 @@ rm_pf = function(y, dllik, revo, rprior, rmove, n, lag = NULL, store.all = FALSE
       if(l <= 0) l = 1
       for (j in 1:n) 
       {
-        tmp2 = rmove(y[,l:i],state[[i+1]][,kk[j],l:(i+1)],theta[,kk[j],i])
-        state[[i+1]][,j,l:(i+1)] = tmp2$state
+        tmp2 = rmove(y[,l:i],state[,kk[j],l:(i+1)],theta[,kk[j],i])
+        state[,j,l:(i+1)] = tmp2$state
         theta[,j,i+1] = tmp2$theta
       }
     } else {
       theta[,,i+1] = theta[,,i]
     }
 
+    if(store.all) state.all[[i+1]] = array(state[,,1:(i+1)], dim=c(ns,n,1:(i+1)))
+
     parent[,i+1] = kk
   }
 
   # Return entire state trajectories or only filtered states?
-  if(!store.all)
-  {
-    new.state = array(NA, dim = c(ns,n,nt+1))
-    for(i in 1:(nt+1)) new.state[,,i] = state[[i]][,,i]
-    state = new.state
-  }
+  if(store.all) state = state.all
   
   return(list(state=state, theta=theta, weight=weight, increment=increment, parent=parent))
 }

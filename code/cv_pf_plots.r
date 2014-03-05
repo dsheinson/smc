@@ -10,36 +10,24 @@ tpath = "../tables/"
 # Load simulated data
 load(paste(dpath,"rw_sim.rdata",sep=""))
 N = length(mysims)
-
-# Create data set of names of rm pf runs
-data1 = expand.grid(n.sim=rep(c(1,2,3),c(20,20,20)),np=c(100, 500, 1000, 5000), W=c(0.5,1,2), stringsAsFactors=FALSE)
-data1 = data.frame(data1, label = 1:dim(data1)[1])
-data2 = expand.grid(n.sim=rep(c(1,2,3),c(20,20,20)),np=c(10000,20000), W=c(0.5,1,2), stringsAsFactors=FALSE)
-data2 = data.frame(data2, label = 1:dim(data2)[1])
-data2 = data2[data2$n.sim == 1 & data2$np == 10000 & data2$W != 2,]
-data3 = expand.grid(n.sim=rep(c(1,2,3),c(20,20,20)),np=10000, W=2, stringsAsFactors=FALSE)
-data3 = data.frame(data3, label = 1:dim(data3)[1])
-data3 = data3[data3$n.sim == 1,]
-data4 = expand.grid(n.sim=4:20,np=c(100, 500, 1000, 5000), W=c(0.5,1,2), stringsAsFactors=FALSE)
-data4 = data.frame(data4, label = (dim(data1)[1] + 1:dim(data4)[1]))
-mydata = rbind(data1,data2,data3,data4)
-np = unique(mydata$np)[-1]
-W = unique(mydata$W)
-nsims = unique(mydata$n.sim)
+np = c(500, 1000, 5000, 10000)
+W = c(0.5, 1, 2)
+n.sim = 1:20
 cols = rainbow(length(np))
 
 ## Function to plot quantiles from rm_pf, compared against true posterior
-cv_pf_quantiles <- function(n.sim, W, alpha = 0.05, burn.k = 1, burn.p = 5)
+cv_pf_quantiles <- function(n.sim, nruns, W, alpha = 0.05, burn.k = 1, burn.p = 5)
 {
   F = mysims[[n.sim]]$true.params$F[1,1,1]
   G = mysims[[n.sim]]$true.params$G[1,1]
   V = mysims[[n.sim]]$true.params$V[1,1]
-  m0 = mysims[[n.sim]]$true.params$m0
-  C0 = mysims[[n.sim]]$true.params$C0[1,1]
+  m0 = 0
+  C0 = 1
+  a0 = b0 = 1
   nt = dim(mysims[[n.sim]]$y)[2]
   
   # Calculate true posterior distribution under correct model
-  post = cv.post(mysims[[n.sim]]$y, F, G, V, W, 1, 1, 0, 1)
+  post = cv.post(mysims[[n.sim]]$y, F, G, V, W, a0, b0, m0, C0)
   
   # Calculatue 95% credible intervals for filtered states, precision, and one-step ahead predictions
   lk = qt(alpha/2,2*post$a)*sqrt(post$C[1,1,]*(post$b/post$a)) + post$m[1,]
@@ -52,12 +40,11 @@ cv_pf_quantiles <- function(n.sim, W, alpha = 0.05, burn.k = 1, burn.p = 5)
   gmax.k = gmax.p = -Inf
   for(j in 1:length(np))
   {
-    labels = mydata$label[which(mydata$n.sim == n.sim & mydata$np == np[j] & mydata$W == W)]
-    for(i in 1:length(labels))
+    for(i in 1:length(nruns))
     {
-      load(paste(dpath,"cv_pf-",n.sim,"-",np[j],"-",W,"-",labels[i],"-",alpha,".rdata",sep=""))
-      gmin.k = min(gmin.k, lk[-(1:burn.k)], mysims[[n.sim]]$x, pf.out$state.quant[-(1:burn.k),1,1])
-      gmax.k = max(gmax.k, uk[-(1:burn.k)], mysims[[n.sim]]$x, pf.out$state.quant[-(1:burn.k),1,2])
+      load(paste(dpath,"cv_pf-",paste(n.sim, i, W, np[j], alpha, sep="-"),".rdata",sep=""))
+      gmin.k = min(gmin.k, lk[-(1:burn.k)], mysims[[n.sim]]$x[1,], pf.out$state.quant[-(1:burn.k),1,1])
+      gmax.k = max(gmax.k, uk[-(1:burn.k)], mysims[[n.sim]]$x[1,], pf.out$state.quant[-(1:burn.k),1,2])
       gmin.p = min(gmin.p, lp[-(1:burn.p)], 1, pf.out$theta.quant[-(1:burn.p),1,1])
       gmax.p = max(gmax.p, up[-(1:burn.p)], 1, pf.out$theta.quant[-(1:burn.p),1,2])
     }
@@ -67,11 +54,10 @@ cv_pf_quantiles <- function(n.sim, W, alpha = 0.05, burn.k = 1, burn.p = 5)
   pdf(paste(gpath,"cv-pf-states-",n.sim,"-",W,"-",alpha,".pdf",sep=""))
   for(j in 1:length(np))
   {
-    labels = mydata$label[which(mydata$n.sim == n.sim & mydata$np == np[j] & mydata$W == W)]
-    for(i in 1:length(labels))
+    for(i in 1:length(nruns))
     {
-      load(paste(dpath,"cv_pf-",n.sim,"-",np[j],"-",W,"-",labels[i],"-",alpha,".rdata",sep=""))
-      if(j == 1 & i == 1) plot(0:nt,mysims[[n.sim]]$x[1,],ylim=c(gmin.k,gmax.k),type="l",xlab=expression(t),ylab=expression(x[t]))
+      load(paste(dpath,"cv_pf-",paste(n.sim, i, W, np[j], alpha, sep="-"),".rdata",sep=""))
+      if(j == 1 & i == 1) plot(0:nt,mysims[[n.sim]]$x[1,],ylim=c(gmin.k,gmax.k),type="l",xlab=expression(t),ylab=expression(x[t]),cex.lab=1.5)
       lines(0:nt, pf.out$state.quant[,1,1],col=cols[j])
       lines(0:nt, pf.out$state.quant[,1,2],col=cols[j])
     }
@@ -87,11 +73,10 @@ cv_pf_quantiles <- function(n.sim, W, alpha = 0.05, burn.k = 1, burn.p = 5)
   pdf(paste(gpath,"cv-pf-precision-",n.sim,"-",W,"-",alpha,".pdf",sep=""))
   for(j in 1:length(np))
   {
-    labels = mydata$label[which(mydata$n.sim == n.sim & mydata$np == np[j] & mydata$W == W)]
-    for(i in 1:length(labels))
+    for(i in 1:length(nruns))
     {
-      load(paste(dpath,"cv_pf-",n.sim,"-",np[j],"-",W,"-",labels[i],"-",alpha,".rdata",sep=""))
-      if(j == 1 & i == 1) plot(0:nt,rep(1,nt+1),ylim=c(gmin.p,gmax.p),type="l",xlab=expression(t),ylab=expression(phi))
+      load(paste(dpath,"cv_pf-",paste(n.sim, i, W, np[j], alpha, sep="-"),".rdata",sep=""))
+      if(j == 1 & i == 1) plot(0:nt,rep(1,nt+1),ylim=c(gmin.p,gmax.p),type="l",xlab=expression(t),ylab=expression(phi),cex.lab=1.5)
       lines(0:nt, pf.out$theta.quant[,1,1],col=cols[j])
       lines(0:nt, pf.out$theta.quant[,1,2],col=cols[j])
     }
@@ -105,16 +90,17 @@ cv_pf_quantiles <- function(n.sim, W, alpha = 0.05, burn.k = 1, burn.p = 5)
 }
 
 require(plyr)
-m_ply(expand.grid(n.sim=1, W=W), cv_pf_quantiles)
+m_ply(expand.grid(n.sim=1:N,nruns=rep(c(20,1),c(3,N-3)), W=W), cv_pf_quantiles)
 
 ## Plot kernel density estimates of log-likelihood under each model
-cv_pf_loglik <- function(n.sim, alpha = 0.05)
+cv_pf_loglik <- function(n.sim, nruns, alpha = 0.05)
 {
   F = mysims[[n.sim]]$true.params$F[1,1,1]
   G = mysims[[n.sim]]$true.params$G[1,1]
   V = mysims[[n.sim]]$true.params$V[1,1]
-  m0 = mysims[[n.sim]]$true.params$m0
-  C0 = mysims[[n.sim]]$true.params$C0[1,1]
+  m0 = 0
+  C0 = 1
+  a0 = b0 = 1
   nt = dim(mysims[[n.sim]]$y)[2]
 
   # Calculate true log marginal likelihoods under each model
@@ -126,15 +112,14 @@ cv_pf_loglik <- function(n.sim, alpha = 0.05)
   true.lmarglik = maply(data.frame(W=W), true_lmarglik)
 
   # Load approximate log marginal likelihoods for particle filter runs
-  rm.lmarglik = array(NA, c(length(nsims),length(np), length(W)))
+  rm.lmarglik = array(NA, c(nruns, length(np), length(W)))
   for(j in 1:length(np))
   {
     for(k in 1:length(W))
     {
-      labels = mydata$label[which(mydata$n.sim == n.sim & mydata$np == np[j] & mydata$W == W[k])]
-      for(i in 1:length(labels))
+      for(i in 1:nruns)
       {
-        load(paste(dpath,"cv_pf-",n.sim,"-",np[j],"-",W[k],"-",labels[i],"-",alpha,".rdata",sep=""))
+        load(paste(dpath,"cv_pf-",paste(n.sim, i, W[k], np[j], alpha,sep="-"),".rdata",sep=""))
         rm.lmarglik[i,j,k] = pf.out$lmarglik
       }
     }
@@ -149,8 +134,8 @@ cv_pf_loglik <- function(n.sim, alpha = 0.05)
   xlabs = c("Log Marginal Likelihood","","")
   cols = rainbow(length(np))
   mains = c(substitute(paste(tilde(W)," = ",aa,sep=""),list(aa=W[1])),substitute(paste(tilde(W)," = ",aa,sep=""),list(aa=W[2])),substitute(paste(tilde(W)," = ",aa,sep=""),list(aa=W[3])))
-  pdf(file=paste(gpath,"cv_pf_loglik-",n.sim,".pdf",sep=""),width=15,height=5)
-  par(mfrow=c(1,3),mar=c(5,6,4,2)+0.1)
+  pdf(file=paste(gpath,"cv_pf_loglik-",n.sim,".pdf",sep=""),width=5*length(W),height=5)
+  par(mfrow=c(1,length(W)),mar=c(5,6,4,2)+0.1)
   for(i in 1:length(W))
   {
     plot(density(rm.lmarglik[,1,i]),lwd=2,col=cols[1],main=mains[i],xlab=xlabs[i],ylab=ylabs[i],xlim=c(min(min.breaks),max(max.breaks)),ylim=c(min(min.densities[,i]),max(max.densities[,i])),cex.axis=1.5,cex.lab=1.75,cex.main=2)
@@ -198,23 +183,24 @@ true_lmarglik = function(n.sim, W)
   F = mysims[[n.sim]]$true.params$F[1,1,1]
   G = mysims[[n.sim]]$true.params$G[1,1]
   V = mysims[[n.sim]]$true.params$V[1,1]
-  post = cv.post(mysims[[n.sim]]$y, F, G, V, W, 1, 1, 0, 1)
+  m0 = 0
+  C0 = 1
+  a0 = b0 = 1
+  post = cv.post(mysims[[n.sim]]$y, F, G, V, W, a0, b0, m0, C0)
   return(cv.lmarglik(mysims[[n.sim]]$y, post$f, post$Q, post$a, post$b))
 }
-true.lmarglik = maply(expand.grid(n.sim=nsims, W=W), true_lmarglik)
+true.lmarglik = maply(expand.grid(n.sim=n.sim, W=W), true_lmarglik)
 
 # Load approximate log marginal likelihoods for particle filter runs
-np = c(100, 500, 1000, 5000)
 alpha = 0.05
 rm.lmarglik = array(NA, c(length(nsims),length(np),length(W)))
 for(j in 1:length(np))
 {
   for(k in 1:length(W))
   {
-    for(i in nsims)
+    for(i in N)
     {
-      label = mydata$label[which(mydata$n.sim == i & mydata$np == np[j] & mydata$W == W[k])][1]
-      load(paste(dpath,"cv_pf-",i,"-",np[j],"-",W[k],"-",label,"-",alpha,".rdata",sep=""))
+      load(paste(dpath,"cv_pf-",paste(i, 1, W[k], np[k], alpha, sep="-"),".rdata",sep=""))
       rm.lmarglik[i,j,k] = pf.out$lmarglik
     }
   }

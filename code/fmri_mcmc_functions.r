@@ -74,7 +74,7 @@ fmri_mcmc <- function(y, psi, prior, initial, mcmc.details, steps, progress=TRUE
     }
   }
   
-  return(list(beta = keep.beta, sigma2m = keep.sigma2m, phi = keep.phi, sigma2s = keep.sigma2s, x = keep.x, accept.phi=accept.phi, mcmc.details=list(n.sims=n.sims,n.thin=n.thin,n.burn=n.burn)))
+  return(list(beta = keep.beta, sigma2m = keep.sigma2m, phi = keep.phi, sigma2s = keep.sigma2s, x = keep.x, accept.phi=accept.phi, mcmc.details=list(n.sims=n.sims,n.thin=n.thin,n.burn=n.burn), initial=initial))
 }
 
 # Functions to sample from full conditional distributions
@@ -234,15 +234,15 @@ check.dim <- function(y, x, theta, psi, prior)
   # Known parameters
   if(is.null(psi$V)) V = as.matrix(diag(q)) else V = as.matrix(psi$V)
   stopifnot(dim(V)[1] == q & dim(V)[2] == q)
-  if(is.null(psi$U)) U = array(0,c(q,d,nt))
-  if(is.matrix(U))
+  if(is.null(psi$U)) U = array(0,c(q,d,nt)) else U = psi$U
+  if(is.matrix(psi$U)) 
   {
     stopifnot(dim(U)[1] == q & dim(U)[2] == d)
     U = array(U,dim=c(q,d,nt))
   } else {
     stopifnot(length(dim(U) == 3) & dim(U)[1] == q & dim(U)[2] == d & dim(U)[3] == nt)
   }
-  if(is.null(F)) F = array(0,c(q,p,nt))
+  if(is.null(psi$F)) F = array(0,c(q,p,nt)) else F = psi$F
   if(is.matrix(F))
   {
     stopifnot(dim(F)[1] == q & dim(F)[2] == p)
@@ -419,6 +419,6 @@ Psi <- function(x0, m0, phi, sigma2s, log=TRUE)
   
   C0 <- makeC0(phi)
   C0.prec <- solve(C0)
-  logPsi <- -.5*(log(det(C0))-(1/sigma2s)*t(x0-m0)%*%C0.prec%*%(x0-m0))/2
+  logPsi <- -.5*log(det(C0))-.5*(1/sigma2s)*t(x0-m0)%*%C0.prec%*%(x0-m0)
   return(ifelse(log, logPsi, exp(logPsi)))
 }

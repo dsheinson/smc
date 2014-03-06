@@ -2,7 +2,7 @@
 dpath = "../data/"
 gpath = "../graphs/"
 
-fmri_mcmc_plot <- function(n.sim, mod, n.chains, x=1, beta=1, sigma2m=1, phi=1, sigma2s=1)
+fmri_mcmc_plot <- function(n.sim, mod, nsims, n.chains, x=1, beta=1, sigma2m=1, phi=1, sigma2s=1)
 {
   # Load simulated data
   load(paste(dpath,"dlm_ar_sim-20-",mod,".rdata",sep=""))
@@ -11,7 +11,7 @@ fmri_mcmc_plot <- function(n.sim, mod, n.chains, x=1, beta=1, sigma2m=1, phi=1, 
   out.all <- list()
   for(i in 1:n.chains)
   {
-    load(paste(dpath,"fmri_mcmc_test-",paste(n.sim,mod,i,beta,sigma2m,phi,sigma2s,sep="-"),".rdata",sep=""))
+    load(paste(dpath,"fmri_mcmc_test-",paste(n.sim,mod,nsims,i,beta,sigma2m,phi,sigma2s,sep="-"),".rdata",sep=""))
     out.all[[i]] = out
   }
   n.sims = out.all[[1]]$mcmc.details$n.sims
@@ -103,11 +103,11 @@ fmri_mcmc_plot <- function(n.sim, mod, n.chains, x=1, beta=1, sigma2m=1, phi=1, 
 }
 
 require(plyr)
-mydata = expand.grid(n.sim = 1:20, mod = "M101", n.chains = 3, x=1, beta=1, sigma2m=1, phi=1, sigma2s=1, stringsAsFactors=FALSE)
+mydata = expand.grid(n.sim = 1:20, mod = "M101", nsims = 10000, n.chains = 3, x=1, beta=1, sigma2m=1, phi=1, sigma2s=1, stringsAsFactors=FALSE)
 m_ply(mydata, fmri_mcmc_plot)
 
 # Function to calculate medians
-fmri_mcmc_medians <- function(nsims, mod, n.chains, x=1, beta=1, sigma2m=1, phi=1, sigma2s=1)
+fmri_mcmc_medians <- function(nsims, mod, nsims, n.chains, x=1, beta=1, sigma2m=1, phi=1, sigma2s=1)
 {
   # Load simulated data
   load(paste(dpath,"dlm_ar_sim-20-",mod,".rdata",sep=""))
@@ -185,3 +185,5 @@ fmri_mcmc_medians <- function(nsims, mod, n.chains, x=1, beta=1, sigma2m=1, phi=
     dev.off()
   }
 }
+
+m_ply(mydata, fmri_mcmc_medians)

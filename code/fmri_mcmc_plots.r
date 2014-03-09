@@ -107,7 +107,7 @@ mydata = expand.grid(n.sim = 1:20, mod = "M101", nsims = 10000, n.chains = 3, x=
 m_ply(mydata, fmri_mcmc_plot)
 
 # Function to calculate medians
-fmri_mcmc_medians <- function(nsims, mod, nsims, n.chains, x=1, beta=1, sigma2m=1, phi=1, sigma2s=1)
+fmri_mcmc_medians <- function(nsims, mod, n.chains, n.iter = 10000, x=1, beta=1, sigma2m=1, phi=1, sigma2s=1)
 {
   # Load simulated data
   load(paste(dpath,"dlm_ar_sim-20-",mod,".rdata",sep=""))
@@ -118,7 +118,7 @@ fmri_mcmc_medians <- function(nsims, mod, nsims, n.chains, x=1, beta=1, sigma2m=
     out.all = list()
     for(i in 1:n.chains)
     {
-      load(paste(dpath,"fmri_mcmc_test-",paste(j,mod,i,beta,sigma2m,phi,sigma2s,sep="-"),".rdata",sep=""))
+      load(paste(dpath,"fmri_mcmc_test-",paste(j,mod,n.iter,i,beta,sigma2m,phi,sigma2s,sep="-"),".rdata",sep=""))
       out.all[[i]] = out
     }
     n.sims = out.all[[1]]$mcmc.details$n.sims
@@ -160,30 +160,32 @@ fmri_mcmc_medians <- function(nsims, mod, nsims, n.chains, x=1, beta=1, sigma2m=
   # Construct histograms
   if(beta)
   {
-    pdf(file=paste(gpath,"fmri_mcmc_test-",paste(nsims,mod,sep="-"),"-hist-beta.pdf",sep=""),width=5*d,height=5)
+    pdf(file=paste(gpath,"fmri_mcmc_test-",paste(nsims,mod,n.iter,sep="-"),"-hist-beta.pdf",sep=""),width=5*d,height=5)
     par(mfrow=c(1,d))
     for(i in 1:d) hist(med.beta[,i],xlab=eval(bquote(expression(beta[.(i-1)]))))
     dev.off()
   }
   if(sigma2m)
   {
-    pdf(file=paste(gpath,"fmri_mcmc_test-",paste(nsims,mod,sep="-"),"-hist-sigma2m.pdf",sep=""))
+    pdf(file=paste(gpath,"fmri_mcmc_test-",paste(nsims,mod,n.iter,sep="-"),"-hist-sigma2m.pdf",sep=""))
     hist(med.sigma2m,xlab=expression(sigma[m]^2))
     dev.off()
   }
   if(phi)
   {
-    pdf(file=paste(gpath,"fmri_mcmc_test-",paste(nsims,mod,sep="-"),"-hist-phi.pdf",sep=""),width=5*d,height=5)
+    pdf(file=paste(gpath,"fmri_mcmc_test-",paste(nsims,mod,n.iter,sep="-"),"-hist-phi.pdf",sep=""),width=5*d,height=5)
     par(mfrow=c(1,p))
     for(i in 1:p) hist(med.phi[,i],xlab=eval(bquote(expression(phi[.(i)]))))
     dev.off()
   }
   if(sigma2s)
   {
-    pdf(file=paste(gpath,"fmri_mcmc_test-",paste(nsims,mod,sep="-"),"-hist-sigma2s.pdf",sep=""))
+    pdf(file=paste(gpath,"fmri_mcmc_test-",paste(nsims,mod,n.iter,sep="-"),"-hist-sigma2s.pdf",sep=""))
     hist(med.sigma2s,xlab=expression(sigma[s]^2))
     dev.off()
   }
 }
 
+require(plyr)
+mydata = expand.grid(nsims = 20, mod = "M101", n.chains = 3, x=1, beta=1, sigma2m=1, phi=1, sigma2s=1, stringsAsFactors=FALSE)
 m_ply(mydata, fmri_mcmc_medians)

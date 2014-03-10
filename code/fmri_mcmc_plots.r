@@ -103,7 +103,7 @@ fmri_mcmc_plot <- function(n.sim, mod, nsims, n.chains, x=1, beta=1, sigma2m=1, 
 }
 
 require(plyr)
-mydata = expand.grid(n.sim = 1:20, mod = "M101", nsims = 10000, n.chains = 3, x=1, beta=1, sigma2m=1, phi=1, sigma2s=1, stringsAsFactors=FALSE)
+mydata = expand.grid(n.sim = 1:20, mod = "M101", nsims = 11000, n.chains = 3, x=1, beta=1, sigma2m=1, phi=1, sigma2s=1, stringsAsFactors=FALSE)
 m_ply(mydata, fmri_mcmc_plot)
 
 # Function to calculate medians
@@ -165,7 +165,7 @@ fmri_mcmc_medians <- function(nsims, mod, n.chains, n.iter = 10000, x=1, beta=1,
     for(i in 1:d)
     {
       hist(med.beta[,i],xlab=eval(bquote(expression(beta[.(i-1)]))))
-      abline(v=mysims[[j]]$true.params$beta[d])
+      abline(v=mysims[[j]]$true.params$beta[i],lwd=2,col=2)
     }
     dev.off()
   }
@@ -173,7 +173,7 @@ fmri_mcmc_medians <- function(nsims, mod, n.chains, n.iter = 10000, x=1, beta=1,
   {
     pdf(file=paste(gpath,"fmri_mcmc_test-",paste(nsims,mod,n.iter,sep="-"),"-hist-sigma2m.pdf",sep=""))
     hist(med.sigma2m,xlab=expression(sigma[m]^2))
-    abline(v=mysims[[j]]$true.params$V[1,1])
+    abline(v=mysims[[j]]$true.params$V[1,1],lwd=2,col=2)
     dev.off()
   }
   if(phi)
@@ -183,7 +183,7 @@ fmri_mcmc_medians <- function(nsims, mod, n.chains, n.iter = 10000, x=1, beta=1,
     for(i in 1:p)
     {
       hist(med.phi[,i],xlab=eval(bquote(expression(phi[.(i)]))))
-      abline(v=mysims[[j]]$true.params$G[i,1])
+      abline(v=mysims[[j]]$true.params$G[i,1],lwd=2,col=2)
     }
     dev.off()
   }
@@ -191,11 +191,11 @@ fmri_mcmc_medians <- function(nsims, mod, n.chains, n.iter = 10000, x=1, beta=1,
   {
     pdf(file=paste(gpath,"fmri_mcmc_test-",paste(nsims,mod,n.iter,sep="-"),"-hist-sigma2s.pdf",sep=""))
     hist(med.sigma2s,xlab=expression(sigma[s]^2))
-    abline(v=mysims[[j]]$true.params$W[1,1])
+    abline(v=mysims[[j]]$true.params$W[1,1],lwd=2,col=2)
     dev.off()
   }
 }
 
 require(plyr)
-mydata = expand.grid(nsims = 20, mod = "M101", n.chains = 3, x=1, beta=1, sigma2m=1, phi=1, sigma2s=1, stringsAsFactors=FALSE)
+mydata = expand.grid(nsims = 20, mod = "M101", n.chains = 3, n.iter = 11000, x=1, beta=1, sigma2m=1, phi=1, sigma2s=1, stringsAsFactors=FALSE)
 m_ply(mydata, fmri_mcmc_medians)

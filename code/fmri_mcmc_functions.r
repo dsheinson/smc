@@ -42,7 +42,7 @@ fmri_mcmc <- function(y, psi, prior, initial, mcmc.details, steps, progress=TRUE
   keep.phi <- matrix(NA, n.iter, p)
   keep.sigma2s <- rep(NA, n.iter)
   keep.x  <- array(NA, c(n.iter, p, nt + 1))
-  accept.phi <- 0
+  accept.phi <- rep(NA, n.iter)
   
   # Run mcmc
   if(progress & !print.iter) pb = txtProgressBar(0,n.sims,style=3)
@@ -59,7 +59,6 @@ fmri_mcmc <- function(y, psi, prior, initial, mcmc.details, steps, progress=TRUE
     if('phi' %in% steps){
       samp.phi = sample.phi(y, x, theta, psi, prior)
       theta$phi = samp.phi$phi
-      accept.phi = accept.phi + samp.phi$accept
     }
     if('sigma2s' %in% steps) theta$sigma2s = sample.sigma2s(y, x, theta, psi, prior)
     if('x' %in% steps) x = sample.states(y, x, theta, psi, prior)
@@ -71,6 +70,7 @@ fmri_mcmc <- function(y, psi, prior, initial, mcmc.details, steps, progress=TRUE
       keep.phi[ii,] = theta$phi
       keep.sigma2s[ii] = theta$sigma2s
       keep.x[ii,,] = x
+      if('phi' %in% steps) accept.phi[ii] = samp.phi$accept
     }
   }
   

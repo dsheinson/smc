@@ -41,7 +41,7 @@ fmri_mcmc_test <- function(n.sim, mod, n.chain, x=1, beta=1, sigma2m=1, phi=1, s
   steps = c('x','beta','sigma2m','phi','sigma2s')
   params.est <- which(as.logical(c(x,beta,sigma2m,phi,sigma2s)))
   steps = steps[params.est]
-  mcmc.details = list(n.sims = 10000, n.thin = 1, n.burn = 0)
+  mcmc.details = list(n.sims = 11000, n.thin = 1, n.burn = 1000)
   out = fmri_mcmc(y, psi, prior, initial, mcmc.details, steps, progress, print.iter)
   
   cat(n.sim,mod,n.chain,beta,sigma2m,phi,sigma2s,"\n",sep=" ")

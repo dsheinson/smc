@@ -162,26 +162,36 @@ fmri_mcmc_medians <- function(nsims, mod, n.chains, n.iter = 10000, x=1, beta=1,
   {
     pdf(file=paste(gpath,"fmri_mcmc_test-",paste(nsims,mod,n.iter,sep="-"),"-hist-beta.pdf",sep=""),width=5*d,height=5)
     par(mfrow=c(1,d))
-    for(i in 1:d) hist(med.beta[,i],xlab=eval(bquote(expression(beta[.(i-1)]))))
+    for(i in 1:d)
+    {
+      hist(med.beta[,i],xlab=eval(bquote(expression(beta[.(i-1)]))))
+      abline(v=mysims[[j]]$true.params$beta[d])
+    }
     dev.off()
   }
   if(sigma2m)
   {
     pdf(file=paste(gpath,"fmri_mcmc_test-",paste(nsims,mod,n.iter,sep="-"),"-hist-sigma2m.pdf",sep=""))
     hist(med.sigma2m,xlab=expression(sigma[m]^2))
+    abline(v=mysims[[j]]$true.params$V[1,1])
     dev.off()
   }
   if(phi)
   {
     pdf(file=paste(gpath,"fmri_mcmc_test-",paste(nsims,mod,n.iter,sep="-"),"-hist-phi.pdf",sep=""),width=5*d,height=5)
     par(mfrow=c(1,p))
-    for(i in 1:p) hist(med.phi[,i],xlab=eval(bquote(expression(phi[.(i)]))))
+    for(i in 1:p)
+    {
+      hist(med.phi[,i],xlab=eval(bquote(expression(phi[.(i)]))))
+      abline(v=mysims[[j]]$true.params$G[i,1])
+    }
     dev.off()
   }
   if(sigma2s)
   {
     pdf(file=paste(gpath,"fmri_mcmc_test-",paste(nsims,mod,n.iter,sep="-"),"-hist-sigma2s.pdf",sep=""))
     hist(med.sigma2s,xlab=expression(sigma[s]^2))
+    abline(v=mysims[[j]]$true.params$W[1,1])
     dev.off()
   }
 }

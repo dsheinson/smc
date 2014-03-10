@@ -154,7 +154,7 @@ sample.phi <- function(y, x, theta, psi, prior)
   Phin = solve((1/theta$sigma2s)*XX + Phi0.prec)
   phin = Phin%*%((1/theta$sigma2s)*Xx1 + Phi0.prec%*%prior$phi0)
   phi.p = rep(phin + t(chol(Phin))%*%rnorm(p),1) 
-  while(!is.stationary(phi.p)) phi.p = rep(t(chol(Phin))%*%rnorm(p,phin,1),1)
+  while(!is.stationary(phi.p)) phi.p = rep(phin + t(chol(Phin))%*%rnorm(p),1)
   
   # Perform MH step
   accept = FALSE

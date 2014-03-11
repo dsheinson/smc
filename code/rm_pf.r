@@ -32,8 +32,6 @@ rm_pf = function(y, dllik, revo, rprior, rmove, n, lag = NULL, store.all = FALSE
 
   # Set up initial state
   state = array(NA, dim=c(ns,n,nt+1))
-#  state = list(); length(state) = nt + 1
-#  for(i in 1:(nt + 1)) state[[i]] = array(NA, dim=c(ns,n,i))
   theta = array(NA, dim=c(np,n,nt+1))
   for (j in 1:n) 
   {
@@ -61,7 +59,6 @@ rm_pf = function(y, dllik, revo, rprior, rmove, n, lag = NULL, store.all = FALSE
   {
     if(progress) setTxtProgressBar(pb,i)
     # Augmentation and update weights
-#    state[[i+1]][,,1:i] = state[[i]]
     for(j in 1:n)
     {
       state[,j,i+1] = revo(state[,j,i],theta[,j,i])

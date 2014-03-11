@@ -11,8 +11,6 @@ tpath = "../tables/"
 load(paste(dpath,"rw_sim.rdata",sep=""))
 N = length(mysims)
 np = c(500, 1000, 5000, 10000)
-W = c(0.5, 1, 2)
-n.sim = 1:20
 cols = rainbow(length(np))
 
 ## Function to plot quantiles from rm_pf, compared against true posterior
@@ -40,7 +38,7 @@ cv_pf_quantiles <- function(n.sim, nruns, W, alpha = 0.05, burn.k = 1, burn.p = 
   gmax.k = gmax.p = -Inf
   for(j in 1:length(np))
   {
-    for(i in 1:length(nruns))
+    for(i in 1:nruns)
     {
       load(paste(dpath,"cv_pf-",paste(n.sim, i, W, np[j], alpha, sep="-"),".rdata",sep=""))
       gmin.k = min(gmin.k, lk[-(1:burn.k)], mysims[[n.sim]]$x[1,], pf.out$state.quant[-(1:burn.k),1,1])
@@ -73,7 +71,7 @@ cv_pf_quantiles <- function(n.sim, nruns, W, alpha = 0.05, burn.k = 1, burn.p = 
   pdf(paste(gpath,"cv-pf-precision-",n.sim,"-",W,"-",alpha,".pdf",sep=""))
   for(j in 1:length(np))
   {
-    for(i in 1:length(nruns))
+    for(i in 1:nruns)
     {
       load(paste(dpath,"cv_pf-",paste(n.sim, i, W, np[j], alpha, sep="-"),".rdata",sep=""))
       if(j == 1 & i == 1) plot(0:nt,rep(1,nt+1),ylim=c(gmin.p,gmax.p),type="l",xlab=expression(t),ylab=expression(phi),cex.lab=1.5)
@@ -90,9 +88,10 @@ cv_pf_quantiles <- function(n.sim, nruns, W, alpha = 0.05, burn.k = 1, burn.p = 
 }
 
 require(plyr)
-m_ply(expand.grid(n.sim=1:N,nruns=rep(c(20,1),c(3,N-3)), W=W), cv_pf_quantiles)
+mydata = expand.grid(n.sim = 1, nruns = 20, W = c(0.1,0.5,1,2,3))
+m_ply(mydata, cv_pf_quantiles)
 
-## Plot kernel density estimates of log-likelihood under each model
+## Plot kernel density estimates of log-likelihood under each model, ternary compositional plot, binary plots
 cv_pf_loglik <- function(n.sim, nruns, alpha = 0.05)
 {
   F = mysims[[n.sim]]$true.params$F[1,1,1]
@@ -155,7 +154,7 @@ cv_pf_loglik <- function(n.sim, nruns, alpha = 0.05)
   
   # How often does the pf pick the "right" model?
   rm.max = apply(rm.postModProbs, 1:2, function(x) which(x == max(x)))
-  prob.matchTruth = apply(rm.max, 2, function(x) sum(x == which(true.postModProbs == max(true.postModProbs)))/length(nsims))
+  prob.matchTruth = apply(rm.max, 2, function(x) sum(x == which(true.postModProbs == max(true.postModProbs)))/nruns)
   
   # Ternary diagrams of posterior model probabilities
   require(compositions)
@@ -173,7 +172,7 @@ cv_pf_loglik <- function(n.sim, nruns, alpha = 0.05)
   dev.off()
 }
 
-m_ply(data.frame(n.sim = 1),cv_pf_loglik)
+m_ply(data.frame(n.sim = 1, nruns = 20),cv_pf_loglik)
 
 ## Plots analyzing rm pf runs between simulations
 # Calculate true log marginal likelihoods under each model

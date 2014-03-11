@@ -49,7 +49,7 @@ cv_pf_quantiles <- function(n.sim, nruns, W, alpha = 0.05, burn.k = 1, burn.p = 
   }
   
   # Plot true data, states, 95% CI of filtered states, and 95% one-step ahead PI
-  pdf(paste(gpath,"cv-pf-states-",n.sim,"-",W,"-",alpha,".pdf",sep=""))
+  pdf(paste(gpath,"cv-pf-states-",n.sim,"-",10*W,"-",100*alpha,".pdf",sep=""))
   for(j in 1:length(np))
   {
     for(i in 1:length(nruns))
@@ -68,7 +68,7 @@ cv_pf_quantiles <- function(n.sim, nruns, W, alpha = 0.05, burn.k = 1, burn.p = 
   dev.off()
   
   # Plot 95% CI of filtered precision
-  pdf(paste(gpath,"cv-pf-precision-",n.sim,"-",W,"-",alpha,".pdf",sep=""))
+  pdf(paste(gpath,"cv-pf-precision-",n.sim,"-",10*W,"-",100*alpha,".pdf",sep=""))
   for(j in 1:length(np))
   {
     for(i in 1:nruns)
@@ -133,7 +133,7 @@ cv_pf_loglik <- function(n.sim, nruns, alpha = 0.05)
   xlabs = c("Log Marginal Likelihood","","")
   cols = rainbow(length(np))
   mains = c(substitute(paste(tilde(W)," = ",aa,sep=""),list(aa=W[1])),substitute(paste(tilde(W)," = ",aa,sep=""),list(aa=W[2])),substitute(paste(tilde(W)," = ",aa,sep=""),list(aa=W[3])))
-  pdf(file=paste(gpath,"cv_pf_loglik-",n.sim,"-",paste(W[1],W[2],W[3],sep="-"),".pdf",sep=""),width=5*length(W),height=5)
+  pdf(file=paste(gpath,"cv_pf_loglik-",n.sim,"-",paste(10*W[1],10*W[2],10*W[3],sep="-"),".pdf",sep=""),width=5*length(W),height=5)
   par(mfrow=c(1,length(W)),mar=c(5,6,4,2)+0.1)
   for(i in 1:length(W))
   {
@@ -160,7 +160,7 @@ cv_pf_loglik <- function(n.sim, nruns, alpha = 0.05)
   require(compositions)
   wlabels = rep(NA,length(W))
   for(i in 1:length(W)) wlabels[i] = as.expression(bquote(paste(tilde(W)," = ",sep="") ~ .(W[i])))
-  pdf(file=paste(gpath,"cv_pf_ternary-",n.sim,"-",paste(W[1],W[2],W[3],sep="-"),".pdf",sep=""),width=10,height=10)
+  pdf(file=paste(gpath,"cv_pf_ternary-",n.sim,"-",paste(10*W[1],10*W[2],10*W[3],sep="-"),".pdf",sep=""),width=10,height=10)
   par(mfrow=c(2,2))
   for(i in 1:length(np))
   {

@@ -133,11 +133,11 @@ cv_pf_loglik <- function(n.sim, nruns, alpha = 0.05)
   xlabs = c("Log Marginal Likelihood","","")
   cols = rainbow(length(np))
   mains = c(substitute(paste(tilde(W)," = ",aa,sep=""),list(aa=W[1])),substitute(paste(tilde(W)," = ",aa,sep=""),list(aa=W[2])),substitute(paste(tilde(W)," = ",aa,sep=""),list(aa=W[3])))
-  pdf(file=paste(gpath,"cv_pf_loglik-",n.sim,".pdf",sep=""),width=5*length(W),height=5)
+  pdf(file=paste(gpath,"cv_pf_loglik-",n.sim,"-",paste(W[1],W[2],W[3],sep="-"),".pdf",sep=""),width=5*length(W),height=5)
   par(mfrow=c(1,length(W)),mar=c(5,6,4,2)+0.1)
   for(i in 1:length(W))
   {
-    plot(density(rm.lmarglik[,1,i]),lwd=2,col=cols[1],main=mains[i],xlab=xlabs[i],ylab=ylabs[i],xlim=c(min(min.breaks),max(max.breaks)),ylim=c(min(min.densities[,i]),max(max.densities[,i])),cex.axis=1.5,cex.lab=1.75,cex.main=2)
+    plot(density(rm.lmarglik[,1,i]),lwd=2,col=cols[1],main=mains[i],xlab=xlabs[i],ylab=ylabs[i],xlim=c(min(min.breaks),max(max.breaks)),ylim=c(min(min.densities),max(max.densities)),cex.axis=1.5,cex.lab=1.75,cex.main=2)
     if(length(np > 1)) for(j in 2:length(np)) lines(density(rm.lmarglik[,j,i]),lwd=2,col=cols[j])
     abline(v=true.lmarglik[i],lwd=1,col=1)
     for(j in which(!(1:length(W) %in% i))) abline(v=true.lmarglik[j],lwd=1,col=1,lty=2)
@@ -160,7 +160,7 @@ cv_pf_loglik <- function(n.sim, nruns, alpha = 0.05)
   require(compositions)
   wlabels = rep(NA,length(W))
   for(i in 1:length(W)) wlabels[i] = as.expression(bquote(paste(tilde(W)," = ",sep="") ~ .(W[i])))
-  pdf(file=paste(gpath,"cv_pf_ternary-",n.sim,".pdf",sep=""),width=10,height=10)
+  pdf(file=paste(gpath,"cv_pf_ternary-",n.sim,"-",paste(W[1],W[2],W[3],sep="-"),".pdf",sep=""),width=10,height=10)
   par(mfrow=c(2,2))
   for(i in 1:length(np))
   {
@@ -172,6 +172,11 @@ cv_pf_loglik <- function(n.sim, nruns, alpha = 0.05)
   dev.off()
 }
 
+W = c(0.1,.5,1)
+m_ply(data.frame(n.sim = 1, nruns = 20),cv_pf_loglik)
+W = c(0.5,1,2)
+m_ply(data.frame(n.sim = 1, nruns = 20),cv_pf_loglik)
+W = c(1,2,3)
 m_ply(data.frame(n.sim = 1, nruns = 20),cv_pf_loglik)
 
 ## Plots analyzing rm pf runs between simulations
@@ -188,7 +193,7 @@ true_lmarglik = function(n.sim, W)
   post = cv.post(mysims[[n.sim]]$y, F, G, V, W, a0, b0, m0, C0)
   return(cv.lmarglik(mysims[[n.sim]]$y, post$f, post$Q, post$a, post$b))
 }
-true.lmarglik = maply(expand.grid(n.sim=n.sim, W=W), true_lmarglik)
+true.lmarglik = maply(expand.grid(n.sim=1:20, W=W), true_lmarglik)
 
 # Load approximate log marginal likelihoods for particle filter runs
 alpha = 0.05
@@ -225,7 +230,7 @@ for(i in 1:dim(rm.max)[2])
 
 # Plot ternary diagrams for posterior model probabilities
 require(compositions)
-N=length(nsims)
+N=20
 grad = order(true.postModProbs[,2],decreasing=TRUE)
 wlabels = rep(NA,length(W))
 for(i in 1:length(W)) wlabels[i] = as.expression(bquote(paste(tilde(W)," = ",sep="") ~ .(W[i])))

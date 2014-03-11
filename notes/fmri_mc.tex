@@ -168,6 +168,66 @@ b_{s_t}^{(i)} &= \frac{1}{2}\tilde{X}'\tilde{X} + \frac{1}{2}(x_0^{(i-1)}-m_0)'\
 \end{enumerate}
 \end{enumerate}
 
+\section{Example - dynamic regression}
+
+Data $y_1,\ldots,y_{245}$ were simulated from a dynamic regression model, i.e. the model described by equations \eqref{eqn:obs2} and \eqref{eqn:state2} with the following parameter values:
+
+\begin{align*}
+U_t = (1, u_t) &\quad \beta = (\beta_0,\beta_1)' \\
+F_t = (u_t) &\quad \tilde{V} = 1 \quad \sigma_m^2 = 1 \\
+G = \phi = 0.9 &\quad \sigma_s^2 = 1
+\end{align*}
+
+\begin{figure}[ht]
+\includegraphics[width=1.0\textwidth]{../graphs/fmri_mcmc_test-1-M101-traceplots-beta}
+\caption{Traceplots for $\beta$ for three MCMC chains.}
+\end{figure}
+
+\begin{figure}[ht]
+\includegraphics[width=1.0\textwidth]{../graphs/fmri_mcmc_test-1-M101-traceplots-sigma2m}
+\caption{Traceplots for $\sigma^2_m$ for three MCMC chains.}
+\end{figure}
+
+\begin{figure}[ht]
+\includegraphics[width=1.0\textwidth]{../graphs/fmri_mcmc_test-1-M101-traceplots-phi}
+\caption{Traceplots for $\phi$ for three MCMC chains.}
+\end{figure}
+
+\begin{figure}[ht]
+\includegraphics[width=1.0\textwidth]{../graphs/fmri_mcmc_test-1-M101-traceplots-sigma2s}
+\caption{Traceplots for $\sigma^2_s$ for three MCMC chains.}
+\end{figure}
+
+\begin{figure}[ht]
+\includegraphics[width=1.0\textwidth]{../graphs/fmri_mcmc_test-1-M101-traceplots-x}
+\caption{Traceplots for $x$ for three MCMC chains.}
+\end{figure}
+
+\begin{figure}[ht]
+\includegraphics[width=1.0\textwidth]{../graphs/fmri_mcmc_test-20-M101-11000-hist-beta}
+\caption{Histogram for $\beta$ for medians over MCMC chains for 20 different simulated data sets.}
+\end{figure}
+
+\begin{figure}[ht]
+\includegraphics[width=1.0\textwidth]{../graphs/fmri_mcmc_test-20-M101-11000-hist-sigma2m}
+\caption{Histogram for $\sigma^2_m$ for medians over MCMC chains for 20 different simulated data sets.}
+\end{figure}
+
+\begin{figure}[ht]
+\includegraphics[width=1.0\textwidth]{../graphs/fmri_mcmc_test-20-M101-11000-hist-phi}
+\caption{Histogram for $\phi$ for medians over MCMC chains for 20 different simulated data sets.}
+\end{figure}
+
+\begin{figure}[ht]
+\includegraphics[width=1.0\textwidth]{../graphs/fmri_mcmc_test-20-M101-11000-hist-sigma2s}
+\caption{Histogram for $\sigma^2_s$ for medians over MCMC chains for 20 different simulated data sets.}
+\end{figure}
+
+\begin{figure}[ht]
+\includegraphics[width=1.0\textwidth]{../graphs/fmri_mcmc_test-20-M101-11000-hist-x}
+\caption{Histogram for $x$ for medians over MCMC chains for 20 different simulated data sets.}
+\end{figure}
+
 \clearpage
 
 \bibliographystyle{plainnat}

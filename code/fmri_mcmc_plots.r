@@ -100,6 +100,29 @@ fmri_mcmc_plot <- function(n.sim, mod, nsims, n.chains, x=1, beta=1, sigma2m=1, 
     abline(h=mysims[[n.sim]]$true.params$W[1,1])
     dev.off()
   }
+  
+  # Traceplots for x_t (9 points)
+  if(x)
+  {
+    tt = dim(out.all[[1]]$x)[3]
+    npts = floor(seq(1,tt,len=9))
+    iter = (1:n.keep)*n.thin
+    pdf(file=paste(gpath,"fmri_mcmc_test-",paste(n.sim,mod,sep="-"),"-traceplots-x.pdf",sep=""))
+    par(mfrow=c(3,3), mar=c(5,6,4,2)+.1)
+    ymin = min(sapply(out.all, function(a) min(a$x[,,npts])))
+    ymax = max(sapply(out.all, function(a) max(a$x[,,npts])))
+    for(k in 1:length(npts))
+    {
+      ylab = bquote(expression(x[.(npts[k]-1)]))
+      plot(iter,out.all[[1]]$x[,1,npts[k]],type="l",ylim=c(ymin,ymax),xlab="Iteration",ylab=eval(ylab),cex.lab=1.5)
+      if(n.chains > 1)
+      {
+        for(j in 2:n.chains) lines(iter,out.all[[j]]$x[,1,npts[k]],col=2*(j-1))
+      }
+      abline(h=mysims[[n.sim]]$x[1,npts[k]])
+    }
+    dev.off()
+  }
 }
 
 require(plyr)
@@ -155,6 +178,15 @@ fmri_mcmc_medians <- function(nsims, mod, n.chains, n.iter = 10000, x=1, beta=1,
       if(j == 1) med.sigma2s = rep(NA, nsims)
       med.sigma2s[j] = median(sapply(out.all, function(x) x$sigma2s))
     }
+    
+    # Calculate medians for x (at 9 ponits)
+    if(x)
+    {
+      tt = dim(out.all[[1]]$x)[3]
+      npts = floor(seq(1,tt,len=9))
+      if(j == 1) med.x = matrix(NA, nr=nsims, nc = length(npts))
+      for(k in 1:length(npts)) med.x[j,k] = median(sapply(out.all, function(a) a$x[,1,npts[k]]))
+    }
   }
   
   # Construct histograms
@@ -164,7 +196,7 @@ fmri_mcmc_medians <- function(nsims, mod, n.chains, n.iter = 10000, x=1, beta=1,
     par(mfrow=c(1,d))
     for(i in 1:d)
     {
-      hist(med.beta[,i],xlab=eval(bquote(expression(beta[.(i-1)]))))
+      hist(med.beta[,i],xlab=eval(bquote(expression(beta[.(i-1)]))),main="")
       abline(v=mysims[[j]]$true.params$beta[i],lwd=2,col=2)
     }
     dev.off()
@@ -172,17 +204,17 @@ fmri_mcmc_medians <- function(nsims, mod, n.chains, n.iter = 10000, x=1, beta=1,
   if(sigma2m)
   {
     pdf(file=paste(gpath,"fmri_mcmc_test-",paste(nsims,mod,n.iter,sep="-"),"-hist-sigma2m.pdf",sep=""))
-    hist(med.sigma2m,xlab=expression(sigma[m]^2))
+    hist(med.sigma2m,xlab=expression(sigma[m]^2),main="")
     abline(v=mysims[[j]]$true.params$V[1,1],lwd=2,col=2)
     dev.off()
   }
   if(phi)
   {
-    pdf(file=paste(gpath,"fmri_mcmc_test-",paste(nsims,mod,n.iter,sep="-"),"-hist-phi.pdf",sep=""),width=5*d,height=5)
+    pdf(file=paste(gpath,"fmri_mcmc_test-",paste(nsims,mod,n.iter,sep="-"),"-hist-phi.pdf",sep=""),width=5*p,height=5)
     par(mfrow=c(1,p))
     for(i in 1:p)
     {
-      hist(med.phi[,i],xlab=eval(bquote(expression(phi[.(i)]))))
+      hist(med.phi[,i],xlab=eval(bquote(expression(phi[.(i)]))),main="")
       abline(v=mysims[[j]]$true.params$G[i,1],lwd=2,col=2)
     }
     dev.off()
@@ -190,8 +222,21 @@ fmri_mcmc_medians <- function(nsims, mod, n.chains, n.iter = 10000, x=1, beta=1,
   if(sigma2s)
   {
     pdf(file=paste(gpath,"fmri_mcmc_test-",paste(nsims,mod,n.iter,sep="-"),"-hist-sigma2s.pdf",sep=""))
-    hist(med.sigma2s,xlab=expression(sigma[s]^2))
+    hist(med.sigma2s,xlab=expression(sigma[s]^2),main="")
     abline(v=mysims[[j]]$true.params$W[1,1],lwd=2,col=2)
+    dev.off()
+  }
+  if(x)
+  {
+    tt = dim(out.all[[1]]$x)[3]
+    npts = floor(seq(1,tt,len=9))
+    pdf(file=paste(gpath,"fmri_mcmc_test-",paste(nsims,mod,n.iter,sep="-"),"-hist-x.pdf",sep=""))
+    par(mfrow=c(3,3))
+    for(k in 1:length(npts))
+    {
+      hist(med.x[,k],xlab=eval(bquote(expression(x[.(npts[k]-1)]))),main="")
+      abline(v=mysims[[j]]$x[1,npts[k]],lwd=2,col=2)
+    }
     dev.off()
   }
 }

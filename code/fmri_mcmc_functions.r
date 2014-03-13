@@ -193,7 +193,7 @@ sample.states <- function(y, x, theta, psi, prior)
   V = theta$sigma2m*psi$V
   sf = c(1,rep(0,p-1))
   W = theta$sigma2s*sf%*%t(sf)
-  C0 = makeC0(theta$phi)
+  C0 = theta$sigma2s*makeC0(theta$phi)
   return(ffbs(y, psi$U, theta$beta, psi$F, G, V, W, prior$m0, C0))
 }
 
@@ -308,6 +308,7 @@ ffbs <- function(y, U, beta, F, G, V, W, m0, C0)
     Ui = matrix(U[,,i],nr=q,nc=d); Fi = matrix(F[,,i],nr=q,nc=p)
     A[,i] = G%*%m[,i]; R[,,i] = G%*%C[,,i]%*%t(G) + W
     f[,i] = Ui%*%beta + Fi%*%A[,i]; Q[,,i] = Fi%*%R[,,i]%*%t(Fi) + V
+    
     e = y[,i] - f[,i]; Qinv = solve(Q[,,i])
     RFQinv = R[,,i]%*%t(Fi)%*%Qinv
     m[,i+1] = A[,i] + RFQinv%*%e

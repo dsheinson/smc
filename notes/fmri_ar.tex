@@ -1,0 +1,111 @@
+\documentclass{article}
+
+\usepackage{amsmath}
+\usepackage{natbib}
+\usepackage{enumitem}
+\usepackage{graphicx}
+
+\begin{document}
+
+\section{Regression with AR(p) errors} \label{sec:model}
+
+Consider the following regression model for a time series $y_t$, $t = 1,2,\ldots,T$, from a single voxel of the brain in an fMRI experiment:
+
+\begin{equation}
+y_t = x_t'\beta + w_t \label{eqn:reg}
+\end{equation}
+
+\noindent where $\beta = (\beta_0,\beta_1,\ldots,\beta_{d-1})$ is a vector of unknown coefficients, $x_t$ is a $d$-length vector of covariates at time $t$, and $w_t$ follows a $p$-order autoregressive process given by
+
+\begin{equation}
+w_t = \rho_1 w_{t-1} + \rho_2 w_{t-2} + \cdots + \rho_p w_{t-p} + \epsilon_t \label{eqn:ar}
+\end{equation}
+
+\noindent with $\epsilon_t \stackrel{\mbox{iid}}{\sim} \mbox{N}(0, \sigma^2)$. We can express equation \eqref{eqn:ar} in terms of a polynomial in the backshift operator $L$ as \[\rho(L)w_t = \epsilon_t\] where $\rho_p \ne 0$ and $\rho(L) = 1 - \rho_1L - \rho_2L^2 - \cdots - \rho_pL^p$. The model can be written in matrix form by
+
+\begin{equation}
+y = X\beta + w \label{eqn:matrix}
+\end{equation}
+
+\noindent with $y = (y_1,y_2,\ldots,y_T)'$, $X = (x_1|x_2|\cdots|x_T)'$, and $w = (w_1,w_2,\ldots,w_T)'$.
+
+We make the following assumptions about the model:
+\begin{enumerate}
+\item Stationarity: All roots of $\rho(L)$ lie outside the unit circle, and the first $p$ data points $y_{1:p} = (y_1,\ldots,y_p)'$ following the stationary distribution given by \[y_{1:p}|\beta,\rho,\sigma^2 \sim \mbox{N}(X_{1:p}\beta,\sigma^2\Sigma_p)\] where $X_{1:p} = (x_1|x_2|\cdots|x_p)'$ is the first $p$ rows of $X$, $\Sigma_p = \Omega'\Sigma_p\Omega + e_1(p)e_1(p)'$ (or equivalently $\mbox{vec}(\Sigma_p) = (I - \Omega \otimes \Omega)^{-1}\mbox{vec}(e_1(p)e_1(p))$), \[\Omega = \left(\begin{array}{ccccc} \rho_1 & 1 & 0 & \cdots & 0 \\
+    \rho_2 & 0 & 1 & \cdots & 0 \\
+    \vdots & \vdots & & \ddots & \vdots \\
+    \rho_{p-1} & 0 & \multicolumn{2}{c}{\cdots} & 1 \\
+    \rho_p & 0 & \multicolumn{2}{c}{\cdots} & 0 \end{array}\right),\] and $e_1(p) = (1,0,\ldots,0)'$ is a $p$-length vector.
+\item Prior distributions: $p(\beta,\rho,\sigma^2) = p(\beta)p(\rho)p(\sigma^2)$, where
+\begin{align*}
+\beta &\sim \mbox{N}(b_0,B_0) \\
+\rho &\sim \mbox{N}(r_0,R_0) \\
+\sigma^2 &\sim \mbox{IG}(v_0,d_0)
+\end{align*}
+\end{enumerate}
+
+\section{Posterior}
+
+Letting $\theta = (\beta,\rho,\sigma^2)'$, the posterior density is \[p(\theta|y) \propto p(y|\theta)p(\theta)\]
+
+\subsection{Full conditional for $\beta$ and $\sigma^2$} \label{sec:fullcondbeta}
+
+First, consider the first $p$ data points $y_{1:p}$. Let $Q_1$ be the Cholesky decomposition of $\Sigma_p$, i.e. $Q_1Q_1' = \Sigma_p$. Then, define $\tilde{y}_1 = Q_1^{-1}y_{1:p}$ and $\tilde{X}_1 = Q_1^{-1}X_{1:p}$. Then, it follows that $\tilde{y}_1 \sim \mbox{N}(\tilde{X}_1\beta,\sigma^2I_p)$.
+
+Next, consider the last $T - p$ data points $y_{p+1:T}$. Define $\tilde{y}_2 = \rho(L)y_{p+1:T}$ and $\tilde{X}_2 = (\tilde{x}_{p+1}|\tilde{x}_{p+2}|\cdots|\tilde{x}_T)'$ where $\tilde{x}_t = \rho(L)x_t$. Noting that applying $\rho(L)$ to $y_t$ (for $t \ge p+1$) yields \[\rho(L)y_t = \rho(L)x_t'\beta + \rho(L)w_t = \tilde{x}_t + \epsilon_t,\] it follows that $\tilde{y}_2 \sim \mbox{N}(\tilde{X}_2\beta, \sigma^2I_{T-p})$.
+
+Finally, letting $\tilde{y} = (\tilde{y}_1',\tilde{y}_2')'$ and $\tilde{X} = (\tilde{X}_1'|\tilde{X}_2')'$, it follows that
+
+\begin{equation}
+\tilde{y} \sim \mbox{N}(\tilde{X}\beta,\sigma^2I_T) \label{eqn:tilde}
+\end{equation}
+
+\noindent This leads to the following results:
+
+\begin{align}
+\beta | \rho, \sigma^2, y_{1:T} &\sim \mbox{N}(b_T,B_T) \label{eqn:fullcondbeta} \\
+\sigma^2 | \beta, \rho, y_{1:T} &\sim \mbox{IG}(v_t,d_t) \label{eqn:fullcondsigma2s}
+\end{align}
+
+\noindent where
+
+\begin{align*}
+b_T &= B_T(\frac{1}{\sigma^2}\tilde{X}'\tilde{y} + B_0^{-1}b_0) \\
+B_T &= (\frac{1}{\sigma^2}\tilde{X}'\tilde{X} + B_0^{-1})^{-1} \\
+v_T &= T/2 + v_0 \\
+d_T &= \frac{1}{2}\mbox{SS}_y + d_0
+\end{align*}
+
+\noindent and $\mbox{SS}_y = (\tilde{y} - \tilde{X}\beta)'(\tilde{y} - \tilde{X}\beta)$
+
+\subsection{Full conditional for $\rho$}
+
+Let $e = (e_{p+1},e_{p+2},\ldots,e_T)'$ be a $T-p$ length vector with $e_t = y_t - x_t'\beta$ for $t \ge p+1$. Then, let $E$ be a $T-p \times p$ matrix with $t$th row given by $(e_{t-1+p},e_{t-2+p}\ldots,e_t)$, i.e. \[E = \left(\begin{array}{cccc}
+e_p & e_{p-1} & \cdots & e_1 \\
+e_{p+1} & e_p & \cdots & e_2 \\
+\vdots & \vdots & & \vdots \\
+e_{T-1} & e_{T-2} & \cdots & e_{T-p}
+\end{array}\right).\] The full conditional for $\rho$ can then be expressed by
+
+\begin{equation}
+\rho | \beta, \sigma^2, y_{1:T} \sim \Psi(\rho) \times \mbox{N}_{S_{\rho}}(r_T,R_T) \label{eqn:fullcondrho}
+\end{equation}
+
+\noindent where
+
+\begin{align*}
+r_T &= R_T(\frac{1}{\sigma^2}E'e + R_0^{-1}r_0) \\
+R_T &= (\frac{1}{\sigma^2}E'E + R_0^{-1})^{-1} \\
+\Psi(\rho) &= |\Sigma_p|^{-1/2} \exp\left[-\frac{1}{\sigma^2}(y_{1:p} - X_{1:p}\beta)'\Sigma_p^{-1}(y_{1:p} - X_{1:p}\beta)\right],
+\end{align*}
+
+\noindent $\mbox{N}_{\Theta}(\mu,\Sigma)$ represents the normal distribution truncated onto the set $\Theta$ with mean and covariance of the corresponding untruncated normal distribution represented by $\mu$ and $\Sigma$, respectively, and $S_{\rho}$ represents the set of all $\rho$ such that the roots of $\rho(L)$ lie outside the unit circle.
+
+Given a current value $\rho^{(i-1)}$ at iteration $i-1$ of an MCMC algorithm, we can sample from the full conditional for $\rho$ at iteration $i$ using the following Metropolis-Hastings step:
+\begin{enumerate}
+\item Draw $\rho^* \sim \mbox{N}(r_T,R_T)$ \label{step:rho}
+\item If $\rho^* \in S_{\rho}$, go to Step \ref{step:mh}. Otherwise, go back to step \ref{step:rho}.
+\item Calculate $R = \mbox{min}\left\{\frac{\Psi(\rho*)}{\Psi(\rho^{(i-1)})}, 1\right\}$ and draw $u \sim \mbox{Unif}[0,1]$. If $u < R$, set $\rho^{(i)} = \rho^*$. Otherwise, set $\rho^{(i)} = \rho^{(i-1)}$. \label{step:mh}
+\end{enumerate}
+
+\end{document} 

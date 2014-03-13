@@ -88,7 +88,7 @@ cv_pf_quantiles <- function(n.sim, nruns, W, alpha = 0.05, burn.k = 1, burn.p = 
 }
 
 require(plyr)
-mydata = expand.grid(n.sim = 1, nruns = 20, W = c(0.1,0.5,1,2,3))
+mydata = expand.grid(n.sim = 1:2, nruns = 20, W = c(0.1,0.5,1,2,3))
 m_ply(mydata, cv_pf_quantiles)
 
 ## Plot kernel density estimates of log-likelihood under each model, ternary compositional plot, binary plots
@@ -173,11 +173,11 @@ cv_pf_loglik <- function(n.sim, nruns, alpha = 0.05)
 }
 
 W = c(0.1,.5,1)
-m_ply(data.frame(n.sim = 1, nruns = 20),cv_pf_loglik)
+m_ply(data.frame(n.sim = 1:2, nruns = 20),cv_pf_loglik)
 W = c(0.5,1,2)
-m_ply(data.frame(n.sim = 1, nruns = 20),cv_pf_loglik)
+m_ply(data.frame(n.sim = 1:2, nruns = 20),cv_pf_loglik)
 W = c(1,2,3)
-m_ply(data.frame(n.sim = 1, nruns = 20),cv_pf_loglik)
+m_ply(data.frame(n.sim = 1:2, nruns = 20),cv_pf_loglik)
 
 ## Plots analyzing rm pf runs between simulations
 # Calculate true log marginal likelihoods under each model

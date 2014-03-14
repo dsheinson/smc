@@ -88,7 +88,7 @@ cv_pf_quantiles <- function(n.sim, nruns, W, alpha = 0.05, burn.k = 1, burn.p = 
 }
 
 require(plyr)
-mydata = expand.grid(n.sim = 1:2, nruns = 20, W = c(0.1,0.5,1,2,3))
+mydata = expand.grid(n.sim = 1, nruns = 20, W = c(0.1,0.5,1,2,3))
 m_ply(mydata, cv_pf_quantiles)
 
 ## Plot kernel density estimates of log-likelihood under each model, ternary compositional plot, binary plots
@@ -173,11 +173,11 @@ cv_pf_loglik <- function(n.sim, nruns, alpha = 0.05)
 }
 
 W = c(0.1,.5,1)
-m_ply(data.frame(n.sim = 1:2, nruns = 20),cv_pf_loglik)
+m_ply(data.frame(n.sim = 1, nruns = 20),cv_pf_loglik)
 W = c(0.5,1,2)
-m_ply(data.frame(n.sim = 1:2, nruns = 20),cv_pf_loglik)
+m_ply(data.frame(n.sim = 1, nruns = 20),cv_pf_loglik)
 W = c(1,2,3)
-m_ply(data.frame(n.sim = 1:2, nruns = 20),cv_pf_loglik)
+m_ply(data.frame(n.sim = 1, nruns = 20),cv_pf_loglik)
 
 ## Plots analyzing rm pf runs between simulations
 # Calculate true log marginal likelihoods under each model
@@ -193,7 +193,7 @@ true_lmarglik = function(n.sim, W)
   post = cv.post(mysims[[n.sim]]$y, F, G, V, W, a0, b0, m0, C0)
   return(cv.lmarglik(mysims[[n.sim]]$y, post$f, post$Q, post$a, post$b))
 }
-true.lmarglik = maply(expand.grid(n.sim=1:20, W=W), true_lmarglik)
+true.lmarglik = maply(expand.grid(n.sim=1:N, W=W), true_lmarglik)
 
 # Load approximate log marginal likelihoods for particle filter runs
 alpha = 0.05
@@ -230,7 +230,6 @@ for(i in 1:dim(rm.max)[2])
 
 # Plot ternary diagrams for posterior model probabilities
 require(compositions)
-N=20
 grad = order(true.postModProbs[,2],decreasing=TRUE)
 wlabels = rep(NA,length(W))
 for(i in 1:length(W)) wlabels[i] = as.expression(bquote(paste(tilde(W)," = ",sep="") ~ .(W[i])))

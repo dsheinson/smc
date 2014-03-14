@@ -1,4 +1,8 @@
-rprior <- function(a,b,m0=0,C0=1)
+dllik <- function(y, x, theta, f = 1, v = 1) dnorm(y,f*x,sqrt(theta*v),log=TRUE)
+
+revo <- function(x, theta, g = 1, w = 1) rnorm(1,g*x,sqrt(theta*w))
+
+rprior <- function(a=1,b=1,m0=0,C0=1)
 {
   mytheta = 1 / rgamma(1,a,b)
   mystate = rnorm(1,m0,sqrt(C0*mytheta))
@@ -18,15 +22,16 @@ rm_mcmc <- function(y, x, theta, a0, b0, mydlm, n.iter)
   return(list(state=x,theta=theta))
 }
 
+###################
+# Utility functions
+###################
+
 sample.theta <- function(y, x, theta, a0, b0, mydlm)
 {
   K = length(y)
-  
-  F = mydlm$F; G = mydlm$G; V = mydlm$V; W = mydlm$W; m0 = mydlm$m0; C0 = mydlm$C0
-  stopifnot((length(F) == 1) & (length(C0) == 1) & (length(G) == 1) & (length(V) == 1) & (length(W) == 1) & (length(m0) == 1))
-  
+  F = mydlm$F; G = mydlm$G; V = mydlm$V; W = mydlm$W; m0 = mydlm$m0; C0 = mydlm$C0 
   a = a0 + K + 0.5
-  b = (1/(2*V))*sum((y[1:K] - F*x[2:(K+1)])^2) + (1/(2*W))*sum((x[2:(K+1)] - G*x[1:K])^2) + (1/(2*C0))*((x[1]-m0)^2) + b0
+  b = (1/(2*V))*sum((y - x[2:(K+1)])^2) + (1/(2*W))*sum((x[2:(K+1)] - x[1:K])^2) + (1/(2*C0))*((x[1]-m0)^2) + b0
   return(1/rgamma(1,a,b))
 }
 
@@ -34,20 +39,19 @@ sample.states <- function(y, theta, mydlm)
 {
   # Initialize DLM
   nt = length(y)
-  
-  F = mydlm$F; G = mydlm$G; V = mydlm$V; W = mydlm$W; m0 = mydlm$m0; C0 = mydlm$C0
-  stopifnot((length(F) == 1) & (length(C0) == 1) & (length(G) == 1) & (length(V) == 1) & (length(W) == 1) & (length(m0) == 1))
+  F = mydlm$F
+  G = mydlm$G
+  V = theta*mydlm$V
+  W = theta*mydlm$W
   
   # Forward-filtering
-  V = theta*V
-  W = theta*W
   m = rep(NA, nt + 1)
   C = rep(NA, nt + 1)
   f = rep(NA, nt)
   Q = rep(NA, nt)
   A = rep(NA, nt)
   R = rep(NA, nt)
-  m[1] = m0; C[1] = theta*C0
+  m[1] = mydlm$m0; C[1] = theta*mydlm$C0
   for(i in 1:nt)
   {
     A[i] = G*m[i]; R[i] = G*C[i]*G + W

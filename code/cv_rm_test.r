@@ -89,7 +89,6 @@ dev.off()
 
 # Run resample move particle filter and approximate log marginal likelihood of the data
 source("rm_pf.r")
-source("dlm_ar_functions.r")
 source("rm_cv_functions.r")
 source("pf_mc_functions.r")
 n.sim = 1
@@ -99,14 +98,11 @@ V = mysims[[n.sim]]$true.params$V
 W = mysims[[n.sim]]$true.params$W
 m0 = 0
 C0 = 1
-np = 100
 a0 = b0 = 1
-dllik1 = function(y, x, theta) dllik(y, x, sigma2 = theta)
-revo1 = function(x, theta) revo(x, sigma2 = theta)
-rprior1 <- function() rprior(a0,b0)
 mydlm = list(F=F[1,1,1],G=G[1,1],V=V[1,1],W=W[1,1],m0=m0,C0=C0)
 rmove <- function(y, x, theta) rm_mcmc(y, x, theta, a0, b0, mydlm, 1)
-out = rm_pf(mysims[[n.sim]]$y, dllik1, revo1, rprior1, rmove, np, method="stratified", nonuniformity="ess", threshold=0.8, log=FALSE)
+np = 100
+out = rm_pf(mysims[[n.sim]]$y, dllik, revo, rprior, rmove, np, method="stratified", nonuniformity="ess", threshold=0.8, log=FALSE)
 pf.lmarglik(out)
 
 # Calculate 95% CI of states and precision

@@ -5,11 +5,11 @@ dpath = "../data/"
 
 # Simulate data
 N = 20
-nt = 150
+nt = 100
 F = G = V = W = C0 = 1
 x0 = 0
 mysims = list()
-set.seed(51)
+set.seed(52)
 for(j in 1:N) mysims[[j]] = dlm.sim(nt, F, G, V, W, x0)
 
 # Save data

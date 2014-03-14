@@ -442,3 +442,13 @@ Psi.C0 <- function(x0, m0, phi, sigma2s, log=TRUE)
   logPsi <- -.5*log(det(C0))-.5*(1/sigma2s)*t(x0-m0)%*%C0.prec%*%(x0-m0)
   return(ifelse(log, logPsi, exp(logPsi)))
 }
+
+mvdnorm <- function(x, mu, Sigma, log = TRUE)
+{
+  d = length(x)
+  Sigma = as.matrix(Sigma)
+  stopifnot(length(mu) == d & dim(Sigma)[1] == d & dim(Sigma)[1] == d)
+  
+  log.lik = -(d/2)*log(2*pi) - .5*log(det(Sigma)) - .5*t(x - mu)%*%solve(Sigma)%*%(x - mu)
+  if(log) return(log.lik) else return(exp(log.lik))
+}

@@ -64,5 +64,5 @@ fmri_dlm_mcmc_test <- function(N, n, n.sim, mod, n.chain, nsims, nburn, nthin, x
 require(plyr)
 require(doMC)
 registerDoMC()
-mydata = expand.grid(N=1,n=6,n.sim=1,mod="M101",n.chain=1,nsims=100,nburn=10,nthin=9)
+mydata = expand.grid(N=5,n=6,n.sim=1:5,mod="M101",n.chain=1:3,nsims=100,nburn=10,nthin=9)
 out.all = mlply(mydata, fmri_dlm_mcmc_test, .parallel = TRUE)

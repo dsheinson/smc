@@ -6,7 +6,6 @@ dpath = "../data/"
 gpath = "../graphs/"
 
 # Simulate data from dynamic regression model
-#set.seed(61)
 dlm_ar_sim <- function(N, mod, beta, sigma2m = 0, phi = NULL, sigma2b = 0, rho = NULL, sigma2s = 0)
 {
   conv = scan(paste(dpath,"basis_sim-245.txt",sep=""))
@@ -51,33 +50,34 @@ dlm_ar_sim <- function(N, mod, beta, sigma2m = 0, phi = NULL, sigma2b = 0, rho =
 }
 
 # Simulate dynamic regression models with different values of phi, sigma2b
-N = 30
-M101_sim <- function(nsims, phi, sigma2b) dlm_ar_sim(nsims, "dr", beta = c(900,1), sigma2m = 1, phi = phi, sigma2b = sigma2b)
-mydata = expand.grid(phi = seq(.1,.9,.2), sigma2b = seq(1,9,2), n = N)
+require(plyr)
+N = 1
+M101_sim <- function(nsims, phi, sigma2b) dlm_ar_sim(nsims, "dr", beta = c(900,5), sigma2m = 1, phi = phi, sigma2b = sigma2b)
+mydata = expand.grid(phi = c(.7,.9,.95,.99), sigma2b = seq(.5,2,.5), n = N)
 M101_dat <- list(mlply(mydata, M101_sim), mydata)
 save(M101_dat, file=paste(dpath,"dlm_ar_sim-",N,"-M101.rdata",sep=""))
 
 # Simulate regression models with AR(1) errors for different values of rho, sigma2s
-M010_sim <- function(nsims, rho, sigma2s) dlm_ar_sim(nsims, "ar", beta = c(900,1), rho = rho, sigma2s = sigma2s)
-mydata = expand.grid(rho = seq(.1,.9,.2), sigma2s = seq(1,9,2), n = N)
+M010_sim <- function(nsims, rho, sigma2s) dlm_ar_sim(nsims, "ar", beta = c(900,5), rho = rho, sigma2s = sigma2s)
+mydata = expand.grid(rho = seq(.2,.8,.2), sigma2s = seq(.5,2,.5), n = N)
 M010_dat <- list(mlply(mydata, M010_sim), mydata)
 save(M010_dat, file=paste(dpath,"dlm_ar_sim-",N,"-M010.rdata",sep=""))
 
 # Simulate regression models with AR(1)+WN errors for different values of rho, sigma2s, sigma2m
-M011_sim <- function(nsims, rho, sigma2s) dlm_ar_sim(nsims, "ar", beta = c(900,1), sigma2m = 1, rho = rho, sigma2s = sigma2s)
-mydata = expand.grid(rho = seq(.1,.9,.2), sigma2s = seq(1,9,2),n = N)
+M011_sim <- function(nsims, rho, sigma2s) dlm_ar_sim(nsims, "ar", beta = c(900,5), sigma2m = .5, rho = rho, sigma2s = sigma2s)
+mydata = expand.grid(rho = seq(.2,.8,.2), sigma2s = seq(.5,2,.5),n = N)
 M011_dat <- list(mlply(mydata, M011_sim), mydata)
 save(M011_dat, file=paste(dpath,"dlm_ar_sim-",N,"-M011.rdata",sep=""))
 
 # Simulate regression models with AR(2) errors for different values of rho1, sigma2s
-M020_sim <- function(nsims, rho1, rho2, sigma2s) dlm_ar_sim(nsims, "ar", beta = c(900,1), rho = c(rho1, .08), sigma2s = sigma2s)
-mydata = expand.grid(rho1 = seq(.1,.9,.2), sigma2s = seq(1,9,2), n = N)
+M020_sim <- function(nsims, rho1, rho2, sigma2s) dlm_ar_sim(nsims, "ar", beta = c(900,5), rho = c(rho1, .08), sigma2s = sigma2s)
+mydata = expand.grid(rho1 = seq(.2,.8,.2), sigma2s = seq(.5,2,.5), n = N)
 M020_dat <- list(mlply(mydata, M020_sim), mydata)
 save(M020_dat, file=paste(dpath,"dlm_ar_sim-",N,"-M020.rdata",sep=""))
 
 # Simulate dynamic regression + AR(1) error models with different values of phi, sigma2b, rho, sigma2s
-M111_sim <- function(nsims, phi, sigma2b, rho, sigma2s) dlm_ar_sim(nsims, "both", beta = c(900,1), sigma2m = 1, phi = phi, sigma2b = sigma2b, rho = rho, sigma2s = sigma2s)
-mydata = expand.grid(phi = seq(.5,.9,.2), sigma2b = seq(1,9,4), rho = seq(.3,.7,.2), sigma2s = seq(1,9,4), n = N)
+M111_sim <- function(nsims, phi, sigma2b, rho, sigma2s) dlm_ar_sim(nsims, "both", beta = c(900,5), sigma2m = .5, phi = phi, sigma2b = sigma2b, rho = rho, sigma2s = sigma2s)
+mydata = expand.grid(phi = c(.9,.95,.99), sigma2b = seq(.5,2,.5), rho = seq(.3,.7,.2), sigma2s = seq(.5,2,.5), n = N)
 M111_dat <- list(mlply(mydata, M111_sim), mydata)
 save(M111_dat, file=paste(dpath,"dlm_ar_sim-",N,"-M111.rdata",sep=""))
 
@@ -133,7 +133,7 @@ dlm_ar_plot <- function(N, n, n.sim, label)
 
 require(plyr)
 #mydata = data.frame(N=rep(30,5),n=rep(5,5),n.sim=rep(1,5),label=c("M101","M010","M011","M020","M111"),stringsAsFactors=FALSE)
-data1 = expand.grid(N = 30, n = 1:25, n.sim = 1, label = c("M101","M010","M011","M020"),stringsAsFactors=FALSE)
-data2 = expand.grid(N = 30, n = 1:81, n.sim = 1, label = "M111", stringsAsFactors=FALSE)
+data1 = expand.grid(N = 1, n = 1:16, n.sim = 1, label = c("M101","M010","M011","M020"),stringsAsFactors=FALSE)
+data2 = expand.grid(N = 1, n = 1:81, n.sim = 1, label = "M111", stringsAsFactors=FALSE)
 mydata = rbind(data1,data2)
 m_ply(mydata, dlm_ar_plot)

@@ -1,56 +1,68 @@
-source("fmri_mcmc_functions.r")
-
 # Set data and graphics path
 dpath = "../data/"
 gpath = "../graphs/"
 
-fmri_mcmc_test <- function(n.sim, mod, n.chain, x=1, beta=1, sigma2m=1, phi=1, sigma2s=1, progress=FALSE, print.iter=TRUE)
+# Test dlm MCMC functions
+source("dlm_mcmc_functions.r")
+
+fmri_dlm_mcmc_test <- function(N, n, n.sim, mod, n.chain, nsims, nburn, nthin, x=1, beta=1, sigma2m=1, phi=1, sigma2s=1, progress=TRUE, print.iter=FALSE)
 {
   # Load data
-  load(paste(dpath,"dlm_ar_sim-20-",mod,".rdata",sep=""))
-  y = mysims[[n.sim]]$y
+  load(paste(dpath,"dlm_ar_sim-",N,"-",mod,".rdata",sep=""))
+  mysim = get(paste(mod,"_dat",sep=""))[[1]][[n]][[n.sim]]
+  y = mysim$y
 
-  # Set known values
-  V = 1
-  U = mysims[[n.sim]]$true.params$U
-  F = mysims[[n.sim]]$true.params$F
-  psi = list(V=V,U=U,F=F)
+  # Set known values and get dimensions of beta and phi
+  U = mysim$true.params$U
+  F = mysim$true.params$F
+  V = mysim$true.params$V
+  psi = list(U=U,F=F,V=V)
+  d = dim(U)[2]
+  p = dim(F)[2]
 
-  # Set initial values to truth and set prior on phi
-  p = dim(mysims[[n.sim]]$true.params$G)[1]
-  if(n.chain == 1)
+  # Set initial values
+  if(x)
   {
-    beta.init = c(800, 0)
-    sigma2m.init = 0.01
-    phi.init = 0.1
-    sigma2s.init = 0.1
-  } else if(n.chain == 2){
-    beta.init = c(900, 1)
-    sigma2m.init = 1
-    phi.init = 0.5
-    sigma2s.init = 2
-  } else  {
-    beta.init = c(1000, 3)
-    sigma2m.init = 4
-    phi.init = 0.99
-    sigma2s.init = 4
-  }
-  initial = list(x=mysims[[1]]$x, theta = list(beta = beta.init, sigma2m = sigma2m.init, phi = phi.init, sigma2s = sigma2s.init))
-  prior = list(m0 = rep(0,p), b0 = c(0,0), B0 = 1e6*diag(2), am0 = 1e-6, bm0 = 1e-6, phi0 = rep(0,p), Phi0 = 1e6*diag(p), as0 = 1e-6, bs0 = 1e-6)
+    tt = dim(mysim$x)[2]
+    x.init = matrix(NA,nr=p,nc=tt)
+    for(j in 1:p) x.init[j,] = rnorm(tt,mysim$x[j,],sd(mysim$x[j,]))
+  } else {x.init = mysim$x}
+  if(beta) beta.init = rnorm(d,mysim$true.params$beta,sqrt(mysim$true.params$beta)) else beta.init = mysim$true.params$beta
+  if(phi)
+  {
+    phi.init = rnorm(p,mysim$true.params$G[,1],sqrt(mysim$true.params$G[,1]))
+    while(!is.stationary(phi.init)) phi.init = rnorm(p,mysim$true.params$G[,1],sqrt(mysim$true.params$G[,1]))
+  } else {phi.init = mysim$true.params$G[,1]}
+  if(sigma2m)
+  { 
+    sigma2m.init = rnorm(1,mysim$true.params$V[1,1],sqrt(mysim$true.params$V[1,1]))
+    while(sigma2m.init <= 0) sigma2m.init = rnorm(1,mysim$true.params$V[1,1],sqrt(mysim$true.params$V[1,1]))
+  } else { sigma2m.init = mysim$true.params$V[1,1]}
+  if(sigma2s)
+  {
+    sigma2s.init = rnorm(1,mysim$true.params$W[1,1],sqrt(mysim$true.params$W[1,1]))
+    while(sigma2s.init <= 0) sigma2s.init = rnorm(1,mysim$true.params$W[1,1],sqrt(mysim$true.params$W[1,1]))
+  } else {sigma2s.init = mysim$true.params$W[1,1]}
+  initial = list(x=x.init, theta = list(beta = beta.init, sigma2m = sigma2m.init, phi = phi.init, sigma2s = sigma2s.init))
+  
+  # Set priors
+  prior = list(m0 = rep(0,p), b0 = rep(0,d), B0 = 1e6*diag(d), am0 = 1e-6, bm0 = 1e-6, phi0 = rep(0,p), Phi0 = 1e6*diag(p), as0 = 1e-6, bs0 = 1e-6)
 
+  # Which parameters to sample?
   steps = c('x','beta','sigma2m','phi','sigma2s')
   params.est <- which(as.logical(c(x,beta,sigma2m,phi,sigma2s)))
   steps = steps[params.est]
-  mcmc.details = list(n.sims = 11000, n.thin = 1, n.burn = 1000)
-  out = fmri_mcmc(y, psi, prior, initial, mcmc.details, steps, progress, print.iter)
+  mcmc.details = list(n.sims = nsims, n.thin = nthin, n.burn = nburn)
+  out = dlm.ar.mcmc(y, psi, prior, initial, mcmc.details, steps, progress, print.iter)
   
-  cat(n.sim,mod,n.chain,beta,sigma2m,phi,sigma2s,"\n",sep=" ")
-  save(out, file = paste(dpath,"fmri_mcmc_test-",paste(n.sim,mod,mcmc.details$n.sims,n.chain,beta,sigma2m,phi,sigma2s,sep="-"),".rdata",sep=""))
+  cat(N,n,n.sim,mod,n.chain,nsims,nburn,nthin,x,beta,sigma2m,phi,sigma2s,"\n",sep=" ")
+  save(out, file = paste(dpath,"fmri_dlm_mcmc_test-",paste(N,n,n.sim,mod,n.chain,nsims,nburn,nthin,x,beta,sigma2m,phi,sigma2s,sep="-"),".rdata",sep=""))
+
+  return(out)
 }
 
 require(plyr)
 require(doMC)
 registerDoMC()
-mydata = expand.grid(n.chain = 1:3, n.sim = 1:20, mod = c("M101"), print.iter = FALSE, stringsAsFactors=FALSE)
-set.seed(78)
-m_ply(mydata, fmri_mcmc_test, .parallel = TRUE)
+mydata = expand.grid(N=1,n=6,n.sim=1,mod="M101",n.chain=1,nsims=100,nburn=10,nthin=9)
+out.all = mlply(mydata, fmri_dlm_mcmc_test, .parallel = TRUE)

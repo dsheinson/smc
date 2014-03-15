@@ -18,7 +18,7 @@ reg.ar.mcmc <- function(y, X, prior, initial, mcmc.details, steps, progress=TRUE
   
   # Deal with missing arguments
   if (missing(initial)) {
-    psi <- list(beta=rep(0,q), phi=rep(0,p), sigma2=1)
+    psi <- list(beta=rep(0,q), phi=rep(0,p), sigma2s=1)
   } else {
     psi <- initial
   }
@@ -32,14 +32,14 @@ reg.ar.mcmc <- function(y, X, prior, initial, mcmc.details, steps, progress=TRUE
     n.burn = mcmc.details$n.burn
   }
   if (missing(steps)) {
-    steps=c('beta','phi','sigma2')
+    steps=c('beta','phi','sigma2s')
   } 
   
   # save structures
   n.iter <- (n.burn-n.sims)%/%n.thin
   keep.beta   <- matrix(NA, n.iter, q)
   keep.phi    <- matrix(NA, n.iter, p)
-  keep.sigma2 <- rep(   NA, n.iter)
+  keep.sigma2s <- rep(   NA, n.iter)
   accept.phi <- c()
   
   # Run mcmc
@@ -52,24 +52,24 @@ reg.ar.mcmc <- function(y, X, prior, initial, mcmc.details, steps, progress=TRUE
       setTxtProgressBar(pb,i)
     }
 
-    if ('beta'  %in%steps) psi$beta   <- sample.beta(  y, X, psi, prior)
+    if ('beta'  %in%steps) psi$beta   <- sample.ar.beta(  y, X, psi, prior)
     if ('phi'   %in%steps)
     {
-      samp.phi <- sample.phi(   y, X, psi, prior)
+      samp.phi <- sample.ar.phi(   y, X, psi, prior)
       psi$phi <- samp.phi$phi
       if(i > n.burn) accept.phi <- c(accept.phi, samp.phi$accept)
     }
-    if ('sigma2'%in%steps) psi$sigma2 <- sample.sigma2(y, X, psi, prior)
+    if ('sigma2'%in%steps) psi$sigma2s <- sample.ar.sigma2s(y, X, psi, prior)
     
     # Only save every n.thin iteration
     if (ii <- save.iteration(i,n.burn,n.thin)) {
       keep.beta  [ii,] <- psi$beta
       keep.phi   [ii,] <- psi$phi
-      keep.sigma2[ii ] <- psi$sigma2
+      keep.sigma2[ii ] <- psi$sigma2s
     }
   }
   
-  return(list(beta=keep.beta, phi=keep.phi, sigma2=keep.sigma2, accept.phi=accept.phi, mcmc.details=list(n.sims=n.sims,n.thin=n.thin,n.burn=n.burn), initial=initial))
+  return(list(beta=keep.beta, phi=keep.phi, sigma2=keep.sigma2s, accept.phi=accept.phi, mcmc.details=list(n.sims=n.sims,n.thin=n.thin,n.burn=n.burn), initial=initial))
 }
 
 # Functions to sample from full conditional distributions
@@ -79,7 +79,7 @@ reg.ar.mcmc <- function(y, X, prior, initial, mcmc.details, steps, progress=TRUE
 # psi has components beta, phi, sigma2 (current values)
 # prior is a list with components b0, B0 (mean and covariance for beta), phi0, Phi0 (mean and covariance for phi), v0, and d0 (shape and rate for sigma2)
 
-sample.beta <- function(y, X, psi, prior)
+sample.ar.beta <- function(y, X, psi, prior)
 {  
   tildey <- make.tildey(y,psi$phi)
   tildeX <- make.tildeX(X,psi$phi)
@@ -91,7 +91,7 @@ sample.beta <- function(y, X, psi, prior)
   return(rep(bn+t(chol(Bn.inv))%*%rnorm(length(psi$beta))),1)
 }
 
-sample.phi <- function(y, X, psi, prior) 
+sample.ar.phi <- function(y, X, psi, prior) 
 {  
   # Calculate phin and Phin and sample phi
   E <- makeE(y,X,psi$beta,length(psi$phi))
@@ -117,7 +117,7 @@ sample.phi <- function(y, X, psi, prior)
   return(list(phi=psi$phi,accept=accept))
 }
 
-sample.sigma2 <- function(y, X, psi, prior)
+sample.ar.sigma2s <- function(y, X, psi, prior)
 {
   return(1/rgamma(1,prior$v0+length(y)/2, prior$d0+d1(y,X,psi)/2))
 }

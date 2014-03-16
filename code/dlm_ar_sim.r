@@ -51,7 +51,7 @@ dlm_ar_sim <- function(N, mod, beta, sigma2m = 0, phi = NULL, sigma2b = 0, rho =
 
 # Simulate dynamic regression models with different values of phi, sigma2b
 require(plyr)
-N = 5
+N = 20
 M101_sim <- function(nsims, phi, sigma2b) dlm_ar_sim(nsims, "dr", beta = c(900,5), sigma2m = 1, phi = phi, sigma2b = sigma2b)
 mydata = expand.grid(phi = c(.7,.9,.95,.99), sigma2b = seq(.5,2,.5), n = N)
 M101_dat <- list(mlply(mydata, M101_sim), mydata)
@@ -132,8 +132,7 @@ dlm_ar_plot <- function(N, n, n.sim, label)
 }
 
 require(plyr)
-#mydata = data.frame(N=rep(30,5),n=rep(5,5),n.sim=rep(1,5),label=c("M101","M010","M011","M020","M111"),stringsAsFactors=FALSE)
-data1 = expand.grid(N = 5, n = 1:16, n.sim = 1, label = c("M101","M010","M011","M020"),stringsAsFactors=FALSE)
-data2 = expand.grid(N = 5, n = 1:81, n.sim = 1, label = "M111", stringsAsFactors=FALSE)
+data1 = expand.grid(N = 20, n = 1:16, n.sim = 1, label = c("M101","M010","M011","M020"),stringsAsFactors=FALSE)
+data2 = expand.grid(N = 20, n = 1:81, n.sim = 1, label = "M111", stringsAsFactors=FALSE)
 mydata = rbind(data1,data2)
 m_ply(mydata, dlm_ar_plot)

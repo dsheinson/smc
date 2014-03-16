@@ -179,8 +179,7 @@ m_ply(data.frame(n.sim = 1, nruns = 20),cv_pf_loglik)
 W = c(1,2,3)
 m_ply(data.frame(n.sim = 1, nruns = 20),cv_pf_loglik)
 
-## Plots analyzing rm pf runs between simulations
-# Calculate true log marginal likelihoods under each model
+# Plot true log marginal likelihood as a function of W
 
 true_lmarglik = function(n.sim, W)
 {
@@ -193,6 +192,17 @@ true_lmarglik = function(n.sim, W)
   post = cv.post(mysims[[n.sim]]$y, F, G, V, W, a0, b0, m0, C0)
   return(cv.lmarglik(mysims[[n.sim]]$y, post$f, post$Q, post$a, post$b))
 }
+w.lmarglik = maply(expand.grid(n.sim=1, W=seq(.1,10,.1)), true_lmarglik)
+pdf(file = paste(gpath,"cv_loglikvsW.pdf",sep=""))
+plot(seq(.1,10,.1), w.lmarglik, type="l",xlab=expression(tilde(W)), ylab = "log marginal likelihood", main = expression(paste("Log marginal likelihood vs ",tilde(W),sep="")))
+abline(v=c(.1,.5,1,2,3),lty=c(2,2,1,2,2))
+mtext(c(.1,.5,1,2,3),at=c(.1,.5,1,2,3),side=1,cex=.65)
+dev.off()
+
+## Plots analyzing rm pf runs between simulations
+
+# Calculate true log marginal likelihoods under each model
+
 true.lmarglik = maply(expand.grid(n.sim=1:N, W=W), true_lmarglik)
 
 # Load approximate log marginal likelihoods for particle filter runs

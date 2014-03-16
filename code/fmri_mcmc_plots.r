@@ -3,17 +3,25 @@ dpath = "../data/"
 gpath = "../graphs/"
 
 # Function to construct traceplots for MCMC chains
-fmri_dlm_mcmc_plot <- function(N, n, n.sim, mod, n.chains, nsims, nburn, nthin, x=1, beta=1, sigma2m=1, phi=1, sigma2s=1)
+fmri_mcmc_plot <- function(N, n, n.sim, mod, n.chains, nsims, nburn, nthin, x=1, beta=1, sigma2m=1, phi=1, sigma2s=1)
 {
   # Load simulated data
   load(paste(dpath,"dlm_ar_sim-",N,"-",mod,".rdata",sep=""))
   mysims = get(paste(mod,"_dat",sep=""))[[1]][[n]]
+  if(strsplit(mod,"")[[1]][4] == 0)
+  {
+    modtype = "reg"
+    vars = paste(beta,phi,sigma2s,sep="-")
+  } else {
+    modtype = "dlm"
+    vars = paste(x,beta,sigma2m,phi,sigma2s,sep="-")
+  }
   
   # Load MCMC data
   out.all <- list()
   for(i in 1:n.chains)
   {
-    load(paste(dpath,"fmri_dlm_mcmc_test-",paste(N,n,n.sim,mod,i,nsims,nburn,nthin,x,beta,sigma2m,phi,sigma2s,sep="-"),".rdata",sep=""))
+    load(paste(dpath,"fmri_",modtype,"_mcmc_test-",paste(N,n,n.sim,mod,i,nsims,nburn,nthin,vars,sep="-"),".rdata",sep=""))
     out.all[[i]] = out
   }
   n.sims = out.all[[1]]$mcmc.details$n.sims
@@ -26,7 +34,7 @@ fmri_dlm_mcmc_plot <- function(N, n, n.sim, mod, n.chains, nsims, nburn, nthin, 
   {
     iter = (1:n.keep)*n.thin
     d = length(mysims[[n.sim]]$true.params$beta)
-    pdf(file=paste(gpath,"fmri_dlm_mcmc_test-",paste(N,n,n.sim,mod,n.chains,nsims,nburn,nthin,x,beta,sigma2m,phi,sigma2s,sep="-"),"-traceplots-beta.pdf",sep=""))
+    pdf(file=paste(gpath,"fmri_mcmc_test-",paste(N,n,n.sim,mod,n.chains,nsims,nburn,nthin,x,beta,sigma2m,phi,sigma2s,sep="-"),"-traceplots-beta.pdf",sep=""))
     par(mfrow=c(d,1), mar=c(5,6,4,2)+.1)
     mins = apply(matrix(sapply(out.all, function(x) apply(x$beta, 2, min)),nr=d), 1, min)
     maxs = apply(matrix(sapply(out.all, function(x) apply(x$beta, 2, max)),nr=d), 1, max)
@@ -49,7 +57,7 @@ fmri_dlm_mcmc_plot <- function(N, n, n.sim, mod, n.chains, nsims, nburn, nthin, 
   if(sigma2m)
   {
     iter = (1:n.keep)*n.thin
-    pdf(file=paste(gpath,"fmri_dlm_mcmc_test-",paste(N,n,n.sim,mod,n.chains,nsims,nburn,nthin,x,beta,sigma2m,phi,sigma2s,sep="-"),"-traceplots-sigma2m.pdf",sep=""))
+    pdf(file=paste(gpath,"fmri_mcmc_test-",paste(N,n,n.sim,mod,n.chains,nsims,nburn,nthin,x,beta,sigma2m,phi,sigma2s,sep="-"),"-traceplots-sigma2m.pdf",sep=""))
     par(mfrow=c(1,1), mar=c(5,6,4,2)+.1)
     ymin = min(sapply(out.all, function(x) min(x$sigma2m)))
     ymax = max(sapply(out.all, function(x) max(x$sigma2m)))
@@ -68,7 +76,7 @@ fmri_dlm_mcmc_plot <- function(N, n, n.sim, mod, n.chains, nsims, nburn, nthin, 
   {
     iter = (1:n.keep)*n.thin
     p = length(mysims[[n.sim]]$true.params$G[,1])
-    pdf(file=paste(gpath,"fmri_dlm_mcmc_test-",paste(N,n,n.sim,mod,n.chains,nsims,nburn,nthin,x,beta,sigma2m,phi,sigma2s,sep="-"),"-traceplots-phi.pdf",sep=""))
+    pdf(file=paste(gpath,"fmri_mcmc_test-",paste(N,n,n.sim,mod,n.chains,nsims,nburn,nthin,x,beta,sigma2m,phi,sigma2s,sep="-"),"-traceplots-phi.pdf",sep=""))
     par(mfrow=c(p,1), mar=c(5,6,4,2)+.1)
     mins = apply(matrix(sapply(out.all, function(x) apply(x$phi, 2, min)),nr=p), 1, min)
     maxs = apply(matrix(sapply(out.all, function(x) apply(x$phi, 2, max)),nr=p), 1, max)
@@ -93,7 +101,7 @@ fmri_dlm_mcmc_plot <- function(N, n, n.sim, mod, n.chains, nsims, nburn, nthin, 
   if(sigma2s)
   {
     iter = (1:n.keep)*n.thin
-    pdf(file=paste(gpath,"fmri_dlm_mcmc_test-",paste(N,n,n.sim,mod,n.chains,nsims,nburn,nthin,x,beta,sigma2m,phi,sigma2s,sep="-"),"-traceplots-sigma2s.pdf",sep=""))
+    pdf(file=paste(gpath,"fmri_mcmc_test-",paste(N,n,n.sim,mod,n.chains,nsims,nburn,nthin,x,beta,sigma2m,phi,sigma2s,sep="-"),"-traceplots-sigma2s.pdf",sep=""))
     par(mfrow=c(1,1), mar=c(5,6,4,2)+.1)
     ymin = min(sapply(out.all, function(x) min(x$sigma2s)))
     ymax = max(sapply(out.all, function(x) max(x$sigma2s)))
@@ -113,7 +121,7 @@ fmri_dlm_mcmc_plot <- function(N, n, n.sim, mod, n.chains, nsims, nburn, nthin, 
     tt = dim(out.all[[1]]$x)[3]
     npts = floor(seq(1,tt,len=9))
     iter = (1:n.keep)*n.thin
-    pdf(file=paste(gpath,"fmri_dlm_mcmc_test-",paste(N,n,n.sim,mod,n.chains,nsims,nburn,nthin,x,beta,sigma2m,phi,sigma2s,sep="-"),"-traceplots-x.pdf",sep=""))
+    pdf(file=paste(gpath,"fmri_mcmc_test-",paste(N,n,n.sim,mod,n.chains,nsims,nburn,nthin,x,beta,sigma2m,phi,sigma2s,sep="-"),"-traceplots-x.pdf",sep=""))
     par(mfrow=c(3,3), mar=c(5,6,2,2)+.1)
     ymin = min(sapply(out.all, function(a) min(a$x[,,npts])))
     ymax = max(sapply(out.all, function(a) max(a$x[,,npts])))
@@ -134,15 +142,25 @@ fmri_dlm_mcmc_plot <- function(N, n, n.sim, mod, n.chains, nsims, nburn, nthin, 
 }
 
 require(plyr)
-mydata = expand.grid(N=5,n=6,n.sim=1:5,mod="M101",n.chains=3,nsims=100,nburn=10,nthin=9)
-m_ply(mydata, fmri_dlm_mcmc_plot)
+data1 = expand.grid(N=5,n=6,n.sim=1:5,mod=c("M011","M101"),n.chains=3,nsims=100,nburn=10,nthin=9,x=1,sigma2m=1,stringsAsFactors=FALSE)
+data2 = expand.grid(N=5,n=6,n.sim=1:5,mod=c("M010","M020"),n.chains=3,nsims=100,nburn=10,nthin=9,x=0,sigma2m=0,stringsAsFactors=FALSE)
+mydata = rbind(data1,data2)
+m_ply(mydata, fmri_mcmc_plot)
 
 # Function to plot histograms of posterior means (or medians) among multiple simulations
-fmri_dlm_mcmc_hist <- function(N, n, mod, n.chains, nsims, nburn, nthin, x=1, beta=1, sigma2m=1, phi=1, sigma2s=1)
+fmri_mcmc_hist <- function(N, n, mod, n.chains, nsims, nburn, nthin, x=1, beta=1, sigma2m=1, phi=1, sigma2s=1)
 {
   # Load simulated data
   load(paste(dpath,"dlm_ar_sim-",N,"-",mod,".rdata",sep=""))
   mysims = get(paste(mod,"_dat",sep=""))[[1]][[n]]
+  if(strsplit(mod,"")[[1]][4] == 0)
+  {
+    modtype = "reg"
+    vars = paste(beta,phi,sigma2s,sep="-")
+  } else {
+    modtype = "dlm"
+    vars = paste(x,beta,sigma2m,phi,sigma2s,sep="-")
+  }
   
   # Load MCMC data and calculate medians
   for(j in 1:N)
@@ -150,7 +168,7 @@ fmri_dlm_mcmc_hist <- function(N, n, mod, n.chains, nsims, nburn, nthin, x=1, be
     out.all = list()
     for(i in 1:n.chains)
     {
-      load(paste(dpath,"fmri_dlm_mcmc_test-",paste(N,n,j,mod,i,nsims,nburn,nthin,x,beta,sigma2m,phi,sigma2s,sep="-"),".rdata",sep=""))
+      load(paste(dpath,"fmri_",modtype,"_mcmc_test-",paste(N,n,j,mod,i,nsims,nburn,nthin,vars,sep="-"),".rdata",sep=""))
       out.all[[i]] = out
     }
     n.sims = out.all[[1]]$mcmc.details$n.sims
@@ -201,7 +219,7 @@ fmri_dlm_mcmc_hist <- function(N, n, mod, n.chains, nsims, nburn, nthin, x=1, be
   # Construct histograms
   if(beta)
   {
-    pdf(file=paste(gpath,"fmri_dlm_mcmc_test-",paste(N,n,mod,nsims,nburn,nthin,x,beta,sigma2m,phi,sigma2s,sep="-"),"-hist-beta.pdf",sep=""),width=5*d,height=5)
+    pdf(file=paste(gpath,"fmri_mcmc_test-",paste(N,n,mod,nsims,nburn,nthin,x,beta,sigma2m,phi,sigma2s,sep="-"),"-hist-beta.pdf",sep=""),width=5*d,height=5)
     par(mfrow=c(1,d))
     for(i in 1:d)
     {
@@ -212,14 +230,14 @@ fmri_dlm_mcmc_hist <- function(N, n, mod, n.chains, nsims, nburn, nthin, x=1, be
   }
   if(sigma2m)
   {
-    pdf(file=paste(gpath,"fmri_dlm_mcmc_test-",paste(N,n,mod,nsims,nburn,nthin,x,beta,sigma2m,phi,sigma2s,sep="-"),"-hist-sigma2m.pdf",sep=""))
+    pdf(file=paste(gpath,"fmri_mcmc_test-",paste(N,n,mod,nsims,nburn,nthin,x,beta,sigma2m,phi,sigma2s,sep="-"),"-hist-sigma2m.pdf",sep=""))
     hist(med.sigma2m,xlab=expression(sigma[m]^2),main="")
     abline(v=mysims[[j]]$true.params$V[1,1],lwd=2,col=2)
     dev.off()
   }
   if(phi)
   {
-    pdf(file=paste(gpath,"fmri_dlm_mcmc_test-",paste(N,n,mod,nsims,nburn,nthin,x,beta,sigma2m,phi,sigma2s,sep="-"),"-hist-phi.pdf",sep=""),width=5*p,height=5)
+    pdf(file=paste(gpath,"fmri_mcmc_test-",paste(N,n,mod,nsims,nburn,nthin,x,beta,sigma2m,phi,sigma2s,sep="-"),"-hist-phi.pdf",sep=""),width=5*p,height=5)
     par(mfrow=c(1,p))
     for(i in 1:p)
     {
@@ -230,7 +248,7 @@ fmri_dlm_mcmc_hist <- function(N, n, mod, n.chains, nsims, nburn, nthin, x=1, be
   }
   if(sigma2s)
   {
-    pdf(file=paste(gpath,"fmri_dlm_mcmc_test-",paste(N,n,mod,nsims,nburn,nthin,x,beta,sigma2m,phi,sigma2s,sep="-"),"-hist-sigma2s.pdf",sep=""))
+    pdf(file=paste(gpath,"fmri_mcmc_test-",paste(N,n,mod,nsims,nburn,nthin,x,beta,sigma2m,phi,sigma2s,sep="-"),"-hist-sigma2s.pdf",sep=""))
     hist(med.sigma2s,xlab=expression(sigma[s]^2),main="")
     abline(v=mysims[[j]]$true.params$W[1,1],lwd=2,col=2)
     dev.off()
@@ -239,7 +257,7 @@ fmri_dlm_mcmc_hist <- function(N, n, mod, n.chains, nsims, nburn, nthin, x=1, be
   {
     tt = dim(out.all[[1]]$x)[3]
     npts = floor(seq(1,tt,len=9))
-    pdf(file=paste(gpath,"fmri_dlm_mcmc_test-",paste(N,n,mod,nsims,nburn,nthin,x,beta,sigma2m,phi,sigma2s,sep="-"),"-hist-x.pdf",sep=""))
+    pdf(file=paste(gpath,"fmri_mcmc_test-",paste(N,n,mod,nsims,nburn,nthin,x,beta,sigma2m,phi,sigma2s,sep="-"),"-hist-x.pdf",sep=""))
     par(mfrow=c(3,3))
     for(k in 1:length(npts))
     {
@@ -251,5 +269,7 @@ fmri_dlm_mcmc_hist <- function(N, n, mod, n.chains, nsims, nburn, nthin, x=1, be
 }
 
 require(plyr)
-mydata = expand.grid(N=5,n=6,mod="M101",n.chains=3,nsims=100,nburn=10,nthin=9)
-m_ply(mydata, fmri_dlm_mcmc_hist)
+data1 = expand.grid(N=5,n=6,mod=c("M011","M101"),n.chains=3,nsims=100,nburn=10,nthin=9,x=1,sigma2m=1,stringsAsFactors=FALSE)
+data2 = expand.grid(N=5,n=6,mod=c("M010","M020"),n.chains=3,nsims=100,nburn=10,nthin=9,x=0,sigma2m=0,stringsAsFactors=FALSE)
+mydata = rbind(data1,data2)
+m_ply(mydata, fmri_mcmc_hist)

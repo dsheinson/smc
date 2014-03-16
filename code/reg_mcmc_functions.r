@@ -36,7 +36,7 @@ reg.ar.mcmc <- function(y, X, prior, initial, mcmc.details, steps, progress=TRUE
   } 
   
   # save structures
-  n.iter <- (n.burn-n.sims)%/%n.thin
+  n.iter <- (n.sims-n.burn)%/%n.thin
   keep.beta   <- matrix(NA, n.iter, q)
   keep.phi    <- matrix(NA, n.iter, p)
   keep.sigma2s <- rep(   NA, n.iter)
@@ -59,17 +59,17 @@ reg.ar.mcmc <- function(y, X, prior, initial, mcmc.details, steps, progress=TRUE
       psi$phi <- samp.phi$phi
       if(i > n.burn) accept.phi <- c(accept.phi, samp.phi$accept)
     }
-    if ('sigma2'%in%steps) psi$sigma2s <- sample.ar.sigma2s(y, X, psi, prior)
+    if ('sigma2s'%in%steps) psi$sigma2s <- sample.ar.sigma2s(y, X, psi, prior)
     
     # Only save every n.thin iteration
     if (ii <- save.iteration(i,n.burn,n.thin)) {
       keep.beta  [ii,] <- psi$beta
       keep.phi   [ii,] <- psi$phi
-      keep.sigma2[ii ] <- psi$sigma2s
+      keep.sigma2s[ii ] <- psi$sigma2s
     }
   }
   
-  return(list(beta=keep.beta, phi=keep.phi, sigma2=keep.sigma2s, accept.phi=accept.phi, mcmc.details=list(n.sims=n.sims,n.thin=n.thin,n.burn=n.burn), initial=initial))
+  return(list(beta=keep.beta, phi=keep.phi, sigma2s=keep.sigma2s, accept.phi=accept.phi, mcmc.details=list(n.sims=n.sims,n.thin=n.thin,n.burn=n.burn), initial=initial))
 }
 
 # Functions to sample from full conditional distributions
@@ -88,7 +88,7 @@ sample.ar.beta <- function(y, X, psi, prior)
   Bn <- solve(B0.prec+t(tildeX)%*%tildeX/psi$sigma2)
   bn <- Bn%*%(B0.prec%*%prior$b0 + t(tildeX)%*%tildey/psi$sigma2)
   
-  return(rep(bn+t(chol(Bn.inv))%*%rnorm(length(psi$beta))),1)
+  return(rep(bn+t(chol(Bn))%*%rnorm(length(psi$beta)),1))
 }
 
 sample.ar.phi <- function(y, X, psi, prior) 
@@ -113,7 +113,11 @@ sample.ar.phi <- function(y, X, psi, prior)
   
   # Perform MH step
   logMH <- Psi(y,X,psi, phi.p) - Psi(y,X,psi, psi$phi)
-  if (log(runif(1)) < logMH) psi$phi <- phi.p
+  if (log(runif(1)) < logMH)
+  {
+    psi$phi <- phi.p
+    accept = c(accept,TRUE)
+  } else { accept = c(accept,FALSE)}
   return(list(phi=psi$phi,accept=accept))
 }
 

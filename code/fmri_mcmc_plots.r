@@ -74,7 +74,7 @@ fmri_mcmc_plot <- function(N, n, n.sim, mod, n.chains, nsims, nburn, nthin, x=1,
       for(j in 2:n.chains) lines(iter,out.all[[j]]$sigma2m,col=2*(j-1))
     }
     abline(h=mysims[[n.sim]]$true.params$V[1,1])
-    abline(h=out.all[[1]]$sigma2mle,col="gray",lwd=3)
+    abline(h=sigma2m.mle,col="gray",lwd=3)
     mtext(mysims[[n.sim]]$true.params$V[1,1], side = 4, at = mysims[[n.sim]]$true.params$V[1,1])
     dev.off()
   }
@@ -159,10 +159,10 @@ fmri_mcmc_plot <- function(N, n, n.sim, mod, n.chains, nsims, nburn, nthin, x=1,
 }
 
 require(plyr)
-data1 = expand.grid(N=5,n=6,n.sim=1:5,mod=c("M011","M101"),n.chains=3,nsims=100,nburn=10,nthin=9,x=1,sigma2m=1,stringsAsFactors=FALSE)
-data2 = expand.grid(N=5,n=6,n.sim=1:5,mod=c("M010","M020"),n.chains=3,nsims=100,nburn=10,nthin=9,x=0,sigma2m=0,stringsAsFactors=FALSE)
+data1 = expand.grid(N=20,n=6,n.sim=1:20,mod=c("M011","M101"),n.chains=3,nsims=11000,nburn=1000,nthin=10,x=1,sigma2m=1,stringsAsFactors=FALSE)
+data2 = expand.grid(N=20,n=6,n.sim=1:20,mod=c("M010","M020"),n.chains=3,nsims=11000,nburn=1000,nthin=10,x=0,sigma2m=0,stringsAsFactors=FALSE)
 mydata = rbind(data1,data2)
-m_ply(data2, fmri_mcmc_plot)
+m_ply(mydata, fmri_mcmc_plot)
 
 # Function to plot histograms of posterior means (or medians) among multiple simulations
 fmri_mcmc_hist <- function(N, n, mod, n.chains, nsims, nburn, nthin, x=1, beta=1, sigma2m=1, phi=1, sigma2s=1)
@@ -286,7 +286,7 @@ fmri_mcmc_hist <- function(N, n, mod, n.chains, nsims, nburn, nthin, x=1, beta=1
 }
 
 require(plyr)
-data1 = expand.grid(N=5,n=6,mod=c("M011","M101"),n.chains=3,nsims=100,nburn=10,nthin=9,x=1,sigma2m=1,stringsAsFactors=FALSE)
-data2 = expand.grid(N=5,n=6,mod=c("M010","M020"),n.chains=3,nsims=100,nburn=10,nthin=9,x=0,sigma2m=0,stringsAsFactors=FALSE)
+data1 = expand.grid(N=20,n=6,mod=c("M011","M101"),n.chains=3,nsims=11000,nburn=1000,nthin=10,x=1,sigma2m=1,stringsAsFactors=FALSE)
+data2 = expand.grid(N=20,n=6,mod=c("M010","M020"),n.chains=3,nsims=11000,nburn=1000,nthin=10,x=0,sigma2m=0,stringsAsFactors=FALSE)
 mydata = rbind(data1,data2)
 m_ply(mydata, fmri_mcmc_hist)

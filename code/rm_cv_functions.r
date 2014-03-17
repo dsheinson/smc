@@ -9,15 +9,18 @@ rprior <- function(a=1,b=1,m0=0,C0=1)
   return(list(x=mystate,theta=mytheta))
 }
 
-rm_mcmc <- function(y, x, theta, a0, b0, mydlm, n.iter)
+rm_mcmc <- function(y, x, theta, a0, b0, mydlm, n.iter, smooth = TRUE, store.smooth = TRUE)
 {
   for(t in 1:n.iter)
   {
+    # Sample smoothed states by FFBS
+    if(smooth) x.smooth = sample.states(y, theta, mydlm) else x.smooth = x
+    
     # Sample theta from full conditional
-    theta = sample.theta(y, x, theta, a0, b0, mydlm)
+    theta = sample.theta(y, x.smooth, theta, a0, b0, mydlm)
     
     # Sample states by FFBS
-    x = sample.states(y, theta, mydlm)
+    if(store.smooth) x = x.smooth
   }
   return(list(state=x,theta=theta))
 }

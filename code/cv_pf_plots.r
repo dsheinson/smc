@@ -201,20 +201,22 @@ dev.off()
 
 ## Plots analyzing rm pf runs between simulations
 
+W = c(.5,1,2)
+
 # Calculate true log marginal likelihoods under each model
 
 true.lmarglik = maply(expand.grid(n.sim=1:N, W=W), true_lmarglik)
 
 # Load approximate log marginal likelihoods for particle filter runs
 alpha = 0.05
-rm.lmarglik = array(NA, c(length(nsims),length(np),length(W)))
+rm.lmarglik = array(NA, c(N,length(np),length(W)))
 for(j in 1:length(np))
 {
   for(k in 1:length(W))
   {
-    for(i in N)
+    for(i in 1:N)
     {
-      load(paste(dpath,"cv_pf-",paste(i, 1, W[k], np[k], alpha, sep="-"),".rdata",sep=""))
+      load(paste(dpath,"cv_pf-",paste(i, 1, W[k], np[j], alpha, sep="-"),".rdata",sep=""))
       rm.lmarglik[i,j,k] = pf.out$lmarglik
     }
   }

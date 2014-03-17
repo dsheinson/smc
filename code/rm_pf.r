@@ -13,7 +13,7 @@
 #' @references Berzuini, C. and Gilks, W. Following a Moving Target-Monte Carlo Inference for Dynamic Bayesian Models. Journal of the Royal Statistical Society. Series B (Statistical Methodology), Vol. 63, No. 1 (2001), pp. 127-146
 #' @seealso \code{\link{resample}}
 #'
-rm_pf = function(y, dllik, revo, rprior, rmove, n, lag = NULL, store.all = FALSE, progress = TRUE, ...)
+rm_pf = function(y, dllik, revo, rprior, rmove, n, lag = NULL, store.all = FALSE, store.filter = TRUE, progress = TRUE, ...)
 {
   require(smcUtils)
 
@@ -43,6 +43,9 @@ rm_pf = function(y, dllik, revo, rprior, rmove, n, lag = NULL, store.all = FALSE
   {
     state.all = list()
     state.all[[1]] = array(state[,,1], dim=c(ns,n,1))
+  } else if(store.filter) {
+    state.filter = array(NA, dim = c(ns,n,nt+1))
+    state.filter[,,1] = state[,,1]
   }
     
   # Initialize weights
@@ -88,13 +91,23 @@ rm_pf = function(y, dllik, revo, rprior, rmove, n, lag = NULL, store.all = FALSE
       theta[,,i+1] = theta[,,i]
     }
 
-    if(store.all) state.all[[i+1]] = array(state[,,1:(i+1)], dim=c(ns,n,1:(i+1)))
-
+    if(store.all)
+    { 
+      state.all[[i+1]] = array(state[,,1:(i+1)], dim=c(ns,n,i+1))
+    } else if(store.filter) {
+      state.filter[,,i+1] = state[,,i+1]
+    }
+    
     parent[,i+1] = kk
   }
 
-  # Return entire state trajectories or only filtered states?
-  if(store.all) state = state.all
+  # Return entire state trajectories, filtered states, or smoothed states?
+  if(store.all)
+  {
+    state = state.all
+  } else if(store.filter) {
+    state = state.filter
+  }
   
   return(list(state=state, theta=theta, weight=weight, increment=increment, parent=parent))
 }

@@ -91,52 +91,62 @@ dev.off()
 source("rm_pf.r")
 source("rm_cv_functions.r")
 source("pf_mc_functions.r")
-n.sim = 1
-F = mysims[[n.sim]]$true.params$F
-G = mysims[[n.sim]]$true.params$G
-V = mysims[[n.sim]]$true.params$V
-W = mysims[[n.sim]]$true.params$W
-m0 = 0
-C0 = 1
-a0 = b0 = 1
-mydlm = list(F=F[1,1,1],G=G[1,1],V=V[1,1],W=W[1,1],m0=m0,C0=C0)
-rmove <- function(y, x, theta) rm_mcmc(y, x, theta, a0, b0, mydlm, 1)
-np = 100
-out = rm_pf(mysims[[n.sim]]$y, dllik, revo, rprior, rmove, np, method="stratified", nonuniformity="ess", threshold=0.8, log=FALSE)
-pf.lmarglik(out)
-
-# Calculate 95% CI of states and precision
 source("pf_functions.r")
-state.quant = pf.quantile(out$state, out$weight, function(x, param=1) x, c(alpha/2,1-alpha/2))
-theta.quant = pf.quantile(1/out$theta, out$weight, function(x, param=1) x, c(alpha/2,1-alpha/2))
-# Compare with true posterior
-post = cv.post(mysims[[n.sim]]$y, F, G, V, W, 1, 1, m0, C0)
-lk = qt(alpha/2,2*post$a)*sqrt(post$C[1,1,]*(post$b/post$a)) + post$m[1,]
-uk = qt(1 - alpha/2,2*post$a)*sqrt(post$C[1,1,]*(post$b/post$a)) + post$m[1,]
-lp = qgamma(alpha/2,post$a,post$b)
-up = qgamma(1-alpha/2,post$a,post$b)
 
-# Plot 95% CI of filtered states
-burn=1
-nt = dim(out$state)[3] - 1
-gmin = min(mysims[[n.sim]]$x, mysims[[n.sim]]$y, lk[-(1:burn)], state.quant[-(1:burn),1,1])
-gmax = max(mysims[[n.sim]]$x, mysims[[n.sim]]$y, uk[-(1:burn)], state.quant[-(1:burn),1,2])
-pdf(paste(gpath,"rm-test-states-",n.sim,".pdf",sep=""))
-plot(0:nt,mysims[[n.sim]]$x[1,],ylim=c(gmin,gmax),type="l",xlab=expression(t),ylab="Position")
-lines(0:nt,lk,col=2)
-lines(0:nt,uk,col=2)
-lines(0:nt,state.quant[,1,1],col=4)
-lines(0:nt,state.quant[,1,2],col=4)
-legend("bottomright",legend=c("PF Approx", "True Post", "True Sim"),lty=c(1,1,1),col=c(4,2,1))
-title("95% CI for filtered states")
-dev.off()
+cv_rm_pf <- function(np, move.states, smooth.states, filt.states, n.sim = 1, alpha = 0.05, burn = 1)
+{
+  # Set known parameter values
+  F = mysims[[n.sim]]$true.params$F
+  G = mysims[[n.sim]]$true.params$G
+  V = mysims[[n.sim]]$true.params$V
+  W = mysims[[n.sim]]$true.params$W
+  m0 = 0
+  C0 = 1
+  a0 = b0 = 1
+  mydlm = list(F=F[1,1,1],G=G[1,1],V=V[1,1],W=W[1,1],m0=m0,C0=C0)
+  
+  # Define MCMC kernel and run resample-move particle filter
+  rmove <- function(y, x, theta) rm_mcmc(y, x, theta, a0, b0, mydlm, 1, move.states, smooth.states)
+  out = rm_pf(mysims[[n.sim]]$y, dllik, revo, rprior, rmove, np, store.filter = filt.states, method="stratified", nonuniformity="ess", threshold=0.8, log=FALSE)
 
-# Plot 95% CI for filtered precision
-pdf(paste(gpath,"rm-test-precision-",n.sim,".pdf",sep=""))
-plot(0:nt,lp,type="l",col=2,ylim=c(min(lp,1),max(up,1)),main="95% CI for Filtered Precision",xlab=expression(t),ylab=expression(phi))
-lines(0:nt,up,col=2)
-lines(0:nt,theta.quant[,1,1],col=4)
-lines(0:nt,theta.quant[,1,2],col=4)
-abline(h=1)
-legend("topright",legend=c("PF Approx", "True Post", "True Sim"),lty=c(1,1,1),col=c(4,2,1))
-dev.off()
+  # Calculate approximated 95% CI of states and precision
+  state.quant = pf.quantile(out$state, out$weight, function(x, param=1) x, c(alpha/2,1-alpha/2))
+  theta.quant = pf.quantile(1/out$theta, out$weight, function(x, param=1) x, c(alpha/2,1-alpha/2))
+  
+  # Calculate true 95% CI of states and precision
+  post = cv.post(mysims[[n.sim]]$y, F, G, V, W, 1, 1, m0, C0)
+  lk = qt(alpha/2,2*post$a)*sqrt(post$C[1,1,]*(post$b/post$a)) + post$m[1,]
+  uk = qt(1 - alpha/2,2*post$a)*sqrt(post$C[1,1,]*(post$b/post$a)) + post$m[1,]
+  lp = qgamma(alpha/2,post$a,post$b)
+  up = qgamma(1-alpha/2,post$a,post$b)
+  
+  # Plot 95% CI for states
+  nt = dim(out$state)[3] - 1
+  gmin = min(mysims[[n.sim]]$x, mysims[[n.sim]]$y, lk[-(1:burn)], state.quant[-(1:burn),1,1])
+  gmax = max(mysims[[n.sim]]$x, mysims[[n.sim]]$y, uk[-(1:burn)], state.quant[-(1:burn),1,2])
+  pdf(paste(gpath,"rm-test-states-",n.sim,"-",np,"-",move.states,"-",smooth.states,"-",filt.states,".pdf",sep=""))
+  plot(0:nt,mysims[[n.sim]]$x[1,],ylim=c(gmin,gmax),type="l",xlab=expression(t),ylab="Position")
+  lines(0:nt,lk,col=2)
+  lines(0:nt,uk,col=2)
+  lines(0:nt,state.quant[,1,1],col=4)
+  lines(0:nt,state.quant[,1,2],col=4)
+  legend("bottomright",legend=c("PF Approx", "True Post", "True Sim"),lty=c(1,1,1),col=c(4,2,1))
+  title("95% CI for filtered states")
+  dev.off()
+  
+  # Plot 95% CI for precision
+  pdf(paste(gpath,"rm-test-precision-",n.sim,"-",np,"-",move.states,"-",smooth.states,"-",filt.states,".pdf",sep=""))
+  plot(0:nt,lp,type="l",col=2,ylim=c(min(lp,1),max(up,1)),main="95% CI for Filtered Precision",xlab=expression(t),ylab=expression(phi))
+  lines(0:nt,up,col=2)
+  lines(0:nt,theta.quant[,1,1],col=4)
+  lines(0:nt,theta.quant[,1,2],col=4)
+  abline(h=1)
+  legend("topright",legend=c("PF Approx", "True Post", "True Sim"),lty=c(1,1,1),col=c(4,2,1))
+  dev.off()
+  
+  return(pf.lmarglik(out))
+}
+
+require(plyr)
+mydata = expand.grid(np = 100, move.states = c(TRUE,FALSE), smooth.states = c(TRUE,FALSE), filt.states = c(TRUE,FALSE), stringsAsFactors = FALSE)
+maply(mydata, cv_rm_pf)

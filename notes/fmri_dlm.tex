@@ -168,65 +168,125 @@ b_{s_t}^{(i)} &= \frac{1}{2}\tilde{X}'\tilde{X} + \frac{1}{2}(x_0^{(i-1)}-m_0)'\
 \end{enumerate}
 \end{enumerate}
 
-%\section{Example - dynamic regression}
-%
-%Data $y_1,\ldots,y_{245}$ were simulated from a dynamic regression model, i.e. the model described by equations \eqref{eqn:obs2} and \eqref{eqn:state2} with the following parameter values:
-%
-%\begin{align*}
-%U_t = (1, u_t) &\quad \beta = (\beta_0,\beta_1)' \\
-%F_t = (u_t) &\quad \tilde{V} = 1 \quad \sigma_m^2 = 1 \\
-%G = \phi = 0.9 &\quad \sigma_s^2 = 1
-%\end{align*}
-%
-%\begin{figure}[ht]
-%\includegraphics[width=1.0\textwidth]{../graphs/fmri_mcmc_test-1-M101-traceplots-beta}
-%\caption{Traceplots for $\beta$ for three MCMC chains.}
-%\end{figure}
-%
-%\begin{figure}[ht]
-%\includegraphics[width=1.0\textwidth]{../graphs/fmri_mcmc_test-1-M101-traceplots-sigma2m}
-%\caption{Traceplots for $\sigma^2_m$ for three MCMC chains.}
-%\end{figure}
-%
-%\begin{figure}[ht]
-%\includegraphics[width=1.0\textwidth]{../graphs/fmri_mcmc_test-1-M101-traceplots-phi}
-%\caption{Traceplots for $\phi$ for three MCMC chains.}
-%\end{figure}
-%
-%\begin{figure}[ht]
-%\includegraphics[width=1.0\textwidth]{../graphs/fmri_mcmc_test-1-M101-traceplots-sigma2s}
-%\caption{Traceplots for $\sigma^2_s$ for three MCMC chains.}
-%\end{figure}
-%
-%\begin{figure}[ht]
-%\includegraphics[width=1.0\textwidth]{../graphs/fmri_mcmc_test-1-M101-traceplots-x}
-%\caption{Traceplots for $x$ for three MCMC chains.}
-%\end{figure}
-%
-%\begin{figure}[ht]
-%\includegraphics[width=1.0\textwidth]{../graphs/fmri_mcmc_test-20-M101-11000-hist-beta}
-%\caption{Histogram for $\beta$ for medians over MCMC chains for 20 different simulated data sets.}
-%\end{figure}
-%
-%\begin{figure}[ht]
-%\includegraphics[width=1.0\textwidth]{../graphs/fmri_mcmc_test-20-M101-11000-hist-sigma2m}
-%\caption{Histogram for $\sigma^2_m$ for medians over MCMC chains for 20 different simulated data sets.}
-%\end{figure}
-%
-%\begin{figure}[ht]
-%\includegraphics[width=1.0\textwidth]{../graphs/fmri_mcmc_test-20-M101-11000-hist-phi}
-%\caption{Histogram for $\phi$ for medians over MCMC chains for 20 different simulated data sets.}
-%\end{figure}
-%
-%\begin{figure}[ht]
-%\includegraphics[width=1.0\textwidth]{../graphs/fmri_mcmc_test-20-M101-11000-hist-sigma2s}
-%\caption{Histogram for $\sigma^2_s$ for medians over MCMC chains for 20 different simulated data sets.}
-%\end{figure}
-%
-%\begin{figure}[ht]
-%\includegraphics[width=1.0\textwidth]{../graphs/fmri_mcmc_test-20-M101-11000-hist-x}
-%\caption{Histogram for $x$ for medians over MCMC chains for 20 different simulated data sets.}
-%\end{figure}
+\section{Example - dynamic regression} \label{sec:exdr}
+
+Consider a time series from one voxel of the brain in an fMRI experiment. We could visualize this time series as begin generated from a dynamic regression model, where the dynamic slope follows an AR(1) process, i.e. a model of the form described by equations \eqref{eqn:obs2} and \eqref{eqn:state2} where:
+
+\begin{equation}
+U_t = (1, \mbox{conv}_t) \quad \beta = (\beta_0,\beta_1)' \quad F_t = (\mbox{conv}_t) \quad G = \phi \label{eqn:dr}
+\end{equation}
+
+\noindent Here, $\mbox{conv}_t$ is the convolution of the hemodynamic response function with the experimental design, giving the expected BOLD response if the experimental stimulus triggers neural activation. Notice that multiplying out the observation equation yields
+\begin{align*}
+y_t &= \beta_0 + \beta_1\mbox{conv}_t + x_t\mbox{conv}_t + v_t \\
+    &= \beta_0 + (\beta_1 + x_t)\mbox{conv}_t + v_t
+\end{align*}
+Thus, $\beta_0$ represents the baseline level of BOLD signal, $\beta_1$ is the mean level of subject response to the experimental stimulus, and $x_t$ is the change in subject response from the mean at time $t$. $x_t$ can reflect changes in focus of the subject in the scanner over time, and is specified by the state equation to follow an AR(1) process.
+
+A time series of length $T = 245$ was simulated from a dynamic regression with the following parameter values:
+\begin{align*}
+\beta_0 = 900 &\quad \beta_1 = 5 \\
+\tilde{V} = 1 &\quad \sigma_m^2 = 1 \\
+\phi = 0.9 &\quad \sigma_s^2 = 1
+\end{align*}
+Three MCMC chains using the Gibbs sampling algorithm described in Section \ref{sec:gibbs} were run for 11000 iterations with a burn-in period of 1000. Samples from every 10th iteration of the Gibbs sampler were saved, yielding the following marginal traceplots for the fixed parameters shown in Figure \ref{fig:tracetheta} and $x_t$ for $t \in \{0, 30, 61, 91, 122, 153, 183, 214, 245\}$ shown in Figure \ref{fig:tracex}. Maximum likelihood estimates shown in the figures were obtained using the {\tt dlm} package in R \citep{petris2009dynamic}.
+
+\begin{figure}[ht]
+\begin{minipage}{0.5\linewidth}
+\includegraphics[width=1.0\textwidth]{../graphs/fmri_mcmc_test-20-6-1-M101-3-11000-1000-10-1-1-1-1-1-traceplots-beta}
+\end{minipage}
+\begin{minipage}{0.5\linewidth}
+\includegraphics[width=1.0\textwidth]{../graphs/fmri_mcmc_test-20-6-1-M101-3-11000-1000-10-1-1-1-1-1-traceplots-phi}
+\end{minipage}
+\begin{minipage}{0.5\linewidth}
+\includegraphics[width=1.0\textwidth]{../graphs/fmri_mcmc_test-20-6-1-M101-3-11000-1000-10-1-1-1-1-1-traceplots-sigma2s}
+\end{minipage}
+\begin{minipage}{0.5\linewidth}
+\includegraphics[width=1.0\textwidth]{../graphs/fmri_mcmc_test-20-6-1-M101-3-11000-1000-10-1-1-1-1-1-traceplots-sigma2m}
+\end{minipage}
+\caption{Marginal traceplots for unknown parameters of a dynamic regression model for three MCMC chains (colors). Gray horizontal lines correspond to MLEs and black horizontal lines correspond to true values used for simulation with actual values printed along the right side of the plot panel.} \label{fig:tracetheta}
+\end{figure}
+
+\begin{figure}[ht]
+\includegraphics[width=1.0\textwidth]{../graphs/fmri_mcmc_test-20-6-1-M101-3-11000-1000-10-1-1-1-1-1-traceplots-x}
+\caption{Marginal traceplots for the change in slope $x_t$ of a dynamic regression model for three MCMC chains (colors) for different $t$ (plot panels). Gray horizontal lines correspond to smoothed estimates with fixed parameter values set at the MLEs, and black horizontal lines correspond to true simulated states with actual values printed along the right side of the plot panel.} \label{fig:tracex}
+\end{figure}
+
+Nineteen more data sets were simulated from the dynamic regression specified by equation \eqref{val:dr} with the same parameter values as those used in the first simulation. Three MCMC chains were run in the same manner as with the first simulated time series. Median values of samples obtained for each fixed parameter and states at selected time points are shown in Figures \ref{fig:medtheta} and \ref{fig:medx}.
+
+\begin{figure}[ht]
+\begin{minipage}{0.5\linewidth}
+\includegraphics[width=1.0\textwidth]{../graphs/fmri_mcmc_test-20-6-M101-11000-1000-10-1-1-1-1-1-hist-beta}
+\end{minipage}
+\begin{minipage}{0.5\linewidth}
+\includegraphics[width=1.0\textwidth]{../graphs/fmri_mcmc_test-20-6-M101-11000-1000-10-1-1-1-1-1-hist-phi}
+\end{minipage}
+\begin{minipage}{0.5\linewidth}
+\includegraphics[width=1.0\textwidth]{../graphs/fmri_mcmc_test-20-6-M101-11000-1000-10-1-1-1-1-1-hist-sigma2s}
+\end{minipage}
+\begin{minipage}{0.5\linewidth}
+\includegraphics[width=1.0\textwidth]{../graphs/fmri_mcmc_test-20-6-M101-11000-1000-10-1-1-1-1-1-hist-sigma2m}
+\end{minipage}
+\caption{Histograms of median sample values for fixed parameters among 20 simulated data sets. Red vertical lines correspond to true values used for simulation.} \label{fig:medtheta}
+\end{figure}
+
+\begin{figure}[ht]
+\includegraphics[width=1.0\textwidth]{../graphs/fmri_mcmc_test-20-6-M101-11000-1000-10-1-1-1-1-1-hist-x}
+\caption{Histograms of median sample values for $x_t$ among 20 simulated data sets for different $t$ (plot panels). Red vertical lines correspond to true values used for simulation.} \label{fig:medx}
+\end{figure}
+
+\section{Example - Regression with AR(1)+WN errors} \label{sec:exar}
+
+We can also visualize fMRI data being generated from a regression model with a constant slope and autocorrelated errors. The dynamic regression model specified by equation \eqref{eqn:dr} can be changed to this model by letting $F_t = 1$ instead of $\mbox{conv}_t$. Twenty time series were generated from this model with parameter values set to
+\begin{align*}
+\beta_0 = 900 &\quad \beta_1 = 5 \\
+\tilde{V} = 1 &\quad \sigma_m^2 = 0.5 \\
+\phi = 0.4 &\quad \sigma_s^2 = 1
+\end{align*}
+
+Three MCMC chains were run on each simulated data set in the same manner as those run for the dynamic regression model in Section \ref{sec:exdr}. Figures \ref{fig:tracetheta-arwn} and \ref{fig:tracex-arwn} shows traceplots for the fixed parameters and states from MCMC runs on the first simulated data set, and figures \ref{fig:medtheta-arwn} and \ref{fig:medx-arwn} display histograms of median sample values among the 20 simulated time series for the fixed parameters and states, respectively.
+
+\begin{figure}[ht]
+\begin{minipage}{0.5\linewidth}
+\includegraphics[width=1.0\textwidth]{../graphs/fmri_mcmc_test-20-6-1-M011-3-11000-1000-10-1-1-1-1-1-traceplots-beta}
+\end{minipage}
+\begin{minipage}{0.5\linewidth}
+\includegraphics[width=1.0\textwidth]{../graphs/fmri_mcmc_test-20-6-1-M011-3-11000-1000-10-1-1-1-1-1-traceplots-phi}
+\end{minipage}
+\begin{minipage}{0.5\linewidth}
+\includegraphics[width=1.0\textwidth]{../graphs/fmri_mcmc_test-20-6-1-M011-3-11000-1000-10-1-1-1-1-1-traceplots-sigma2s}
+\end{minipage}
+\begin{minipage}{0.5\linewidth}
+\includegraphics[width=1.0\textwidth]{../graphs/fmri_mcmc_test-20-6-1-M011-3-11000-1000-10-1-1-1-1-1-traceplots-sigma2m}
+\end{minipage}
+\caption{Marginal traceplots for unknown parameters of a regression model with AR(1)+WN errors for three MCMC chains (colors). Gray horizontal lines correspond to MLEs and black horizontal lines correspond to true values used for simulation with actual values printed along the right side of the plot panel.} \label{fig:tracetheta-arwn}
+\end{figure}
+
+\begin{figure}[ht]
+\includegraphics[width=1.0\textwidth]{../graphs/fmri_mcmc_test-20-6-1-M011-3-11000-1000-10-1-1-1-1-1-traceplots-x}
+\caption{Marginal traceplots for the change in slope $x_t$ of a regression model with AR(1)+WN errors for three MCMC chains (colors) for different $t$ (plot panels). Gray horizontal lines correspond to smoothed estimates with fixed parameter values set at the MLEs, and black horizontal lines correspond to true simulated states with actual values printed along the right side of the plot panel.} \label{fig:tracex-arwn}
+\end{figure}
+
+\begin{figure}[ht]
+\begin{minipage}{0.5\linewidth}
+\includegraphics[width=1.0\textwidth]{../graphs/fmri_mcmc_test-20-6-M011-11000-1000-10-1-1-1-1-1-hist-beta}
+\end{minipage}
+\begin{minipage}{0.5\linewidth}
+\includegraphics[width=1.0\textwidth]{../graphs/fmri_mcmc_test-20-6-M011-11000-1000-10-1-1-1-1-1-hist-phi}
+\end{minipage}
+\begin{minipage}{0.5\linewidth}
+\includegraphics[width=1.0\textwidth]{../graphs/fmri_mcmc_test-20-6-M011-11000-1000-10-1-1-1-1-1-hist-sigma2s}
+\end{minipage}
+\begin{minipage}{0.5\linewidth}
+\includegraphics[width=1.0\textwidth]{../graphs/fmri_mcmc_test-20-6-M011-11000-1000-10-1-1-1-1-1-hist-sigma2m}
+\end{minipage}
+\caption{Histograms of median sample values for fixed parameters among 20 simulated data sets. Red vertical lines correspond to true values used for simulation.} \label{fig:medtheta-arwn}
+\end{figure}
+
+\begin{figure}[ht]
+\includegraphics[width=1.0\textwidth]{../graphs/fmri_mcmc_test-20-6-M011-11000-1000-10-1-1-1-1-1-hist-x}
+\caption{Histograms of median sample values for $x_t$ among 20 simulated data sets for different $t$ (plot panels). Red vertical lines correspond to true values used for simulation.} \label{fig:medx-arwn}
+\end{figure}
 
 \clearpage
 

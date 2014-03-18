@@ -83,6 +83,7 @@ fmri_dlm_rm_test <- function(N, n, n.sim, mod, np, progress=TRUE)
     lines(0:nt,theta.quant[,i,2])
     abline(h=theta.mle[i],col="gray")
     abline(h=theta.truth[i],col=2)
+    if(i == 3) legend("bottomright",c("95% CI","MLE","Truth"),lty=c(1,1,1),col=c(1,"gray",2),cex=1.5)
   }
   dev.off()
   

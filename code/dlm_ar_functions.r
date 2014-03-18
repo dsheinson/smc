@@ -97,3 +97,8 @@ unlogit <- function(u,a,b)
   x = exp(u) / (1 + exp(u))
   return(x*(b-a) + a)
 }
+
+d.unlogit <- function(x,a,b)
+{
+  ((b-a)*exp(x)*(1+2*exp(x))) / (1+exp(x))^2
+}

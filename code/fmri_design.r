@@ -29,7 +29,7 @@ optim.design <- function(N, n, E, intercept = TRUE)
   ind = which(sapply(designs, function(x) x$min.eig) == max(sapply(designs, function(x) x$min.eig)))
   
   # Plot optimal design
-  pdf(file = paste(gpath,"fmri-design.pdf",sep=""))
+  pdf(file = paste(gpath,"fmri-design-",dim(fmri.design$boxcar)[2],".pdf",sep=""))
   par(mfrow=c(3,1))
   ymax = max(designs[[ind]]$boxcar$boxcar)
   plot(designs[[ind]]$boxcar$t,designs[[ind]]$boxcar$boxcar[,1],ylim=c(0,ymax),type="l",xlab="",ylab="Boxcar")

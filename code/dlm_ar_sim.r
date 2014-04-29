@@ -5,18 +5,22 @@ source("dlm_ar_functions.r")
 dpath = "../data/"
 gpath = "../graphs/"
 
+# Load design matrix
+load(paste(dpath,"fmri-design.rdata",sep=""))
+X = fmri.design$X
+nt = dim(X)[1]
+
 # Simulate data from dynamic regression model
 dlm_ar_sim <- function(N, mod, beta, sigma2m = 0, phi = NULL, sigma2b = 0, rho = NULL, sigma2s = 0)
 {
-  conv = scan(paste(dpath,"basis_sim-245.txt",sep=""))
-  nt = length(conv)
-  U = array(rbind(1,conv), c(1,2,nt))
-  beta = rep(beta,1); stopifnot(length(beta) == 2)
+  beta = rep(beta,1); stopifnot(length(beta) == dim(X)[2])
+  d = length(beta)
+  U = array(t(X), c(1,d,nt))
 
   if(mod == "dr")
   {
     p = length(phi)
-    F = array(0, c(1,p,nt)); F[1,1,] = conv
+    F = array(0, c(1,p,nt)); F[1,1,] = apply(U[1,-1,], 2, sum)
     V = matrix(sigma2m, nr = 1, nc = 1)
     G = makeG(phi)
     W = sigma2b*(c(1,rep(0,p-1))%*%t(c(1,rep(0,p-1))))
@@ -32,7 +36,7 @@ dlm_ar_sim <- function(N, mod, beta, sigma2m = 0, phi = NULL, sigma2b = 0, rho =
     x0 = rep(t(chol(C0))%*%rnorm(p,0,1),1)
   } else if(mod == "both") {
     p1 = length(phi); p2 = length(rho)
-    F = array(0, c(1,p1+p2,nt)); F[1,1,] = conv; F[1,1+p1,] = 1
+    F = array(0, c(1,p1+p2,nt)); F[1,1,] = apply(U[1,-1,], 2, sum); F[1,1+p1,] = 1
     V = matrix(sigma2m, nr = 1, nc = 1)
     G = bdiag(list(makeG(phi),makeG(rho)))
     eb = c(sigma2b,rep(0,p1-1))
@@ -114,19 +118,22 @@ dlm_ar_plot <- function(N, n, n.sim, label)
 
   nt = dim(mysim$y)[2]
   pdf(file=paste(gpath,"dlm_ar_sim-",N,"-",label,"-",n,"-",n.sim,".pdf",sep=""))
-  par(mfrow=c(3,1),mar=c(3,5,4,2)+0.1)
+  par(mfrow=c(2,1),mar=c(3,5,4,2)+0.1)
   plot(0:nt,c(NA,mysim$y[1,]),type="l",main=title,xlab="",ylab=expression(y[t]),cex.lab=1.5,cex.main=1.5)
   mtext(subtext, side = 3, cex = 0.85)
   par(mar = c(5,5,2,2)+0.1)
-  plot(0:nt,c(NA,mysim$true.params$U[1,2,]),type="l",xlab="",ylab=expression(conv[t]),cex.lab=1.5)
-  par(mar = c(7,5,0,2)+0.1)
+  d = dim(mysim$true.params$U)[2]
+  ymax = max(mysim$true.params$U)
+  plot(0:nt,c(NA,mysim$true.params$U[1,1,]),ylim=c(0,ymax),type="l",xlab="",ylab=expression(conv[t]),cex.lab=1.5)
+  if(d > 1) for(j in 2:d) lines(0:nt, c(NA,mysim$true.params$U[1,j,],col=j))
+  par(mar = c(5,5,2,2)+0.1)
   if(label == "M111"){
     ymin = min(mysim$x); ymax = max(mysim$x)
-    plot(0:nt,mysim$x[1,],type="l",col=2,ylim = c(ymin,ymax),xlab=expression(t),ylab=expression(x[t]),cex.lab=1.5)     
+    plot(0:nt,mysim$x[1,],type="l",col=2,ylim = c(ymin,ymax),xlab="TR",ylab=expression(x[t]),cex.lab=1.5)     
     lines(0:nt,mysim$x[2,],col=4)
     legend("topleft",c(expression(beta[0]),expression(beta[1])),lty=c(1,1),col=c(4,2))
   } else {
-    plot(0:nt,mysim$x[1,],type="l",xlab=expression(t),ylab=expression(x[t]),cex.lab=1.5)
+    plot(0:nt,mysim$x[1,],type="l",xlab="TR",ylab=expression(x[t]),cex.lab=1.5)
   }
   dev.off()
 }

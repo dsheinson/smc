@@ -8,13 +8,13 @@ gpath = "../graphs/"
 # Load design matrix
 load(paste(dpath,"fmri-design.rdata",sep=""))
 X = fmri.design$X
-nt = dim(X)[1]
+nt = dim(X)[1] # assume X includes first column for intercept
 
 # Simulate data from dynamic regression model
 dlm_ar_sim <- function(N, mod, beta, sigma2m = 0, phi = NULL, sigma2b = 0, rho = NULL, sigma2s = 0)
 {
   beta = rep(beta,1); stopifnot(length(beta) == dim(X)[2])
-  d = length(beta)
+  d = length(beta); stopifnot(d > 1)
   U = array(t(X), c(1,d,nt))
 
   if(mod == "dr")
@@ -26,6 +26,21 @@ dlm_ar_sim <- function(N, mod, beta, sigma2m = 0, phi = NULL, sigma2b = 0, rho =
     W = sigma2b*(c(1,rep(0,p-1))%*%t(c(1,rep(0,p-1))))
     C0 = makeC0(phi)
     x0 = rep(t(chol(C0))%*%rnorm(p,0,1),1)
+  } else if(mod == "dr2") {
+    stopifnot(is.list(phi) & length(sigma2b) > 1 & length(sigma2b) < d)
+    stopifnot(length(phi) == length(sigma2b))
+    p = rep(NA, length(phi))
+    for(i in 1:length(phi)) p[i] = length(phi[[i]])
+    F = array(0, c(1,sum(p),nt)); F[1,1,] = U[1,2,]
+    for(i in 2:length(p)) F[1,1+sum(p[1:(i-1)]),] = U[1,i+1,] 
+    V = matrix(sigma2m, nr = 1, nc = 1)
+    G = makeG(phi[[1]])
+    for(i in 2:length(p)) G = bdiag(list(G,makeG(phi[[i]])))
+    W = matrix(0,nr=sum(p),nc=sum(p)); W[1,1] = sigma2b[1]
+    for(i in 2:length(p)) W[1+sum(p[1:(i-1)]),1+sum(p[1:(i-1)])] = sigma2b[i]
+    C0 = makeC0(phi[[1]])
+    for(i in 2:length(p)) C0 = bdiag(list(C0,makeC0(phi[[i]])))
+    x0 = rep(t(chol(C0))%*%rnorm(sum(p),0,1),1)
   } else if(mod == "ar") {
     p = length(rho)
     F = array(0, c(1,p,nt)); F[1,1,] = 1
@@ -44,7 +59,27 @@ dlm_ar_sim <- function(N, mod, beta, sigma2m = 0, phi = NULL, sigma2b = 0, rho =
     W = bdiag(list(eb%*%t(eb),es%*%t(es)))
     C0 = bdiag(list(makeC0(phi),makeC0(rho)))
     x0 = rep(t(chol(C0))%*%rnorm(p1+p2,0,1),1)
-  } else { stop("mod must be 'dr','ar', or 'both'")}
+  } else if(mod == "both2") {
+    stopifnot(is.list(phi) & length(sigma2b) > 1 & length(sigma2b) < d)
+    stopifnot(length(phi) == length(sigma2b))
+    p1 = rep(NA, length(phi))
+    for(i in 1:length(phi)) p1[i] = length(phi[[i]])
+    p2 = length(rho)
+    F = array(0, c(1,sum(p1)+p2,nt)); F[1,1,] = U[1,2,]
+    for(i in 2:length(p1)) F[1,1+sum(p1[1:(i-1)]),] = U[1,i+1,] 
+    F[1,1+sum(p1),] = 1
+    V = matrix(sigma2m, nr = 1, nc = 1)
+    G = makeG(phi[[1]])
+    for(i in 2:length(p1)) G = bdiag(list(G,makeG(phi[[i]])))
+    G = bdiag(list(G,makeG(rho)))    
+    W = matrix(0,nr=sum(p1)+p2,nc=sum(p1)+p2); W[1,1] = sigma2b[1]
+    for(i in 2:length(p1)) W[1+sum(p1[1:(i-1)]),1+sum(p1[1:(i-1)])] = sigma2b[i]
+    W[1+sum(p1),1+sum(p1)] == sigma2s
+    C0 = makeC0(phi[[1]])
+    for(i in 2:length(p)) C0 = bdiag(list(C0,makeC0(phi[[i]])))
+    C0 = bdiag(list(C0,makeC0(rho)))
+    x0 = rep(t(chol(C0))%*%rnorm(sum(p1)+p2,0,1),1)
+  } else { stop("mod must be 'dr', 'dr2', 'ar', 'both', or 'both2'")}
 
   mysims = list()
   for(j in 1:N) mysims[[j]] = dlm.sim(nt, F, G, V, W, x0, beta, U)

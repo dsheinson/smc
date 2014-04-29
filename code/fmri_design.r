@@ -21,7 +21,7 @@ optim.design <- function(N, n, E, intercept = TRUE)
     } else {basis = as.matrix(basis1)}
     if(intercept) X = cbind(1,basis) else X = basis
     eig = eigen(t(X)%*%X)
-    designs[[j]] = list(boxcar=boxcar, X=X, min.eig = min(eig$values))
+    designs[[j]] = list(boxcar=boxcar, X=X, t=basis1$t, min.eig = min(eig$values))
     cat(j,eig$values,"\n")
   }
   
@@ -29,7 +29,7 @@ optim.design <- function(N, n, E, intercept = TRUE)
   ind = which(sapply(designs, function(x) x$min.eig) == max(sapply(designs, function(x) x$min.eig)))
   
   # Plot optimal design
-  pdf(file = paste(gpath,"fmri-optim-design.pdf",sep=""))
+  pdf(file = paste(gpath,"fmri-design.pdf",sep=""))
   par(mfrow=c(3,1))
   ymax = max(designs[[ind]]$boxcar$boxcar)
   plot(designs[[ind]]$boxcar$t,designs[[ind]]$boxcar$boxcar[,1],ylim=c(0,ymax),type="l",xlab="",ylab="Boxcar")
@@ -38,15 +38,11 @@ optim.design <- function(N, n, E, intercept = TRUE)
   plot(basis1$t,designs[[ind]]$X[,intercept+1],type="l",ylim=c(min(designs[[ind]]$X),max(designs[[ind]]$X)),xlab="Convolution",ylab="Time (s)")
   if(E > 1) for(i in 2:E) lines(basis1$t,designs[[ind]]$X[,intercept+i],col=i)
   dev.off()
+  
+  # return optimal design
+  return(designs[[ind]])
 }
 
-# # Generate basis function
-# set.seed(61)
-# n = 245
-# hrf.raw = read.table(paste(dpath,"hrf.csv",sep=""),sep=",",header=FALSE)[,1]
-# boxcar = rapidEvent.boxcar(n,10)
-# hrf = c(hrf.raw,rep(0,n - length(hrf.raw)))
-# basis = fmri.convolve(hrf,boxcar)
-# 
-# # Save basis function
-# write(basis,file=paste(dpath,"basis_sim-",n,".txt",sep=""))
+set.seed(61)
+fmri.design = optim.design(100,500,2)
+save(fmri.design, file = paste(dpath,"fmri-design.rdata",sep=""))

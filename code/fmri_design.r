@@ -45,4 +45,4 @@ optim.design <- function(N, n, E, intercept = TRUE)
 
 set.seed(61)
 fmri.design = optim.design(100,500,2)
-save(fmri.design, file = paste(dpath,"fmri-design.rdata",sep=""))
+save(fmri.design, file = paste(dpath,"fmri-design-",dim(fmri.design$boxcar)[2],".rdata",sep=""))

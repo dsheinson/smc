@@ -112,7 +112,7 @@ For each $k \in \{1,2,\ldots,p-1\}$
 \item $\sigma^2_s|y_{1:t},x_{0:t},\beta,\phi,\sigma^2_m \sim \mbox{IG}(a_{s_t}, b_{s_t})$, where
 \begin{align*}
 a_{s_t} &= (p/2)(t+1) + a_{s_0} \\
-b_{s_t} &= \frac{1}{2}\tilde{X}'\tilde{X} + \frac{1}{2}(x_0-m_0)'\tilde{C_0}^{-1}(x_0-m_0) + b_{s_0}
+b_{s_t} &= \frac{1}{2}\tilde{x}'\tilde{x} + \frac{1}{2}(x_0-m_0)'\tilde{C_0}^{-1}(x_0-m_0) + b_{s_0}
 \end{align*}
 \end{itemize}
 
@@ -150,7 +150,7 @@ b_{m_t}^{(i)} &= \frac{1}{2}\mbox{SS}_y + b_{m_0} \\
 \item Sample ${\sigma^2_s}^{(i)}|\cdots \sim \mbox{IG}(a_{s_t}^{(i)}, b_{s_t}^{(i)})$, where
 \begin{align*}
 a_{s_t}^{(i)} &= (p/2)(t+1) + a_{s_0} \\
-b_{s_t}^{(i)} &= \frac{1}{2}\tilde{X}'\tilde{X} + \frac{1}{2}(x_0^{(i-1)}-m_0)'\tilde{C_0}(\phi^{(i)})(x_0^{(i-1)}-m_0) + b_{s_0}
+b_{s_t}^{(i)} &= \frac{1}{2}\tilde{x}'\tilde{x} + \frac{1}{2}(x_0^{(i-1)}-m_0)'\tilde{C_0}(\phi^{(i)})(x_0^{(i-1)}-m_0) + b_{s_0}
 \end{align*}
 \noindent Here, $\tilde{C_0}(\phi^{(i)})$ implies that the matrix $\tilde{C_0}$ is constructed using $\phi^{(i)}$.
 \item Sample $x_{0:t}^{(i)}$ using the following forward filtering backward sampling (FFBS) algorithm \citep{petris2009dynamic}:
@@ -306,7 +306,52 @@ We can extend the general form of regression models with one autoregressive erro
 \end{array}
 \right).\]
 
-\noindent $W$ is also a $P\times P$ block diagonal matrix with $i^{\mbox{th}}$ block $W_i = \sigma^2_{s_i}e_ie_i'$ where $e_i$ is a $p_i$-length vector with first element equal to 1 and the rest 0. $V$ is defined the same way as in Section  \ref{sec:reg}, and the prior state $x_0$ is drawn from the same stationary distribution given in Section \ref{sec:reg} where $\tilde{C_0}$ is now a $P\times P$ block diagonal matrix with $i^{\mbox{th}}$ block $\tilde{C_0}_i$ satisfying \[\mbox{vec}({\tilde{C_0}_i}) = (I - G \otimes G)^{-1}\mbox{vec}(ee')\]
+\noindent $W$ is also a $P\times P$ block diagonal matrix with $i^{\mbox{th}}$ block $W_i = \sigma^2_{s_i}e_ie_i'$ where $e_i$ is a $p_i$-length vector with first element equal to 1 and the rest 0. $V = \sigma^2_m$ is defined the same way as in Section  \ref{sec:reg}, and the prior state $x_0$ is drawn from the same stationary distribution given in Section \ref{sec:reg} where $\tilde{C}_0$ is now a $P\times P$ block diagonal matrix with $i^{\mbox{th}}$ block $\tilde{C}_{0_i}$ satisfying \[\mbox{vec}(\tilde{C}_{0_i}) = (I - G_i \otimes G_i)^{-1}\mbox{vec}(e_ie_i')\]
+
+We can estimate $\tilde{\phi}_i$ and $\sigma^2_{s_i}$ for $i = 1,2,\ldots,d$ using the Gibbs sampling algorithm described in Section \ref{sec:gibbs} with a slight variation to add the full conditional distributions for $\tilde{\phi}_i$ and $\sigma^2_{s_i}$. Let $c_i = 1 + p_1 + p_2 + \cdots p_{i-1}$ for $i = 1,2,\ldots,d,d+1$ with the convention that $c_1 = 1$ and $c_{d+1} = P$, and $x_{k,j}$ the $j^{\mbox{th}}$ element of $x_k$. Given prior distributions $\tilde{\phi}_i \sim \mbox{N}_{S_{\tilde{\phi}_i}}(\tilde{\phi}_{0,i}, \Phi_{0,i})$ and $\sigma^2_{s_i} \sim \mbox{IG}(a^i_{s_0}, b^i_{s_0})$ for $i = 1,2,\ldots,d$, the full conditionals are given by
+\begin{itemize}
+\item $p(\tilde{\phi}_i|\cdots) = \Psi(\phi)\mbox{N}_{S_{\tilde{\phi}_i}}(\tilde{\phi}_i; \tilde{\phi}_{t_i},\Phi_{t_i})$, where
+\begin{align*}
+\tilde{\phi}_{t_i} &= \Phi_t\left(\frac{1}{\sigma^2_{s,i}} \tilde{X}_i'\tilde{x}_i + \Phi_{0_i}^{-1}\tilde{\phi}_{0,i}\right) \\
+\Phi_{t,i} &= \left(\frac{1}{\sigma^2_{s,i}} \tilde{X}_i'\tilde{X}_i + \Phi_{0,i}^{-1}\right)^{-1} \\
+\tilde{X}_i &= \left(\begin{array}{ccccc}
+x_{0,c_i} & x_{-1,c_i} & \cdots & x_{1-p_i,c_i} \\
+x_{1,c_i} & x_{0,c_i} & \cdots & x_{2-p_i,c_i} \\
+\vdots & \vdots & & \vdots \\
+x_{t-1,c_i} & x_{t-1,c_i} & \cdots & x_{t-p_i,c_i}
+\end{array} \quad
+\right) \tilde{x}_i = \left(\begin{array}{c} x_{1,c_i} \\ x_{2,c_i} \\ \vdots \\ x_{t,c_i} \end{array}\right) \\
+\Psi(\tilde{\phi}_i) &= \left|\tilde{C}^i_0\right|^{-1/2}\exp\left(-\frac{1}{2\sigma^2_{s,i}}(x_{0,c_i:c_{i+1}-1}-m_{0,c_i:c_{i+1}-1})'\tilde{C}_{0_i}^{-1}(x_{0,c_i:c_{i+1}-1}-m_{0,c_i:c_{i+1}-1})\right),
+\end{align*}
+where $x_{0,j:h}$ and $m_{0,j:h}$ denote elements $j$ through $h$ of $x_0$ and $m_0$, respectively. As was the case with the regression model with just one AR error term, if $p_i > 1$, the pre-sample states $\{x_{-1,c_i}, x_{-2,c_i}, \ldots, x_{-(p-1),c_i}\}$ need to be calculated in order to construct $\tilde{X}_i$. These can be obtained using the same recursive procedure specified for the full conditional of $\phi$ in Section \ref{sec:fullcond} setting $x_0 = (x_{0,c_i},x_{0,c_i+1},\ldots,x_{0,c_i+p_i-1})'$, $p = p_i$, and $\phi_j = \phi_{i,j}$ for $j = 1,\ldots,p$. \\
+\item $\sigma^2_{s,i}|\cdots \sim \mbox{IG}(a^i_{s_t}, b^i_{s_t})$, where
+\begin{align*}
+a^i_{s_t} &= (p_i/2)(t+1) + a^i_{s_0} \\
+b^i_{s_t} &= \frac{1}{2}\tilde{X}_i'\tilde{X}_i + \frac{1}{2}(x_{0,c_i:c_{i+1}-1}-m_{0,c_i:c_{i+1}-1})'\tilde{C}_{0,i}^{-1}(x_{0,c_i:c_{i+1}-1}-m_{0,c_i:c_{i+1}-1}) + b^i_{s_0}
+\end{align*}
+\end{itemize}
+
+\noindent We can also consider the special case of multiple AR components following the same AR process, i.e. $\phi = \tilde{\phi}_1 = \tilde{\phi}_2 = \cdots = \tilde{\phi}_d$ and $\sigma^2_s = \sigma^2_{s,1} = \sigma^2_{s,2} = \cdots = \sigma^2_{s,d}$. In this case, the full conditionals of $\phi$ and $\sigma^2_s$ are given by
+\begin{itemize}
+\item $p(\phi|\cdots) = \Psi(\phi)\mbox{N}_{S_\phi}(\phi; \phi_t,\Phi_t)$, where
+\begin{align*}
+\phi_t &= \Phi_t\left(\frac{1}{\sigma^2_s} \sum_{k=1}^t \tilde{X}_k'\tilde{x}_k + \Phi_0^{-1}\phi_0\right) \\
+\Phi_t &= \left(\frac{1}{\sigma^2_s} \sum_{k=1}^t \tilde{X}_k'\tilde{X}_k + \Phi_0^{-1}\right)^{-1} \\
+\tilde{X}_k &= \left(\begin{array}{ccccc}
+x_{k-1,c_1} & x_{k-2,c_1} & \cdots & x_{k-p,c_1} \\
+x_{k-1,c_2} & x_{k-2,c_2} & \cdots & x_{k-p,c_2} \\
+\vdots & \vdots & & \vdots \\
+x_{k-1,c_d} & x_{k-2,c_d} & \cdots & x_{k-p,c_d}
+\end{array} \quad
+\right) \tilde{x}_k = \left(\begin{array}{c} x_{k,c_1} \\ x_{k,c_2} \\ \vdots \\ x_{k,c_d} \end{array}\right) \\
+\Psi(\phi) &= \left|\tilde{C_0}\right|^{-1/2}\exp\left(-\frac{1}{2\sigma^2_s}(x_0-m_0)'\tilde{C_0}^{-1}(x_0-m_0)\right)
+\end{align*}
+\item $\sigma^2_s|\cdots \sim \mbox{IG}(a_{s_t}, b_{s_t})$, where
+\begin{align*}
+a_{s_t} &= (pd/2)(t+1) + a_{s_0} \\
+b_{s_t} &= \frac{1}{2}\sum_{k=1}^t \tilde{x}_k'\tilde{x}_k + \frac{1}{2}(x_0-m_0)'\tilde{C_0}^{-1}(x_0-m_0) + b_{s_0}
+\end{align*}
+\end{itemize}
 
 \clearpage
 

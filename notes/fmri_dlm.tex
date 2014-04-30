@@ -29,7 +29,7 @@ x_t &= Gx_{t-1} + w_t \label{eqn:state2}
 
 \noindent Letting $\beta = 0$, $U_t = 0$ for all $t$, and $F_t = F$ independent of $t$, we have the DLM described by equations \eqref{eqn:obs} and \eqref{eqn:state}.
 
-\subsection{Regression with AR(p) errors}
+\subsection{Regression with AR(p) errors} \label{sec:reg}
 
 We will now consider a regression model with autoregressive error structure and separate observation and state noises. This specific model is a special case of the the DLM described in equations \eqref{eqn:obs2} and \eqref{eqn:state2}. In this case, $G$ has the form given by
 
@@ -289,6 +289,24 @@ Three MCMC chains were run on the simulated data set in the same manner as those
 %\includegraphics[width=1.0\textwidth]{../graphs/fmri_mcmc_test-20-6-M011-11000-1000-10-1-1-1-1-1-hist-x}
 %\caption{Histograms of median sample values for $x_t$ among 20 simulated data sets for different $t$ (plot panels). Red vertical lines correspond to true values used for simulation.} \label{fig:medx-arwn}
 %\end{figure}
+
+\clearpage
+
+\section{Adding more autoregressive components} \label{sec:add}
+
+We can extend the general form of regression models with one autoregressive error component described in Section \ref{sec:reg} to include regression models with multiple autoregressive components. For example, consider a model of the form \[y_t = U_t\beta + F_tx_t + v_t\] where $x_t = (x_{t,1},x_{t,2})'$, $x_{t,1}$ follows an $\mbox{AR(}p_1\mbox{)}$ process, and $x_{t,2}$ follows an $\mbox{AR(}p_2\mbox{)}$ process. We can describe the general form for a regression model with $d$ independent autoregressive error components by the DLM from equations \eqref{eqn:obs2} and \eqref{eqn:state2} by letting $x_t$ be a $P = p_1 + p_2 + \cdots + p_d$ length vector, $\tilde{\phi}_i = (\phi_{i,1},\phi_{i,2},\ldots,\phi_{i,p_i})'$ the AR coefficients for the $i^{\mbox{th}}$ autoregressive error term, $\sigma^2_{s_1}, \sigma^2_{s_2}, \ldots, \sigma^2_{s_d}$ the $d$ white noise variances for each AR component, and $G$ a $P \times P$ block-diagonal matrix with $i^{\mbox{th}}$ block
+
+\[G_i = \left(
+\begin{array}{ccccc}
+\phi_{i,1} & 1 & 0 & \cdots & 0 \\
+\phi_{i,2} & 0 & 1 & \cdots & 0 \\
+\vdots & \vdots & & \ddots & \vdots \\
+\phi_{i,p_i-1} & 0 & \multicolumn{2}{c}{\cdots} & 1 \\
+\phi_{i,p_i} & 0 & \multicolumn{2}{c}{\cdots} & 0
+\end{array}
+\right).\]
+
+\noindent $W$ is also a $P\times P$ block diagonal matrix with $i^{\mbox{th}}$ block $W_i = \sigma^2_{s_i}e_ie_i'$ where $e_i$ is a $p_i$-length vector with first element equal to 1 and the rest 0. $V$ is defined the same way as in Section  \ref{sec:reg}, and the prior state $x_0$ is drawn from the same stationary distribution given in Section \ref{sec:reg} where $\tilde{C_0}$ is now a $P\times P$ block diagonal matrix with $i^{\mbox{th}}$ block $\tilde{C_0}_i$ satisfying \[\mbox{vec}({\tilde{C_0}_i}) = (I - G \otimes G)^{-1}\mbox{vec}(ee')\]
 
 \clearpage
 

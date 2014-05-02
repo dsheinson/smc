@@ -7,14 +7,16 @@ source("dlm_ar_functions.r")
 # psi is a list with components V a q by q covariance matrix, U a q by d by nt array of beta covariates, and F a q by p by nt array of state covariates
 # prior is a list with components b0, B0 (mean and covariance on normal prior for beta), phi0, Phi0 (lists with elements phi0[[i]] and Phi0[[i]] giving the mean and covariance on truncated normal prior for phi[[i]]), am0, bm0 (shape and rate for inverse-gamma prior on sigma2m), as0, bs0 (vectors with elements as0[i] and bs0[i] giving the shape and rate for inverse-gamma prior on sigma2s[i]), and m0 (mean on normal prior for initial state; covariance matrix is constructed using makeC0() to ensure initial state comes from a stationary distribution)
 # initial (optional) is a list with components x a p by nt + 1 state matrix and theta a list with components beta (d-length vector), sigma2m (scalar), phi (P-length list of phi vectors), and sigma2s (P-length vector of white noise variance of AR components)
+# same is a boolean indicating whether all AR components in the model are assumed to have the same model parameters
 # mcmc.details (optional) a list with scalar components n.sims (total number of MCMC iterations), n.burn (burn in iterations), and n.thin (save every n.thin-th iteration after burn-in)
 # steps (optional) a character vector list which parameters to sample in the MCMC
 # progress a boolean indicating if a progress bar should be displayed
 # print.iter a boolean indicating if the iteration number should be printed (only if progress = FALSE)
 
-dlm.ar.mcmc <- function(y, psi, prior, initial, mcmc.details, steps, progress=TRUE, print.iter=FALSE) {
+dlm.ar.mcmc <- function(y, psi, prior, initial, same = FALSE, mcmc.details, steps, progress=TRUE, print.iter=FALSE) {
   # Get dimensions of data and parameters
   if(!is.matrix(y)) y = matrix(y, nr = 1)
+  if(!is.list(prior$phi0)) prior$phi0 = list(prior$phi0)
   nt = dim(y)[2]
   q = dim(y)[1]
   p = sapply(prior$phi0, length)
@@ -31,15 +33,13 @@ dlm.ar.mcmc <- function(y, psi, prior, initial, mcmc.details, steps, progress=TR
   } else {
     x = initial$x
     theta = initial$theta
+    check = check.dim(y, x, theta, psi, prior)
+    x = check$x
+    theta = check$theta
+    psi = check$psi
+    prior = check$prior
+    rm(check)
   }
-  
-#   # Check dimensions
-#   check = check.dim(y, x, theta, psi, prior)
-#   y = check$y
-#   x = check$x
-#   theta = check$theta
-#   psi = check$psi
-#   prior = check$prior
   
   # MCMC details
   if(missing(mcmc.details)) {
@@ -93,7 +93,7 @@ dlm.ar.mcmc <- function(y, psi, prior, initial, mcmc.details, steps, progress=TR
       keep.beta[ii,] = theta$beta
       keep.sigma2m[ii] = theta$sigma2m
       for(j in 1:P) keep.phi[[j]][ii,] = theta$phi[[j]]
-      keep.sigma2s[ii] = theta$sigma2s
+      keep.sigma2s[ii,] = theta$sigma2s
       keep.x[ii,,] = x
     }
   }
@@ -173,7 +173,9 @@ sample.phi <- function(y, x, theta, psi, prior)
   {
     # Make X
     cj = ifelse(j == 1, 1, sum(p[1:(j-1)])+1)
-    X = makeXtilde(x[cj:(cj+p[j]-1),], theta$phi[[j]])
+    xj = x[cj:(cj+p[j]-1),]
+    if(!is.matrix(xj)) xj = matrix(xj, nr = 1)
+    X = makeXtilde(xj, theta$phi[[j]])
     x1 = x[cj,2:(nt+1)]
     XX = t(X)%*%X
     Xx1 = t(X)%*%x1
@@ -216,8 +218,10 @@ sample.sigma2s <- function(y, x, theta, psi, prior)
   {
     # Calculate SSx
     C0 = makeC0(theta$phi[[j]])
-    cj = ifelse(j == 1, 1, sum(p[1:(j-1)])+1)
-    X = makeXtilde(x[cj:(cj+p[j]-1),], theta$phi[[j]])
+    cj = ifelse(j == 1, 1, sum(p[1:(j-1)])+1)  
+    xj = x[cj:(cj+p[j]-1),]
+    if(!is.matrix(xj)) xj = matrix(xj, nr = 1)
+    X = makeXtilde(xj, theta$phi[[j]])
     x1 = x[cj,2:(nt+1)]
     e = x1 - X%*%theta$phi[[j]]
     SSx = t(e)%*%e
@@ -238,16 +242,16 @@ sample.states <- function(y, x, theta, psi, prior)
   G = makeG(theta$phi[[1]])
   sf = c(1,rep(0,p[1]-1))
   W = theta$sigma2s[1]*sf%*%t(sf)
-  C0 = theta$sigma2s*makeC0(theta$phi[[1]])
+  C0 = theta$sigma2s[1]*makeC0(theta$phi[[1]])
   if(P > 1)
   {
-    for(j in 1:P)
+    for(j in 2:P)
     {
-      G = bdiag(G,makeG(theta$phi[[j]]))
+      G = bdiag(list(G,makeG(theta$phi[[j]])))
       sf = c(1,rep(0,p[j]-1))
       Wj = theta$sigma2s[j]*sf%*%t(sf)
-      W = bdiag(W,Wj)
-      C0 = bdiag(theta$sigma2s[j]*makeC0(theta$phi[[j]]))
+      W = bdiag(list(W,Wj))
+      C0 = bdiag(list(C0,theta$sigma2s[j]*makeC0(theta$phi[[j]])))
     }
   }
   V = theta$sigma2m*psi$V
@@ -275,78 +279,72 @@ check.dim <- function(y, x, theta, psi, prior)
   q = dim(y)[1]
   nt = dim(y)[2]
   
-  # States
-  if(is.null(dim(x))) x = matrix(x, nr=1)
-  x = as.matrix(x)
+  # States assumed to be either a vector or a matrix
+  if(!is.matrix(x)) x = matrix(x, nr=1)
+  stopifnot(is.matrix(x))
   p.sum = dim(x)[1]
   stopifnot(dim(x)[2] == nt + 1)
+  prior$m0 = rep(prior$m0,1)
+  stopifnot(length(prior$m0) == p.sum)
   
-  # Unknown parameters
-  if(is.null(theta$beta)) beta = 0 else beta = rep(theta$beta, 1)
-  d = length(beta)
+  # Unknown parameters and priors
+  # beta
+  prior$b0 = rep(prior$b0,1)
+  prior$B0 = as.matrix(prior$B0)
+  stopifnot(length(prior$b0) == dim(prior$B0)[1] & dim(prior$B0)[1] == dim(prior$B0)[2])
+  d = length(prior$b0)
+  if(is.null(theta$beta)) theta$beta = rep(0,d) else theta$beta = rep(theta$beta, 1)
+  stopifnot(length(theta$beta) == d)
+  # sigma2m
+  prior$am0 = rep(prior$am0,1)[1]
+  prior$bm0 = rep(prior$bm0,1)[1]
+  if(is.null(theta$sigma2m)) theta$sigma2m = 0 else theta$sigma2m = theta$sigma2m[1]
+  # phi
+  stopifnot(is.list(prior$phi0) & is.list(prior$Phi0))
+  P = length(prior$phi0)
+  stopifnot(P == length(prior$Phi0))
+  p = rep(NA, P)
+  for(j in 1:length(prior$phi0))
+  {
+    prior$phi0[[j]] = rep(prior$phi0[[j]],1)
+    prior$Phi0[[j]] = as.matrix(prior$Phi0[[j]])
+    p[j] = length(prior$phi0[[j]])
+    stopifnot(dim(prior$Phi0[[j]])[1] == p[j] & dim(prior$Phi0[[j]])[2] == p[j])
+  }
+  stopifnot(sum(p) == p.sum)
   if(is.null(theta$phi))
   {
-    phi = list(rep(0,p.sum))
-  } else if(!is.list(phi)) {
-    phi = list(phi)
+    theta$phi = list(); length(theta$phi) = P
+    for(j in 1:P) theta$phi[[j]] = rep(0,p[j])
+  } else if(!is.list(theta$phi)) {
+    theta$phi = list(theta$phi)
+    stopifnot(P == 1 & p[1] == length(theta$phi[[1]]))
   }
-  p = sapply(phi, length)
-  stopifnot(sum(p) == p.sum)
-  if(is.null(theta$sigma2m)) sigma2m = 0 else sigma2m = theta$sigma2m[1]
-  if(is.null(theta$sigma2s)) sigma2s = 0 else sigma2s = rep(theta$sigma2s, 1)
-  stopifnot(length(theta$sigma2s) == length(p))
-  theta = list(beta = beta, phi = phi, sigma2m = sigma2m, sigma2s = sigma2s)
+  # sigma2s
+  stopifnot(length(prior$as0) == P & length(prior$bs0) == P)
+  if(is.null(theta$sigma2s)) theta$sigma2s = rep(0, P) else theta$sigma2s = rep(theta$sigma2s, 1)
+  stopifnot(length(theta$sigma2s) == P)
   
   # Known parameters
-  if(is.null(psi$V)) V = as.matrix(diag(q)) else V = as.matrix(psi$V)
-  stopifnot(dim(V)[1] == q & dim(V)[2] == q)
-  if(is.null(psi$U)) U = array(0,c(q,d,nt)) else U = psi$U
+  if(is.null(psi$V)) psi$V = as.matrix(diag(q)) else psi$V = as.matrix(psi$V)
+  stopifnot(dim(psi$V)[1] == q & dim(psi$V)[2] == q)
+  if(is.null(psi$U)) psi$U = array(0,c(q,d,nt))
   if(is.matrix(psi$U)) 
   {
-    stopifnot(dim(U)[1] == q & dim(U)[2] == d)
-    U = array(U,dim=c(q,d,nt))
+    stopifnot(dim(psi$U)[1] == q & dim(psi$U)[2] == d)
+    psi$U = array(psi$U,dim=c(q,d,nt))
   } else {
-    stopifnot(length(dim(U) == 3) & dim(U)[1] == q & dim(U)[2] == d & dim(U)[3] == nt)
+    stopifnot(length(dim(psi$U) == 3) & dim(psi$U)[1] == q & dim(psi$U)[2] == d & dim(psi$U)[3] == nt)
   }
-  if(is.null(psi$F)) F = array(0,c(q,p,nt)) else F = psi$F
-  if(is.matrix(F))
+  if(is.null(psi$F)) psi$F = array(0,c(q,p.sum,nt))
+  if(is.matrix(psi$F))
   {
-    stopifnot(dim(F)[1] == q & dim(F)[2] == p)
-    F = array(F,dim=c(q,p,nt))
+    stopifnot(dim(psi$F)[1] == q & dim(psi$F)[2] == p.sum)
+    psi$F = array(psi$F,dim=c(q,p,nt))
   } else {
-    stopifnot(length(dim(F) == 3) & dim(F)[1] == q & dim(F)[2] == p & dim(F)[3] == nt)
-  }
-  psi = list(V = V, U = U, F = F)
-    
-  # Prior hyperparameters
-  checked.prior = list()
-  checked.prior$m0 = rep(prior$m0,1)
-  stopifnot(length(checked.prior$m0) == p)
-  if(!is.null(prior$b0) & !is.null(prior$B0))
-  {
-    checked.prior$b0 = rep(prior$b0,1)
-    checked.prior$B0 = as.matrix(prior$B0)
-    stopifnot(length(checked.prior$b0) == d & dim(checked.prior$B0)[1] == d & dim(checked.prior$B0)[2] == d)
-  }
-  if(!is.null(prior$phi0) & !is.null(prior$Phi0))
-  {
-    checked.prior$phi0 = rep(prior$phi0,1)
-    checked.prior$Phi0 = as.matrix(prior$Phi0)
-    stopifnot(length(checked.prior$phi0) == p & dim(checked.prior$Phi0)[1] == p & dim(checked.prior$Phi0)[2] == p)
-  }
-  if(!is.null(prior$am0) & !is.null(prior$bm0))
-  {
-    checked.prior$am0 = rep(prior$am0,1)[1]
-    checked.prior$bm0 = rep(prior$bm0,1)[1]
-  }
-  if(!is.null(prior$as0) & !is.null(prior$bs0))
-  {
-    checked.prior$as0 = rep(prior$as0,1)[1]
-    checked.prior$bs0 = rep(prior$bs0,1)[1]
-  }
-  prior = checked.prior
-     
-  return(list(y=y,x=x,theta=theta,psi=psi,prior=prior))
+    stopifnot(length(dim(psi$F) == 3) & dim(psi$F)[1] == q & dim(psi$F)[2] == p.sum & dim(psi$F)[3] == nt)
+  } 
+  return(list(x=x,theta=theta,psi=psi,prior=prior))
 }
 
 ffbs <- function(y, U, beta, F, G, V, W, m0, C0)

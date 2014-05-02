@@ -7,7 +7,7 @@ source("dlm_ar_functions.r")
 # psi is a list with components V a q by q covariance matrix, U a q by d by nt array of beta covariates, and F a q by p by nt array of state covariates
 # prior is a list with components b0, B0 (mean and covariance on normal prior for beta), phi0, Phi0 (lists with elements phi0[[i]] and Phi0[[i]] giving the mean and covariance on truncated normal prior for phi[[i]]), am0, bm0 (shape and rate for inverse-gamma prior on sigma2m), as0, bs0 (vectors with elements as0[i] and bs0[i] giving the shape and rate for inverse-gamma prior on sigma2s[i]), and m0 (mean on normal prior for initial state; covariance matrix is constructed using makeC0() to ensure initial state comes from a stationary distribution)
 # initial (optional) is a list with components x a p by nt + 1 state matrix and theta a list with components beta (d-length vector), sigma2m (scalar), phi (P-length list of phi vectors), and sigma2s (P-length vector of white noise variance of AR components)
-# same is a boolean indicating whether all AR components in the model are assumed to have the same model parameters
+# same is a boolean indicating whether all AR components in the model are assumed to have the same model parameters. In this case, prior components phi0 and Phi0 must be P-length lists with (p/P)-length vector elements, but only first element of lists will be used
 # mcmc.details (optional) a list with scalar components n.sims (total number of MCMC iterations), n.burn (burn in iterations), and n.thin (save every n.thin-th iteration after burn-in)
 # steps (optional) a character vector list which parameters to sample in the MCMC
 # progress a boolean indicating if a progress bar should be displayed
@@ -162,74 +162,158 @@ sample.sigma2m <- function(y, x, theta, psi, prior)
   return(1/rgamma(1,amn,bmn))
 }
 
-sample.phi <- function(y, x, theta, psi, prior)
+sample.phi <- function(y, x, theta, psi, prior, same)
 {
   nt = dim(y)[2]
   p = sapply(prior$phi0, length)
   P = length(p)
   accept = list(); length(accept) = P
   
-  for(j in 1:P)
+  if(!same)
   {
-    # Make X
-    cj = ifelse(j == 1, 1, sum(p[1:(j-1)])+1)
-    xj = x[cj:(cj+p[j]-1),]
-    if(!is.matrix(xj)) xj = matrix(xj, nr = 1)
-    X = makeXtilde(xj, theta$phi[[j]])
-    x1 = x[cj,2:(nt+1)]
-    XX = t(X)%*%X
-    Xx1 = t(X)%*%x1
+    for(j in 1:P)
+    {
+      # Make X
+      cj = ifelse(j == 1, 1, sum(p[1:(j-1)])+1)
+      xj = x[cj:(cj+p[j]-1),]
+      if(!is.matrix(xj)) xj = matrix(xj, nr = 1)
+      X = makeXtilde(xj, theta$phi[[j]])
+      x1 = x[cj,2:(nt+1)]
+      XX = t(X)%*%X
+      Xx1 = t(X)%*%x1
   
+      # Calculate phin and Phin and sample phi
+      Phi0.prec = solve(prior$Phi0[[j]])
+      Phin = solve((1/theta$sigma2s[j])*XX + Phi0.prec)
+      phin = Phin%*%((1/theta$sigma2s[j])*Xx1 + Phi0.prec%*%prior$phi0[[j]])
+      phi.p = rep(phin + t(chol(Phin))%*%rnorm(p[j]),1)
+  
+      # Reject phi.p until stationary
+      while(!is.stationary(phi.p))
+      {
+        phi.p = rep(phin + t(chol(Phin))%*%rnorm(p),1)
+        accept[[j]] = c(accept[[j]], FALSE)
+      }
+      accept[[j]] = c(accept[[j]], TRUE)
+  
+      # Perform MH step
+      logMH <- Psi.C0(x[cj:(cj+p[j]-1),1], prior$m0[cj:(cj+p[j]-1)], phi.p, theta$sigma2s[j]) - Psi.C0(x[cj:(cj+p[j]-1),1], prior$m0[cj:(cj+p[j]-1)], theta$phi[[j]], theta$sigma2s[j])
+      if (log(runif(1)) < logMH)
+      {
+        theta$phi[[j]] <- phi.p
+        accept[[j]] = c(accept[[j]], TRUE)
+      } else {
+        accept[[j]] = c(accept[[j]], FALSE)
+      }
+    }
+  } else {
+    stopifnot(dim(x)[1] == P*p[1])
+    X = array(NA, c(P,p[1],nt))
+    x1 = matrix(NA, nr = P, nc = nt)
+    for(j in 1:P)
+    {
+      # Make Xj for all k
+      cj = ifelse(j == 1, 1, (j-1)*p[1]+1)
+      xj = x[cj:(cj+p[1]-1),]
+      if(!is.matrix(xj)) xj = matrix(xj, nr = 1)
+      X[j,,] = makeXtilde(xj, theta$phi[[j]])
+      x1[j,] = x[cj,2:(nt+1)]
+    }
+    
+    # Calculate Xx and XX
+    XX = matrix(0,nr=p[1],nc=p[1])
+    Xx1 = rep(0,p[1])
+    for(k in 1:nt)
+    {
+      Xk = matrix(X[,,k],nr=P,nc=p[1])
+      x1k = x1[,k]
+      XX = XX + t(Xk)%*%Xk
+      Xx1 = Xx1 + t(Xk)%*%x1k
+    }
+    
     # Calculate phin and Phin and sample phi
-    Phi0.prec = solve(prior$Phi0[[j]])
-    Phin = solve((1/theta$sigma2s[j])*XX + Phi0.prec)
-    phin = Phin%*%((1/theta$sigma2s[j])*Xx1 + Phi0.prec%*%prior$phi0[[j]])
-    phi.p = rep(phin + t(chol(Phin))%*%rnorm(p[j]),1)
-  
+    Phi0.prec = solve(prior$Phi0[[1]])
+    Phin = solve((1/theta$sigma2s[1])*XX + Phi0.prec)
+    phin = Phin%*%((1/theta$sigma2s[1])*Xx1 + Phi0.prec%*%prior$phi0[[1]])
+    phi.p = rep(phin + t(chol(Phin))%*%rnorm(p[1]),1)
+    
     # Reject phi.p until stationary
     while(!is.stationary(phi.p))
     {
       phi.p = rep(phin + t(chol(Phin))%*%rnorm(p),1)
-      accept[[j]] = c(accept[[j]], FALSE)
+      accept[[1]] = c(accept[[1]], FALSE)
     }
-    accept[[j]] = c(accept[[j]], TRUE)
-  
+    accept[[1]] = c(accept[[1]], TRUE)
+    
     # Perform MH step
-    logMH <- Psi.C0(x[cj:(cj+p[j]-1),1], prior$m0[cj:(cj+p[j]-1)], phi.p, theta$sigma2s[j]) - Psi.C0(x[cj:(cj+p[j]-1),1], prior$m0[cj:(cj+p[j]-1)], theta$phi[[j]], theta$sigma2s[j])
+    logMH <- Psi.C0(x[,1], prior$m0, phi.p, theta$sigma2s[1], P) - Psi.C0(x[,1], prior$m0, theta$phi[[1]], theta$sigma2s[1], P)
     if (log(runif(1)) < logMH)
     {
-      theta$phi[[j]] <- phi.p
-      accept[[j]] = c(accept[[j]], TRUE)
+      theta$phi[[1]] <- phi.p
+      accept[[1]] = c(accept[[1]], TRUE)
     } else {
-      accept[[j]] = c(accept[[j]], FALSE)
+      accept[[1]] = c(accept[[1]], FALSE)
     }
   }
   return(list(phi=theta$phi,accept=accept))
 }
 
-sample.sigma2s <- function(y, x, theta, psi, prior)
+sample.sigma2s <- function(y, x, theta, psi, prior, same)
 {
   nt = dim(y)[2]
   q = dim(y)[1]
   p = sapply(prior$phi0, length)
   P = length(p)
 
-  for(j in 1:P)
+  if(!same)
   {
+    for(j in 1:P)
+    {
+      # Calculate SSx
+      cj = ifelse(j == 1, 1, sum(p[1:(j-1)])+1)  
+      xj = x[cj:(cj+p[j]-1),]
+      if(!is.matrix(xj)) xj = matrix(xj, nr = 1)
+      X = makeXtilde(xj, theta$phi[[j]])
+      x1 = x[cj,2:(nt+1)]
+      e = x1 - X%*%theta$phi[[j]]
+      SSx = t(e)%*%e
+   
+      # Sample from inverse gamma
+      C0 = makeC0(theta$phi[[j]])
+      asn = (p[j]/2)*(nt + 1) + prior$as0[j]
+      bsn = (SSx + t(x[cj:(cj+p[j]-1),1]-prior$m0[cj:(cj+p[j]-1)])%*%solve(C0)%*%(x[cj:(cj+p[j]-1),1]-prior$m0[cj:(cj+p[j]-1)]))/2 + prior$bs0[j]
+      theta$sigma2s[j] = 1/rgamma(1,asn,bsn)
+    }
+  } else {
+    stopifnot(dim(x)[1] == P*p[1])
+    X = array(NA, c(P,p[1],nt))
+    x1 = matrix(NA, nr = P, nc = nt)
+    for(j in 1:P)
+    {
+      # Make Xj for all k
+      cj = ifelse(j == 1, 1, (j-1)*p[1]+1)
+      xj = x[cj:(cj+p[1]-1),]
+      if(!is.matrix(xj)) xj = matrix(xj, nr = 1)
+      X[j,,] = makeXtilde(xj, theta$phi[[j]])
+      x1[j,] = x[cj,2:(nt+1)]
+    }
+    
     # Calculate SSx
-    C0 = makeC0(theta$phi[[j]])
-    cj = ifelse(j == 1, 1, sum(p[1:(j-1)])+1)  
-    xj = x[cj:(cj+p[j]-1),]
-    if(!is.matrix(xj)) xj = matrix(xj, nr = 1)
-    X = makeXtilde(xj, theta$phi[[j]])
-    x1 = x[cj,2:(nt+1)]
-    e = x1 - X%*%theta$phi[[j]]
-    SSx = t(e)%*%e
-  
+    SSx = 0
+    for(k in 1:nt)
+    {
+      Xk = matrix(X[,,k],nr=P,nc=p[1])
+      x1k = x1[,k]
+      e = x1k - Xk%*%theta$phi[[1]]
+      SSx = SSx + t(e)%*%e
+    } 
+    
     # Sample from inverse gamma
-    asn = (p[j]/2)*(nt + 1) + prior$as0[j]
-    bsn = (SSx + t(x[cj:(cj+p[j]-1),1]-prior$m0[cj:(cj+p[j]-1)])%*%solve(C0)%*%(x[cj:(cj+p[j]-1),1]-prior$m0[cj:(cj+p[j]-1)]))/2 + prior$bs0[j]
-    theta$sigma2s[j] = 1/rgamma(1,asn,bsn)
+    C0 = makeC0(theta$phi[[1]])
+    if(P > 1) for(j in 2:P) C0 = bdiag(list(C0,makeC0(theta$phi[[1]])))
+    asn = (P*p[1]/2)*(nt + 1) + prior$as0[1]
+    bsn = (SSx + t(x[,1]-prior$m0)%*%solve(C0)%*%(x[,1]-prior$m0))/2 + prior$bs0[1]
+    theta$sigma2s[1] = 1/rgamma(1,asn,bsn)
   }
   return(theta$sigma2s)
 }
@@ -472,12 +556,14 @@ makex0 <- function(x, phi)
   return(x0)
 }
 
-Psi.C0 <- function(x0, m0, phi, sigma2s, log=TRUE) 
+Psi.C0 <- function(x0, m0, phi, sigma2s, P = 1, log=TRUE) 
 {
-  p = length(x0)
-  stopifnot((p == length(m0)) & (p == length(phi)))
+  p.sum = length(x0)
+  p = length(phi)
+  stopifnot((p.sum == length(m0)) & (p*P == p.sum))
   
   C0 <- makeC0(phi)
+  if(P > 1) for(j in 2:P) C0 = bdiag(list(C0,makeC0(phi)))
   C0.prec <- solve(C0)
   logPsi <- -.5*log(det(C0))-.5*(1/sigma2s)*t(x0-m0)%*%C0.prec%*%(x0-m0)
   return(ifelse(log, logPsi, exp(logPsi)))

@@ -112,7 +112,8 @@ For each $k \in \{1,2,\ldots,p-1\}$
 \item $\sigma^2_s|y_{1:t},x_{0:t},\beta,\phi,\sigma^2_m \sim \mbox{IG}(a_{s_t}, b_{s_t})$, where
 \begin{align*}
 a_{s_t} &= (p/2)(t+1) + a_{s_0} \\
-b_{s_t} &= \frac{1}{2}\tilde{x}'\tilde{x} + \frac{1}{2}(x_0-m_0)'\tilde{C_0}^{-1}(x_0-m_0) + b_{s_0}
+b_{s_t} &= \frac{1}{2}\mbox{SS}_x + \frac{1}{2}(x_0-m_0)'\tilde{C_0}^{-1}(x_0-m_0) + b_{s_0} \\
+\mbox{SS}_x &= (\tilde{x} - \tilde{X}\phi)'(\tilde{x} - \tilde{X}\phi)
 \end{align*}
 \end{itemize}
 
@@ -150,7 +151,8 @@ b_{m_t}^{(i)} &= \frac{1}{2}\mbox{SS}_y + b_{m_0} \\
 \item Sample ${\sigma^2_s}^{(i)}|\cdots \sim \mbox{IG}(a_{s_t}^{(i)}, b_{s_t}^{(i)})$, where
 \begin{align*}
 a_{s_t}^{(i)} &= (p/2)(t+1) + a_{s_0} \\
-b_{s_t}^{(i)} &= \frac{1}{2}\tilde{x}'\tilde{x} + \frac{1}{2}(x_0^{(i-1)}-m_0)'\tilde{C_0}(\phi^{(i)})(x_0^{(i-1)}-m_0) + b_{s_0}
+b_{s_t}^{(i)} &= \frac{1}{2}\mbox{SS}_x + \frac{1}{2}(x_0^{(i-1)}-m_0)'\tilde{C_0}(\phi^{(i)})(x_0^{(i-1)}-m_0) + b_{s_0} \\
+\mbox{SS}_x &= (\tilde{x} - \tilde{X}\phi)'(\tilde{x} - \tilde{X}\phi)
 \end{align*}
 \noindent Here, $\tilde{C_0}(\phi^{(i)})$ implies that the matrix $\tilde{C_0}$ is constructed using $\phi^{(i)}$.
 \item Sample $x_{0:t}^{(i)}$ using the following forward filtering backward sampling (FFBS) algorithm \citep{petris2009dynamic}:
@@ -327,7 +329,8 @@ where $x_{0,j:h}$ and $m_{0,j:h}$ denote elements $j$ through $h$ of $x_0$ and $
 \item $\sigma^2_{s,i}|\cdots \sim \mbox{IG}(a^i_{s_t}, b^i_{s_t})$, where
 \begin{align*}
 a^i_{s_t} &= (p_i/2)(t+1) + a^i_{s_0} \\
-b^i_{s_t} &= \frac{1}{2}\tilde{X}_i'\tilde{X}_i + \frac{1}{2}(x_{0,c_i:c_{i+1}-1}-m_{0,c_i:c_{i+1}-1})'\tilde{C}_{0,i}^{-1}(x_{0,c_i:c_{i+1}-1}-m_{0,c_i:c_{i+1}-1}) + b^i_{s_0}
+b^i_{s_t} &= \frac{1}{2}\mbox{SS}^i_x + \frac{1}{2}(x_{0,c_i:c_{i+1}-1}-m_{0,c_i:c_{i+1}-1})'\tilde{C}_{0,i}^{-1}(x_{0,c_i:c_{i+1}-1}-m_{0,c_i:c_{i+1}-1}) + b^i_{s_0} \\
+\mbox{SS}^i_x &= (\tilde{x}_i - \tilde{X}_i\tilde{\phi}_i)'(\tilde{x}_i - \tilde{X}_i\tilde{\phi}_i)
 \end{align*}
 \end{itemize}
 
@@ -349,7 +352,8 @@ x_{k-1,c_d} & x_{k-2,c_d} & \cdots & x_{k-p,c_d}
 \item $\sigma^2_s|\cdots \sim \mbox{IG}(a_{s_t}, b_{s_t})$, where
 \begin{align*}
 a_{s_t} &= (pd/2)(t+1) + a_{s_0} \\
-b_{s_t} &= \frac{1}{2}\sum_{k=1}^t \tilde{x}_k'\tilde{x}_k + \frac{1}{2}(x_0-m_0)'\tilde{C_0}^{-1}(x_0-m_0) + b_{s_0}
+b_{s_t} &= \frac{1}{2}\mbox{SS}_x + \frac{1}{2}(x_0-m_0)'\tilde{C_0}^{-1}(x_0-m_0) + b_{s_0} \\
+\mbox{SS}_x &= \sum_{k=1}^t \left( (\tilde{x}_k - \tilde{X}_k\phi)'(\tilde{x}_k - \tilde{X}_k\phi) \right)
 \end{align*}
 \end{itemize}
 

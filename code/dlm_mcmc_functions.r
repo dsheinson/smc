@@ -3,10 +3,10 @@ source("dlm_ar_functions.r")
 ########## Gibbs sampling functions ####################
 # dlm.mcmc runs an MCMC algorithm for a DLM where the state follows an AR(p) process
 # Inputs:
-# y is a q by nt matrix of data
+# y is an nt-length vector or q by nt matrix of data
 # psi is a list with components V a q by q covariance matrix, U a q by d by nt array of beta covariates, and F a q by p by nt array of state covariates
-# prior is a list with components b0, B0 (mean and covariance on normal prior for beta), phi0, Phi0 (mean and covariance on truncated normal prior for phi), am0, bm0 (shape and rate for inverse-gamma prior on sigma2m), as0, bs0 (shape and rate for inverse-gamma prior on sigma2s), and m0 (mean on normal prior for initial state; covariance matrix is constructed using makeC0() to ensure initial state comes from a stationary distribution)
-# initial (optional) is a list with components x a p by nt + 1 state matrix and theta a list with components beta (d-length vector), sigma2m (scalar), phi (p-length vector), and sigma2s (scalar)
+# prior is a list with components b0, B0 (mean and covariance on normal prior for beta), phi0, Phi0 (lists with elements phi0[[i]] and Phi0[[i]] giving the mean and covariance on truncated normal prior for phi[[i]]), am0, bm0 (shape and rate for inverse-gamma prior on sigma2m), as0, bs0 (vectors with elements as0[i] and bs0[i] giving the shape and rate for inverse-gamma prior on sigma2s[i]), and m0 (mean on normal prior for initial state; covariance matrix is constructed using makeC0() to ensure initial state comes from a stationary distribution)
+# initial (optional) is a list with components x a p by nt + 1 state matrix and theta a list with components beta (d-length vector), sigma2m (scalar), phi (P-length list of phi vectors), and sigma2s (P-length vector of white noise variance of AR components)
 # mcmc.details (optional) a list with scalar components n.sims (total number of MCMC iterations), n.burn (burn in iterations), and n.thin (save every n.thin-th iteration after burn-in)
 # steps (optional) a character vector list which parameters to sample in the MCMC
 # progress a boolean indicating if a progress bar should be displayed
@@ -14,27 +14,32 @@ source("dlm_ar_functions.r")
 
 dlm.ar.mcmc <- function(y, psi, prior, initial, mcmc.details, steps, progress=TRUE, print.iter=FALSE) {
   # Get dimensions of data and parameters
+  if(!is.matrix(y)) y = matrix(y, nr = 1)
   nt = dim(y)[2]
   q = dim(y)[1]
-  p = length(prior$phi0)
+  p = sapply(prior$phi0, length)
+  P = length(p)
   d = length(prior$b0)
   
   # Set up initial values
   if(missing(initial)) {
-    x = matrix(rnorm(p*(nt+1)),nr=p,nc=nt+1)
-    theta = list(beta = rep(0,d), sigma2m = 1, phi = rep(0,p), sigma2s = 1)
+    x = matrix(rnorm(sum(p)*(nt+1)),nr=sum(p),nc=nt+1)
+    phi.temp = list(); length(phi.temp) = P
+    for(i in 1:P) phi.temp[[i]] = rep(0,p[i])
+    theta = list(beta = rep(0,d), sigma2m = 1, phi = phi.temp, sigma2s = rep(1,P))
+    rm(phi.temp)
   } else {
     x = initial$x
     theta = initial$theta
   }
   
-  # Check dimensions
-  check = check.dim(y, x, theta, psi, prior)
-  y = check$y
-  x = check$x
-  theta = check$theta
-  psi = check$psi
-  prior = check$prior
+#   # Check dimensions
+#   check = check.dim(y, x, theta, psi, prior)
+#   y = check$y
+#   x = check$x
+#   theta = check$theta
+#   psi = check$psi
+#   prior = check$prior
   
   # MCMC details
   if(missing(mcmc.details)) {
@@ -54,10 +59,11 @@ dlm.ar.mcmc <- function(y, psi, prior, initial, mcmc.details, steps, progress=TR
   n.iter <- (n.sims - n.burn)%/%n.thin
   keep.beta <- matrix(NA, n.iter, d)
   keep.sigma2m <- rep(NA, n.iter)
-  keep.phi <- matrix(NA, n.iter, p)
-  keep.sigma2s <- rep(NA, n.iter)
-  keep.x  <- array(NA, c(n.iter, p, nt + 1))
-  accept.phi <- c()
+  keep.phi = list(); length(keep.phi) = P
+  for(i in 1:P) keep.phi[[i]] <- matrix(NA, n.iter, p[i])
+  keep.sigma2s <- matrix(NA, n.iter, P)
+  keep.x  <- array(NA, c(n.iter, sum(p), nt + 1))
+  accept.phi <- list(); length(accept.phi) = P
   
   # Run mcmc
   if(progress) pb = txtProgressBar(0,n.sims,style=3)
@@ -73,8 +79,11 @@ dlm.ar.mcmc <- function(y, psi, prior, initial, mcmc.details, steps, progress=TR
     if('sigma2m' %in% steps) theta$sigma2m = sample.sigma2m(y, x, theta, psi, prior)
     if('phi' %in% steps){
       samp.phi = sample.phi(y, x, theta, psi, prior)
-      theta$phi = samp.phi$phi
-      if(i > n.burn) accept.phi = c(accept.phi, samp.phi$accept)
+      for(j in 1:P)
+      {
+        theta$phi[[j]] = samp.phi$phi[[j]]
+        if(i > n.burn) accept.phi[[j]] = c(accept.phi[[j]], samp.phi$accept[[j]])
+      }
     }
     if('sigma2s' %in% steps) theta$sigma2s = sample.sigma2s(y, x, theta, psi, prior)
     if('x' %in% steps) x = sample.states(y, x, theta, psi, prior)
@@ -83,7 +92,7 @@ dlm.ar.mcmc <- function(y, psi, prior, initial, mcmc.details, steps, progress=TR
     if (ii <- save.iteration(i,n.burn,n.thin)) {
       keep.beta[ii,] = theta$beta
       keep.sigma2m[ii] = theta$sigma2m
-      keep.phi[ii,] = theta$phi
+      for(j in 1:P) keep.phi[[j]][ii,] = theta$phi[[j]]
       keep.sigma2s[ii] = theta$sigma2s
       keep.x[ii,,] = x
     }
@@ -156,37 +165,42 @@ sample.sigma2m <- function(y, x, theta, psi, prior)
 sample.phi <- function(y, x, theta, psi, prior)
 {
   nt = dim(y)[2]
-  p = dim(x)[1]
-
-  # Make X
-  X = makeXtilde(x, theta$phi)
-  x1 = x[1,2:(nt+1)]
-  XX = t(X)%*%X
-  Xx1 = t(X)%*%x1
+  p = sapply(prior$phi0, length)
+  P = length(p)
+  accept = list(); length(accept) = P
   
-  # Calculate phin and Phin and sample phi
-  Phi0.prec = solve(prior$Phi0)
-  Phin = solve((1/theta$sigma2s)*XX + Phi0.prec)
-  phin = Phin%*%((1/theta$sigma2s)*Xx1 + Phi0.prec%*%prior$phi0)
-  phi.p = rep(phin + t(chol(Phin))%*%rnorm(p),1)
-  
-  # Reject phi.p until stationary
-  accept = c()
-  while(!is.stationary(phi.p))
+  for(j in 1:P)
   {
-    phi.p = rep(phin + t(chol(Phin))%*%rnorm(p),1)
-    accept = c(accept, FALSE)
-  }
-  accept = c(accept, TRUE)
+    # Make X
+    cj = ifelse(j == 1, 1, sum(p[1:(j-1)])+1)
+    X = makeXtilde(x[cj:(cj+p[j]-1),], theta$phi[[j]])
+    x1 = x[cj,2:(nt+1)]
+    XX = t(X)%*%X
+    Xx1 = t(X)%*%x1
   
-  # Perform MH step
-  logMH <- Psi.C0(x[,1], prior$m0, phi.p, theta$sigma2s) - Psi.C0(x[,1], prior$m0, theta$phi, theta$sigma2s)
-  if (log(runif(1)) < logMH)
-  {
-    theta$phi <- phi.p
-    accept = c(accept, TRUE)
-  } else {
-    accept = c(accept, FALSE)
+    # Calculate phin and Phin and sample phi
+    Phi0.prec = solve(prior$Phi0[[j]])
+    Phin = solve((1/theta$sigma2s[j])*XX + Phi0.prec)
+    phin = Phin%*%((1/theta$sigma2s[j])*Xx1 + Phi0.prec%*%prior$phi0[[j]])
+    phi.p = rep(phin + t(chol(Phin))%*%rnorm(p[j]),1)
+  
+    # Reject phi.p until stationary
+    while(!is.stationary(phi.p))
+    {
+      phi.p = rep(phin + t(chol(Phin))%*%rnorm(p),1)
+      accept[[j]] = c(accept[[j]], FALSE)
+    }
+    accept[[j]] = c(accept[[j]], TRUE)
+  
+    # Perform MH step
+    logMH <- Psi.C0(x[cj:(cj+p[j]-1),1], prior$m0[cj:(cj+p[j]-1)], phi.p, theta$sigma2s[j]) - Psi.C0(x[cj:(cj+p[j]-1),1], prior$m0[cj:(cj+p[j]-1)], theta$phi[[j]], theta$sigma2s[j])
+    if (log(runif(1)) < logMH)
+    {
+      theta$phi[[j]] <- phi.p
+      accept[[j]] = c(accept[[j]], TRUE)
+    } else {
+      accept[[j]] = c(accept[[j]], FALSE)
+    }
   }
   return(list(phi=theta$phi,accept=accept))
 }
@@ -194,30 +208,51 @@ sample.phi <- function(y, x, theta, psi, prior)
 sample.sigma2s <- function(y, x, theta, psi, prior)
 {
   nt = dim(y)[2]
-  p = dim(x)[1]
   q = dim(y)[1]
-  C0 = makeC0(theta$phi)
+  p = sapply(prior$phi0, length)
+  P = length(p)
+
+  for(j in 1:P)
+  {
+    # Calculate SSx
+    C0 = makeC0(theta$phi[[j]])
+    cj = ifelse(j == 1, 1, sum(p[1:(j-1)])+1)
+    X = makeXtilde(x[cj:(cj+p[j]-1),], theta$phi[[j]])
+    x1 = x[cj,2:(nt+1)]
+    e = x1 - X%*%theta$phi[[j]]
+    SSx = t(e)%*%e
   
-  # Calculate SSx
-  X = makeXtilde(x, theta$phi)
-  e = x[1,2:(nt+1)] - X%*%theta$phi
-  SSx = t(e)%*%e
-  
-  # Sample from inverse gamma
-  asn = (p/2)*(nt + 1) + prior$as0
-  bsn = (SSx + t(x[,1]-prior$m0)%*%solve(C0)%*%(x[,1]-prior$m0))/2 + prior$bs0
-  return(1/rgamma(1,asn,bsn))
+    # Sample from inverse gamma
+    asn = (p[j]/2)*(nt + 1) + prior$as0[j]
+    bsn = (SSx + t(x[cj:(cj+p[j]-1),1]-prior$m0[cj:(cj+p[j]-1)])%*%solve(C0)%*%(x[cj:(cj+p[j]-1),1]-prior$m0[cj:(cj+p[j]-1)]))/2 + prior$bs0[j]
+    theta$sigma2s[j] = 1/rgamma(1,asn,bsn)
+  }
+  return(theta$sigma2s)
 }
 
 sample.states <- function(y, x, theta, psi, prior)
 {
   # Extract dlm components
-  p = length(theta$phi)
-  G = makeG(theta$phi)
+  p = sapply(prior$phi0, length)
+  P = length(p)
+  G = makeG(theta$phi[[1]])
+  sf = c(1,rep(0,p[1]-1))
+  W = theta$sigma2s[1]*sf%*%t(sf)
+  C0 = theta$sigma2s*makeC0(theta$phi[[1]])
+  if(P > 1)
+  {
+    for(j in 1:P)
+    {
+      G = bdiag(G,makeG(theta$phi[[j]]))
+      sf = c(1,rep(0,p[j]-1))
+      Wj = theta$sigma2s[j]*sf%*%t(sf)
+      W = bdiag(W,Wj)
+      C0 = bdiag(theta$sigma2s[j]*makeC0(theta$phi[[j]]))
+    }
+  }
   V = theta$sigma2m*psi$V
-  sf = c(1,rep(0,p-1))
-  W = theta$sigma2s*sf%*%t(sf)
-  C0 = theta$sigma2s*makeC0(theta$phi)
+
+  # Forward filtering backward sampling
   return(ffbs(y, psi$U, theta$beta, psi$F, G, V, W, prior$m0, C0))
 }
 
@@ -236,23 +271,30 @@ save.iteration <- function(current.iter, n.burn, n.thin) {
 # check.dim() checks that y, x, and components of theta, psi, and prior are of correct dimensions
 check.dim <- function(y, x, theta, psi, prior)
 {
-  # Data and states
-  if(is.null(dim(y))) y = matrix(y, nr=1)
-  y = as.matrix(y)
+  # Data assumed to be a q by nt matrix
   q = dim(y)[1]
   nt = dim(y)[2]
+  
+  # States
   if(is.null(dim(x))) x = matrix(x, nr=1)
   x = as.matrix(x)
-  p = dim(x)[1]
+  p.sum = dim(x)[1]
   stopifnot(dim(x)[2] == nt + 1)
   
   # Unknown parameters
   if(is.null(theta$beta)) beta = 0 else beta = rep(theta$beta, 1)
   d = length(beta)
-  if(is.null(theta$phi)) phi = rep(0,p) else phi = rep(theta$phi, 1)
-  stopifnot(length(phi) == p)
+  if(is.null(theta$phi))
+  {
+    phi = list(rep(0,p.sum))
+  } else if(!is.list(phi)) {
+    phi = list(phi)
+  }
+  p = sapply(phi, length)
+  stopifnot(sum(p) == p.sum)
   if(is.null(theta$sigma2m)) sigma2m = 0 else sigma2m = theta$sigma2m[1]
-  if(is.null(theta$sigma2s)) sigma2s = 0 else sigma2s = theta$sigma2s[1]
+  if(is.null(theta$sigma2s)) sigma2s = 0 else sigma2s = rep(theta$sigma2s, 1)
+  stopifnot(length(theta$sigma2s) == length(p))
   theta = list(beta = beta, phi = phi, sigma2m = sigma2m, sigma2s = sigma2s)
   
   # Known parameters

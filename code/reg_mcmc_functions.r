@@ -38,9 +38,9 @@ reg.ar.mcmc <- function(y, X, prior, initial, mcmc.details, steps, progress=TRUE
   # save structures
   n.iter <- (n.sims-n.burn)%/%n.thin
   keep.beta   <- matrix(NA, n.iter, q)
-  keep.phi    <- matrix(NA, n.iter, p)
-  keep.sigma2s <- rep(   NA, n.iter)
-  accept.phi <- c()
+  keep.phi    <- list(matrix(NA, n.iter, p))
+  keep.sigma2s <- matrix(   NA, n.iter, 1)
+  accept.phi <- list(); length(accept.phi) = 1
   
   # Run mcmc
   if(progress) pb = txtProgressBar(0,n.sims,style=3)
@@ -57,15 +57,15 @@ reg.ar.mcmc <- function(y, X, prior, initial, mcmc.details, steps, progress=TRUE
     {
       samp.phi <- sample.ar.phi(   y, X, psi, prior)
       psi$phi <- samp.phi$phi
-      if(i > n.burn) accept.phi <- c(accept.phi, samp.phi$accept)
+      if(i > n.burn) accept.phi[[1]] <- c(accept.phi[[1]], samp.phi$accept)
     }
     if ('sigma2s'%in%steps) psi$sigma2s <- sample.ar.sigma2s(y, X, psi, prior)
     
     # Only save every n.thin iteration
     if (ii <- save.iteration(i,n.burn,n.thin)) {
       keep.beta  [ii,] <- psi$beta
-      keep.phi   [ii,] <- psi$phi
-      keep.sigma2s[ii ] <- psi$sigma2s
+      keep.phi[[1]][ii,] <- psi$phi
+      keep.sigma2s[ii,1] <- psi$sigma2s
     }
   }
   

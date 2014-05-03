@@ -46,26 +46,57 @@ bdiag <- function(mylist)
 }
 
 # Functions to build a DLM model using R package 'dlm'
-# par = c(logit(phi), log(sigma2s), log(sigma2m))
+# par = c(logit(phi1), ..., logit(phip), log(sigma2s), log(sigma2m))
 
-build_M101 <- function(par,V,U,x)
+build_M101 <- function(par,V,U,nd=NULL) # assume all error components are AR(1)
 {
   require(dlm)
   d = dim(U)[2]
+  lp = length(par)
+  p = (lp - 1) / 2
+  stopifnot(p %% 1 == 0)
    
-  FF = matrix(rep(0,d+1),nr=1)
-  JFF = matrix(1:(d+1),nr=1)
-  X = cbind(t(U[1,,]),x)
-  V=exp(par[3])*V
-  GG = diag(dim(X)[2]); GG[dim(X)[2],dim(X)[2]] = unlogit(par[1],-1,1)
-  W = 0*diag(dim(X)[2]); W[dim(X)[2],dim(X)[2]] = exp(par[2])
-  m0 = rep(0,dim(X)[2])
-  C0 = 1e6*diag(dim(X)[2]); C0[dim(X)[2],dim(X)[2]] = exp(par[2])/(1-unlogit(par[1],-1,1)^2)
+  FF = matrix(rep(0,d+p),nr=1)
+  JFF = matrix(1:(d+p),nr=1)
+  if(p == 1) U.add = matrix(U[1,d,]) else U.add = t(U[1,(d-p+1):d,])
+  X = cbind(t(U[1,,]),U.add)
+  dd = dim(X)[2]
+  V=exp(par[lp])*V
+  GG = diag(dd)
+  for(j in 1:p) GG[dd-p+j,dd-p+j] = unlogit(par[j],-1,1)
+  W = 0*diag(dd)
+  for(j in 1:p) W[dd-p+j,dd-p+j] = exp(par[p+j])
+  m0 = rep(0,dd)
+  C0 = 1e6*diag(dd)
+  for(j in 1:p) C0[dd-p+j,dd-p+j] = exp(par[p+j])/(1-unlogit(par[j],-1,1)^2)
   mod = dlm(FF=FF,V=V,GG=GG,W=W,m0=m0,C0=C0,JFF=JFF,X=X)
   return(mod)
 }
 
-build_M011 <- function(par,V,U,x)
+build_M101_same <- function(par,V,U,nd) # assume all error components are AR(1)
+{
+  require(dlm)
+  d = dim(U)[2]
+  stopifnot(length(par) == 3 & nd <= d)
+  
+  FF = matrix(rep(0,d+nd),nr=1)
+  JFF = matrix(1:(d+nd),nr=1)
+  if(nd == 1) U.add = matrix(U[1,d,]) else U.add = t(U[1,(d-nd+1):d,])
+  X = cbind(t(U[1,,]),U.add)
+  dd = dim(X)[2]
+  V=exp(par[3])*V
+  GG = diag(dd)
+  for(j in 1:nd) GG[dd-nd+j,dd-nd+j] = unlogit(par[1],-1,1)
+  W = 0*diag(dd)
+  for(j in 1:nd) W[dd-nd+j,dd-nd+j] = exp(par[2])
+  m0 = rep(0,dd)
+  C0 = 1e6*diag(dd)
+  for(j in 1:nd) C0[dd-nd+j,dd-nd+j] = exp(par[2])/(1-unlogit(par[1],-1,1)^2)
+  mod = dlm(FF=FF,V=V,GG=GG,W=W,m0=m0,C0=C0,JFF=JFF,X=X)
+  return(mod)
+}
+
+build_M011 <- function(par,V,U,nd=NULL)
 {
   require(dlm)
   d = dim(U)[2]

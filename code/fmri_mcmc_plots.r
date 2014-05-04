@@ -8,13 +8,14 @@ fmri_mcmc_plot <- function(N, n, n.sim, mod, diff, dimx, n.chains, nsims, nburn,
   # Load simulated data
   load(paste(dpath,"dlm_ar_sim-",N,"-",mod,diff,"-",dimx,".rdata",sep=""))
   mysims = get(paste(mod,"_dat",sep=""))[[1]][[n]]
-  if(strsplit(mod,"")[[1]][2] == 0) modtype = "reg" else modtype = "dlm"
+  if(strsplit(mod,"")[[1]][4] == 0) modtype = "reg" else modtype = "dlm"
+  if(!same & modtype == "reg") same.lab = "" else same.lab = paste("-",same,sep="")
   
   # Load MCMC data
   out.all <- list()
   for(i in 1:n.chains)
   {
-    file = paste(dpath,"fmri_dlm_mcmc_test-",paste(N,n,n.sim,mod,sep="-"),paste(diff,dimx,i,nsims,nburn,nthin,same,sep="-"),".rdata",sep="")
+    file = paste(dpath,"fmri_",modtype,"_mcmc_test-",paste(N,n,n.sim,mod,sep="-"),paste(diff,dimx,i,nsims,nburn,nthin,sep="-"),same.lab,".rdata",sep="")
     load(file)
     out.all[[i]] = out.est
   }
@@ -26,7 +27,7 @@ fmri_mcmc_plot <- function(N, n, n.sim, mod, diff, dimx, n.chains, nsims, nburn,
   # Traceplots for beta
   iter = (1:n.keep)*n.thin
   d = length(mysims[[n.sim]]$true.params$beta)
-  file = paste(gpath,"fmri_dlm_mcmc_test-",paste(N,n,n.sim,mod,sep="-"),paste(diff,dimx,n.chains,nsims,nburn,nthin,same,sep="-"),"-traceplots-beta.pdf",sep="")
+  file = paste(gpath,"fmri_",modtype,"_mcmc_test-",paste(N,n,n.sim,mod,sep="-"),paste(diff,dimx,n.chains,nsims,nburn,nthin,sep="-"),same.lab,"-traceplots-beta.pdf",sep="")
   pdf(file=file)
   par(mfrow=c(d,1), mar=c(5,6,4,2)+.1)
   mins = apply(matrix(sapply(out.all, function(x) apply(x$out$beta, 2, min)),nr=d), 1, min)
@@ -78,7 +79,7 @@ fmri_mcmc_plot <- function(N, n, n.sim, mod, diff, dimx, n.chains, nsims, nburn,
   {
     if(i > 1 & same) break
     p = dim(out.all[[1]]$out$phi[[i]])[2]
-    file = paste(gpath,"fmri_dlm_mcmc_test-",paste(N,n,n.sim,mod,sep="-"),paste(diff,dimx,n.chains,nsims,nburn,nthin,same,sep="-"),"-traceplots-phi-",i,".pdf",sep="")
+    file = paste(gpath,"fmri_",modtype,"_mcmc_test-",paste(N,n,n.sim,mod,sep="-"),paste(diff,dimx,n.chains,nsims,nburn,nthin,sep="-"),same.lab,"-traceplots-phi-",i,".pdf",sep="")
     pdf(file=file)
     par(mfrow=c(p,1), mar=c(5,6,4,2)+.1)
     mins = apply(matrix(sapply(out.all, function(x) apply(x$out$phi[[i]], 2, min)),nr=p), 1, min)
@@ -110,7 +111,7 @@ fmri_mcmc_plot <- function(N, n, n.sim, mod, diff, dimx, n.chains, nsims, nburn,
   {
     if(i > 1 & same) break
     p = dim(out.all[[1]]$out$phi[[i]])[2]
-    file = paste(gpath,"fmri_dlm_mcmc_test-",paste(N,n,n.sim,mod,sep="-"),paste(diff,dimx,n.chains,nsims,nburn,nthin,same,sep="-"),"-traceplots-sigma2s-",i,".pdf",sep="")
+    file = paste(gpath,"fmri_",modtype,"_mcmc_test-",paste(N,n,n.sim,mod,sep="-"),paste(diff,dimx,n.chains,nsims,nburn,nthin,sep="-"),same.lab,"-traceplots-sigma2s-",i,".pdf",sep="")
     pdf(file=file)
     par(mfrow=c(1,1), mar=c(5,6,4,2)+.1)
     ymin = min(sapply(out.all, function(x) min(x$out$sigma2s[,i])))
@@ -132,44 +133,49 @@ fmri_mcmc_plot <- function(N, n, n.sim, mod, diff, dimx, n.chains, nsims, nburn,
   }
   
   # Traceplots for x_t (9 points)
-  tt = dim(out.all[[1]]$out$x)[3]
-  npts = floor(seq(1,tt,len=9))
-  p.sum = 1
-  for(i in 1:P)
+  if(modtype == "dlm")
   {
-    p = dim(out.all[[1]]$out$phi[[i]])[2]
-    file = paste(gpath,"fmri_dlm_mcmc_test-",paste(N,n,n.sim,mod,sep="-"),paste(diff,dimx,n.chains,nsims,nburn,nthin,same,sep="-"),"-traceplots-x-",i,".pdf",sep="")
-    pdf(file=file)
-    par(mfrow=c(3,3), mar=c(5,6,2,2)+.1)
-    ymin = min(sapply(out.all, function(a) min(a$out$x[,p.sum,npts])))
-    ymax = max(sapply(out.all, function(a) max(a$out$x[,p.sum,npts])))
-    for(k in 1:length(npts))
+    tt = dim(out.all[[1]]$out$x)[3]
+    npts = floor(seq(1,tt,len=9))
+    p.sum = 1
+    for(i in 1:P)
     {
-      ylab = bquote(expression(x[.(npts[k]-1)]))
-      if(k == 1) xlab = "Iteration" else xlab = ""
-      true.x = mysims[[n.sim]]$x[p.sum,npts[k]]
-      mle.x = out.all[[1]]$x.mle[p.sum,npts[k]]
-      plot(iter,out.all[[1]]$out$x[,p.sum,npts[k]],type="l",ylim=c(min(true.x,mle.x,ymin),max(true.x,mle.x,ymax)),xlab=xlab,ylab=eval(ylab),cex.lab=1.5)
-      ess.mcmcse = ess(rep(sapply(out.all, function(x) x$out$x[,p.sum,npts[k]]),1))
-      ess.coda = 0
-      for(j in 1:n.chains) ess.coda = ess.coda + effectiveSize(mcmc(out.all[[j]]$out$x[,p.sum,npts[k]]))
-      mtext(paste("ESS: ",round(ess.mcmcse,2)," (mcmcse), ",round(ess.coda,2)," (coda)",sep="") ,side = 3, cex = 0.5)
-      if(n.chains > 1) for(j in 2:n.chains) lines(iter,out.all[[j]]$out$x[,p.sum,npts[k]],col=2*(j-1))
-      abline(h=true.x,lty=2)
-      abline(h=mle.x,col="gray",lwd=3)
-      mtext(round(true.x,3), cex = 0.9, side = 4, at = true.x)
+      p = dim(out.all[[1]]$out$phi[[i]])[2]
+      file = paste(gpath,"fmri_dlm_mcmc_test-",paste(N,n,n.sim,mod,sep="-"),paste(diff,dimx,n.chains,nsims,nburn,nthin,same,sep="-"),"-traceplots-x-",i,".pdf",sep="")
+      pdf(file=file)
+      par(mfrow=c(3,3), mar=c(5,6,2,2)+.1)
+      ymin = min(sapply(out.all, function(a) min(a$out$x[,p.sum,npts])))
+      ymax = max(sapply(out.all, function(a) max(a$out$x[,p.sum,npts])))
+      for(k in 1:length(npts))
+      {
+        ylab = bquote(expression(x[.(npts[k]-1)]))
+        if(k == 1) xlab = "Iteration" else xlab = ""
+        true.x = mysims[[n.sim]]$x[p.sum,npts[k]]
+        mle.x = out.all[[1]]$x.mle[p.sum,npts[k]]
+        plot(iter,out.all[[1]]$out$x[,p.sum,npts[k]],type="l",ylim=c(min(true.x,mle.x,ymin),max(true.x,mle.x,ymax)),xlab=xlab,ylab=eval(ylab),cex.lab=1.5)
+        ess.mcmcse = ess(rep(sapply(out.all, function(x) x$out$x[,p.sum,npts[k]]),1))
+        ess.coda = 0
+        for(j in 1:n.chains) ess.coda = ess.coda + effectiveSize(mcmc(out.all[[j]]$out$x[,p.sum,npts[k]]))
+        mtext(paste("ESS: ",round(ess.mcmcse,2)," (mcmcse), ",round(ess.coda,2)," (coda)",sep="") ,side = 3, cex = 0.5)
+        if(n.chains > 1) for(j in 2:n.chains) lines(iter,out.all[[j]]$out$x[,p.sum,npts[k]],col=2*(j-1))
+        abline(h=true.x,lty=2)
+        abline(h=mle.x,col="gray",lwd=3)
+        mtext(round(true.x,3), cex = 0.9, side = 4, at = true.x)
+      }
+      dev.off()
+      p.sum = p.sum + p
     }
-    dev.off()
-    p.sum = p.sum + p
   }
 }
 
 require(coda)
 require(mcmcse)
 require(plyr)
-data1 = expand.grid(N=20,n=6,n.sim=1,mod=c("M011","M101"),diff="",dimx=3,n.chains=3,nsims=110,nburn=10,nthin=10,same=FALSE,stringsAsFactors=FALSE)
-data2 = expand.grid(N=20,n=6,n.sim=1,mod="M101",diff="-diff",dimx=3,n.chains=3,nsims=110,nburn=10,nthin=10,same=c(TRUE,FALSE),stringsAsFactors=FALSE)
-mydata = rbind(data1,data2)
+data1 = expand.grid(N=20,n=6,n.sim=1:10,mod=c("M011","M101"),diff="",dimx=3,n.chains=3,nsims=11000,nburn=1000,nthin=1,same=FALSE,stringsAsFactors=FALSE)
+data2 = expand.grid(N=20,n=6,n.sim=1:10,mod="M101",diff="-diff",dimx=3,n.chains=3,nsims=11000,nburn=1000,nthin=1,same=FALSE,stringsAsFactors=FALSE)
+data3 = expand.grid(N=20,n=4,n.sim=1:10,mod="M101",diff="-diff",dimx=3,n.chains=3,nsims=11000,nburn=1000,nthin=1,same=TRUE,stringsAsFactors=FALSE)
+data4 = expand.grid(N=20,n=6,n.sim=1:10,mod=c("M010","M020"),diff="",dimx=3,n.chains=3,nsims=11000,nburn=1000,nthin=1,same=FALSE,stringsAsFactors=FALSE)
+mydata = rbind(data1,data2,data3,data4)
 m_ply(mydata, fmri_mcmc_plot)
 
 # # Function to plot histograms of posterior means (or medians) among multiple simulations

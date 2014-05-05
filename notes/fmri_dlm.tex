@@ -5,7 +5,10 @@
 \usepackage{enumitem}
 \usepackage{graphicx}
 
-\graphicspath{{/Users/Danny/Documents/"UCSB - Research"/smc/graphs/simpleLR/}}
+\graphicspath{
+{/Users/Danny/Documents/"UCSB - Research"/smc/graphs/simpleLR/},
+{/Users/Danny/Documents/"UCSB - Research"/smc/graphs/}
+}
 
 \begin{document}
 
@@ -180,11 +183,12 @@ Consider a time series from one voxel of the brain in an fMRI experiment. We cou
 U_t = (1, \mbox{conv}_t) \quad \beta = (\beta_0,\beta_1)' \quad F_t = (\mbox{conv}_t) \quad G = \phi \label{eqn:dr}
 \end{equation}
 
-\noindent Here, $\mbox{conv}_t$ is the convolution of the hemodynamic response function with the experimental design, giving the expected BOLD response if the experimental stimulus triggers neural activation. Notice that multiplying out the observation equation yields
+\noindent Here, $\mbox{conv}_t$ is the convolution of the hemodynamic response function with the experimental design, giving the expected BOLD response if the experimental stimulus triggers neural activation. Notice that multiplying out the observation equation yields the following state-space model:
 \begin{align*}
-y_t &= \beta_0 + \beta_1\mbox{conv}_t + x_t\mbox{conv}_t + v_t \\
-    &= \beta_0 + (\beta_1 + x_t)\mbox{conv}_t + v_t
+y_t &= \beta_0 + (\beta_1 + x_t)\mbox{conv}_t + v_t \\
+x_t &= \phi x_{t-1} + w_t
 \end{align*}
+\noindent where $v_t \stackrel{iid}{\sim} \mbox{N}(0,\sigma^2_m\tilde{V})$ and $w_t \stackrel{iid}{\sim} \mbox{N}(0,\sigma^2_s)$.
 Thus, $\beta_0$ represents the baseline level of BOLD signal, $\beta_1$ is the mean level of subject response to the experimental stimulus, and $x_t$ is the change in subject response from the mean at time $t$. $x_t$ can reflect changes in focus of the subject in the scanner over time, and is specified by the state equation to follow an AR(1) process.
 
 A time series of length $T = 245$ was simulated from a dynamic regression with the following parameter values:
@@ -239,9 +243,16 @@ Three MCMC chains using the Gibbs sampling algorithm described in Section \ref{s
 %\caption{Histograms of median sample values for $x_t$ among 20 simulated data sets for different $t$ (plot panels). Red vertical lines correspond to true values used for simulation.} \label{fig:medx}
 %\end{figure}
 
+\clearpage
+
 \section{Example - Regression with AR(1)+WN errors} \label{sec:exar}
 
-We can also visualize fMRI data being generated from a regression model with a constant slope and autocorrelated errors. The dynamic regression model specified by equation \eqref{eqn:dr} can be changed to this model by letting $F_t = 1$ instead of $\mbox{conv}_t$. A time series were generated from this model with parameter values set to
+We can also visualize fMRI data being generated from a regression model with a constant slope and autocorrelated errors. The dynamic regression model specified by equation \eqref{eqn:dr} can be changed to this model by letting $F_t = 1$ instead of $\mbox{conv}_t$. That is, we can form a DLM representation of the following model: 
+\begin{align*}
+y_t &= \beta_0 + \beta_1\mbox{conv}_t + x_t + v_t \\
+x_t &= \phi x_{t-1} + w_t
+\end{align*}
+\noindent where $v_t \stackrel{iid}{\sim} \mbox{N}(0,\sigma^2_m\tilde{V})$ and $w_t \stackrel{iid}{\sim} \mbox{N}(0,\sigma^2_s)$. A time series were generated from this model with parameter values set to
 \begin{align*}
 \beta_0 = 900 &\quad \beta_1 = 5 \\
 \tilde{V} = 1 &\quad \sigma_m^2 = 0.5 \\
@@ -291,6 +302,44 @@ Three MCMC chains were run on the simulated data set in the same manner as those
 %\includegraphics[width=1.0\textwidth]{../graphs/fmri_mcmc_test-20-6-M011-11000-1000-10-1-1-1-1-1-hist-x}
 %\caption{Histograms of median sample values for $x_t$ among 20 simulated data sets for different $t$ (plot panels). Red vertical lines correspond to true values used for simulation.} \label{fig:medx-arwn}
 %\end{figure}
+
+\clearpage
+
+\section{Example - dynamic regression extended} \label{sec:drext}
+
+In this section, we add an additional dynamic regression coefficient to the model and assume that the two regression coefficients, e.g. $\beta_1$ and $\beta_2$, change over time in the exact same manner. That is, we assume the following model:
+\begin{align*}
+y_t &= \beta_0 + (\beta_1 + x_t)\mbox{conv}_{1,t} + (\beta_2 + x_t)\mbox{conv}_{2,t} + v_t \\
+x_t &= \phi x_{t-1} + w_t
+\end{align*}
+\noindent where $\mbox{conv}_{1,t}$ and $\mbox{conv}_{2,t}$ now represent the predicted BOLD response to two separate events. A time series of length $T = 250$ was simulated from this model with the following parameter values:
+\begin{align*}
+\beta_0 = 900 &\quad \beta_1 = 5 \quad \beta_2 = 2 \\
+\tilde{V} = 1 &\quad \sigma_m^2 = 1 \\
+\phi = 0.9 &\quad \sigma_s^2 = 1
+\end{align*}
+Three MCMC chains using the Gibbs sampling algorithm described in Section \ref{sec:gibbs} were run for 11000 iterations with a burn-in period of 1000. Samples from every iteration of the Gibbs sampler were saved, yielding the following marginal traceplots for the fixed parameters shown in Figure \ref{fig:tracetheta-drext} and $x_t$ for $t \in \{0, 31, 62, 93, 125, 156, 187, 218, 250\}$ shown in Figure \ref{fig:tracex-drext}. Maximum likelihood estimates shown in the figures were obtained using the {\tt dlm} package in R \citep{petris2009dynamic}.
+
+\begin{figure}[ht]
+\begin{minipage}{0.5\linewidth}
+\includegraphics[width=1.0\textwidth]{fmri_dlm_mcmc_test-20-6-1-M101-3-3-11000-1000-1-FALSE-traceplots-beta}
+\end{minipage}
+\begin{minipage}{0.5\linewidth}
+\includegraphics[width=1.0\textwidth]{fmri_dlm_mcmc_test-20-6-1-M101-3-3-11000-1000-1-FALSE-traceplots-phi-1}
+\end{minipage}
+\begin{minipage}{0.5\linewidth}
+\includegraphics[width=1.0\textwidth]{fmri_dlm_mcmc_test-20-6-1-M101-3-3-11000-1000-1-FALSE-traceplots-sigma2m}
+\end{minipage}
+\begin{minipage}{0.5\linewidth}
+\includegraphics[width=1.0\textwidth]{fmri_dlm_mcmc_test-20-6-1-M101-3-3-11000-1000-1-FALSE-traceplots-sigma2s-1}
+\end{minipage}
+\caption{Marginal traceplots for unknown parameters of the two-coefficient dynamic regression model with the same time-evolving state for three MCMC chains (colors). Gray horizontal lines correspond to MLEs and black horizontal lines correspond to true values used for simulation with actual values printed along the right side of the plot panel.} \label{fig:tracetheta-drext}
+\end{figure}
+
+\begin{figure}[ht]
+\includegraphics[width=1.0\textwidth]{fmri_dlm_mcmc_test-20-6-1-M101-3-3-11000-1000-1-FALSE-traceplots-x-1}
+\caption{Marginal traceplots for the change in slopes $x_t$ of the two-coefficient dynamic regression model for three MCMC chains (colors) for different $t$ (plot panels). Gray horizontal lines correspond to smoothed estimates with fixed parameter values set at the MLEs, and black horizontal lines correspond to true simulated states with actual values printed along the right side of the plot panel.} \label{fig:tracex-drext}
+\end{figure}
 
 \clearpage
 
@@ -356,6 +405,111 @@ b_{s_t} &= \frac{1}{2}\mbox{SS}_x + \frac{1}{2}(x_0-m_0)'\tilde{C_0}^{-1}(x_0-m_
 \mbox{SS}_x &= \sum_{k=1}^t \left( (\tilde{x}_k - \tilde{X}_k\phi)'(\tilde{x}_k - \tilde{X}_k\phi) \right)
 \end{align*}
 \end{itemize}
+
+\section{Example - dynamic regression with change in slopes following different AR(1) processes}
+
+In this section, we assume that the two coefficients of a dynamic regression model, e.g. $\beta_1$ and $\beta_2$, evolve over time in different manners according to different AR(1) processes. That is, we assume the following model:
+\begin{align*}
+y_t &= \beta_0 + (\beta_1 + x_{1,t})\mbox{conv}_{1,t} + (\beta_2 + x_{2,t})\mbox{conv}_{2,t} + v_t \\
+x_{1,t} &= \phi_1 x_{1,t-1} + w_{1,t} \\
+x_{2,t} &= \phi_2 x_{2,t-1} + w_{2,t}
+\end{align*}
+\noindent where $x_t = (x_{1,t}, x_{2,t})'$ now represents the change in the first and second regression coefficients at time $t$, $v_t \stackrel{iid}{\sim} \mbox{N}(0,\sigma^2_m\tilde{V})$, $w_{1,t} \stackrel{iid}{\sim} \mbox{N}(0,\sigma^2_{s,1})$, $w_{2,t} \stackrel{iid}{\sim} \mbox{N}(0,\sigma^2_{s,2})$. A DLM representation of this model can be formed by letting
+
+\begin{equation}
+U_t = (1, \mbox{conv}_{1,t}, \mbox{conv}_{2,t}) \quad \beta = (\beta_0,\beta_1,\beta_2)' \quad F_t = (\mbox{conv}_{1,t}, \mbox{conv}_{2,t}) \quad G = \left( \begin{array}{cc} \phi & 0 \\ 0 & \phi \end{array} \right) \label{eqn:dr}
+\end{equation}
+
+A time series of length $T = 250$ was simulated from this model with the following parameter values:
+\begin{align*}
+\beta_0 = 900 &\quad \beta_1 = 5 \quad \beta_2 = 2 \\
+\tilde{V} = 1 &\quad \sigma_m^2 = 1 \\
+\phi_1 = 0.99 &\quad \sigma^2_{s,1} = 1.5 \\
+\phi_2 = 0.7 &\quad \sigma^2_{s,2} = 0.5
+\end{align*}
+Three MCMC chains using the Gibbs sampling algorithm described in Section \ref{sec:gibbs} were run for 11000 iterations with a burn-in period of 1000. Samples from every iteration of the Gibbs sampler were saved, yielding the following marginal traceplots for the fixed parameters shown in Figure \ref{fig:tracetheta-drdiff} and $x_t$ for $t \in \{0, 31, 62, 93, 125, 156, 187, 218, 250\}$ shown in Figures \ref{fig:tracex-drdiff1} and \ref{fig:tracex-drdiff2}. Maximum likelihood estimates shown in the figures were obtained using the {\tt dlm} package in R \citep{petris2009dynamic}.
+
+\begin{figure}[ht]
+\begin{minipage}{0.5\linewidth}
+\includegraphics[width=1.0\textwidth]{fmri_dlm_mcmc_test-20-6-1-M101-diff-3-3-11000-1000-1-FALSE-traceplots-beta}
+\end{minipage}
+\begin{minipage}{0.5\linewidth}
+\includegraphics[width=1.0\textwidth]{fmri_dlm_mcmc_test-20-6-1-M101-diff-3-3-11000-1000-1-FALSE-traceplots-phi-1}
+\end{minipage}
+\begin{minipage}{0.5\linewidth}
+\includegraphics[width=1.0\textwidth]{fmri_dlm_mcmc_test-20-6-1-M101-diff-3-3-11000-1000-1-FALSE-traceplots-phi-2}
+\end{minipage}
+\begin{minipage}{0.5\linewidth}
+\includegraphics[width=1.0\textwidth]{fmri_dlm_mcmc_test-20-6-1-M101-diff-3-3-11000-1000-1-FALSE-traceplots-sigma2m}
+\end{minipage}
+\begin{minipage}{0.5\linewidth}
+\includegraphics[width=1.0\textwidth]{fmri_dlm_mcmc_test-20-6-1-M101-diff-3-3-11000-1000-1-FALSE-traceplots-sigma2s-1}
+\end{minipage}
+\begin{minipage}{0.5\linewidth}
+\includegraphics[width=1.0\textwidth]{fmri_dlm_mcmc_test-20-6-1-M101-diff-3-3-11000-1000-1-FALSE-traceplots-sigma2s-2}
+\end{minipage}
+\caption{Marginal traceplots for unknown parameters of the two-coefficient dynamic regression model with different time-evolving states following different AR(1) processes for three MCMC chains (colors). Gray horizontal lines correspond to MLEs and black horizontal lines correspond to true values used for simulation with actual values printed along the right side of the plot panel.} \label{fig:tracetheta-drdiff}
+\end{figure}
+
+\begin{figure}[ht]
+\includegraphics[width=1.0\textwidth]{fmri_dlm_mcmc_test-20-6-1-M101-diff-3-3-11000-1000-1-FALSE-traceplots-x-1}
+\caption{Marginal traceplots for the change in slope $x_{1,t}$ of the two-coefficient dynamic regression model with different time-evolving states following different AR(1) processes for three MCMC chains (colors) for different $t$ (plot panels). Gray horizontal lines correspond to smoothed estimates with fixed parameter values set at the MLEs, and black horizontal lines correspond to true simulated states with actual values printed along the right side of the plot panel.} \label{fig:tracex-drdiff1}
+\end{figure}
+
+\begin{figure}[ht]
+\includegraphics[width=1.0\textwidth]{fmri_dlm_mcmc_test-20-6-1-M101-diff-3-3-11000-1000-1-FALSE-traceplots-x-2}
+\caption{Marginal traceplots for the change in slope $x_{2,t}$ of the two-coefficient dynamic regression model with different time-evolving states following different AR(1) processes for three MCMC chains (colors) for different $t$ (plot panels). Gray horizontal lines correspond to smoothed estimates with fixed parameter values set at the MLEs, and black horizontal lines correspond to true simulated states with actual values printed along the right side of the plot panel.} \label{fig:tracex-drdiff2}
+\end{figure}
+
+\clearpage
+
+\section{Example - dynamic regression with change in slopes following the same AR(1) process}
+
+In this section, we assume that the two coefficients of a dynamic regression model, e.g. $\beta_1$ and $\beta_2$, evolve over time in different manners according to the same AR(1) process. That is, we assume the following model:
+\begin{align*}
+y_t &= \beta_0 + (\beta_1 + x_{1,t})\mbox{conv}_{1,t} + (\beta_2 + x_{2,t})\mbox{conv}_{2,t} + v_t \\
+x_{1,t} &= \phi x_{1,t-1} + w_t \\
+x_{2,t} &= \phi x_{2,t-1} + w_t
+\end{align*}
+\noindent where $x_t = (x_{1,t}, x_{2,t})'$ again represents the change in the first and second regression coefficients at time $t$, $v_t \stackrel{iid}{\sim} \mbox{N}(0,\sigma^2_m\tilde{V})$ and $w_t \stackrel{iid}{\sim} \mbox{N}(0,\sigma^2_s)$. A DLM representation of this model can be formed by letting
+
+\begin{equation}
+U_t = (1, \mbox{conv}_{1,t}, \mbox{conv}_{2,t}) \quad \beta = (\beta_0,\beta_1,\beta_2)' \quad F_t = (\mbox{conv}_{1,t}, \mbox{conv}_{2,t}) \quad G = \left( \begin{array}{cc} \phi_1 & 0 \\ 0 & \phi \end{array} \right) \label{eqn:dr}
+\end{equation}
+
+A time series of length $T = 250$ was simulated from this model with the following parameter values:
+\begin{align*}
+\beta_0 = 900 &\quad \beta_1 = 5 \quad \beta_2 = 2 \\
+\tilde{V} = 1 &\quad \sigma_m^2 = 1 \\
+\phi = 0.99 &\quad \sigma^2_{s,1} = 0.5
+\end{align*}
+Three MCMC chains using the Gibbs sampling algorithm described in Section \ref{sec:gibbs} were run for 11000 iterations with a burn-in period of 1000. Samples from every iteration of the Gibbs sampler were saved, yielding the following marginal traceplots for the fixed parameters shown in Figure \ref{fig:tracetheta-drdiffsame} and $x_t$ for $t \in \{0, 31, 62, 93, 125, 156, 187, 218, 250\}$ shown in Figures \ref{fig:tracex-drdiffsame1} and \ref{fig:tracex-drdiffsame2}. Maximum likelihood estimates shown in the figures were obtained using the {\tt dlm} package in R \citep{petris2009dynamic}.
+
+\begin{figure}[ht]
+\begin{minipage}{0.5\linewidth}
+\includegraphics[width=1.0\textwidth]{fmri_dlm_mcmc_test-20-4-1-M101-diff-3-3-11000-1000-1-TRUE-traceplots-beta}
+\end{minipage}
+\begin{minipage}{0.5\linewidth}
+\includegraphics[width=1.0\textwidth]{fmri_dlm_mcmc_test-20-4-1-M101-diff-3-3-11000-1000-1-TRUE-traceplots-phi-1}
+\end{minipage}
+\begin{minipage}{0.5\linewidth}
+\includegraphics[width=1.0\textwidth]{fmri_dlm_mcmc_test-20-4-1-M101-diff-3-3-11000-1000-1-TRUE-traceplots-sigma2m}
+\end{minipage}
+\begin{minipage}{0.5\linewidth}
+\includegraphics[width=1.0\textwidth]{fmri_dlm_mcmc_test-20-4-1-M101-diff-3-3-11000-1000-1-TRUE-traceplots-sigma2s-1}
+\end{minipage}
+\caption{Marginal traceplots for unknown parameters of the two-coefficient dynamic regression model with different time-evolving states following the same AR(1) process for three MCMC chains (colors). Gray horizontal lines correspond to MLEs and black horizontal lines correspond to true values used for simulation with actual values printed along the right side of the plot panel.} \label{fig:tracetheta-drdiffsame}
+\end{figure}
+
+\begin{figure}[ht]
+\includegraphics[width=1.0\textwidth]{fmri_dlm_mcmc_test-20-4-1-M101-diff-3-3-11000-1000-1-TRUE-traceplots-x-1}
+\caption{Marginal traceplots for the change in slope $x_{1,t}$ of the two-coefficient dynamic regression model with different time-evolving states following the same AR(1) process for three MCMC chains (colors) for different $t$ (plot panels). Gray horizontal lines correspond to smoothed estimates with fixed parameter values set at the MLEs, and black horizontal lines correspond to true simulated states with actual values printed along the right side of the plot panel.} \label{fig:tracex-drdiffsame1}
+\end{figure}
+
+\begin{figure}[ht]
+\includegraphics[width=1.0\textwidth]{fmri_dlm_mcmc_test-20-4-1-M101-diff-3-3-11000-1000-1-TRUE-traceplots-x-2}
+\caption{Marginal traceplots for the change in slope $x_{2,t}$ of the two-coefficient dynamic regression model with different time-evolving states following the same AR(1) process for three MCMC chains (colors) for different $t$ (plot panels). Gray horizontal lines correspond to smoothed estimates with fixed parameter values set at the MLEs, and black horizontal lines correspond to true simulated states with actual values printed along the right side of the plot panel.} \label{fig:tracex-drdiffsame2}
+\end{figure}
 
 \clearpage
 

@@ -96,25 +96,27 @@ load(paste(dpath,"fmri-design-1.rdata",sep=""))
 X = fmri.design$X
 nt = dim(X)[1] # assume X includes first column for intercept
 
+set.seed(45)
+
 # Simulate dynamic regression models with different values of phi, sigma2b
 require(plyr)
 N = 20
 M101_sim <- function(nsims, phi, sigma2b) dlm_ar_sim(nsims, "dr", beta = c(900,5), nd = 1, sigma2m = 1, phi = phi, sigma2b = sigma2b)
-mydata = expand.grid(nsims = N, phi = c(.7,.9,.95,.99), sigma2b = seq(.5,2,.5))
+mydata = expand.grid(nsims = N, phi = c(.7,.8,.9,.99), sigma2b = seq(.5,2,.5))
 M101_dat <- list(mlply(mydata, M101_sim), mydata)
 save(M101_dat, file=paste(dpath,"dlm_ar_sim-",N,"-M101-",dim(X)[2],".rdata",sep=""))
 
 # Simulate regression models with AR(1) errors for different values of rho, sigma2s
 M010_sim <- function(nsims, rho, sigma2s) dlm_ar_sim(nsims, "ar", beta = c(900,5), rho = rho, sigma2s = sigma2s)
-mydata = expand.grid(nsims = N, rho = seq(.2,.8,.2), sigma2s = seq(.5,2,.5))
+mydata = expand.grid(nsims = N, rho = c(.7,.8,.9,.99), sigma2s = seq(.5,2,.5))
 M010_dat <- list(mlply(mydata, M010_sim), mydata)
 save(M010_dat, file=paste(dpath,"dlm_ar_sim-",N,"-M010-",dim(X)[2],".rdata",sep=""))
 
-# # Simulate regression models with AR(1)+WN errors for different values of rho, sigma2s, sigma2m
-# M011_sim <- function(nsims, rho, sigma2s) dlm_ar_sim(nsims, "ar", beta = c(900,5), sigma2m = .5, rho = rho, sigma2s = sigma2s)
-# mydata = expand.grid(nsims = N, rho = seq(.2,.8,.2), sigma2s = seq(.5,2,.5))
-# M011_dat <- list(mlply(mydata, M011_sim), mydata)
-# save(M011_dat, file=paste(dpath,"dlm_ar_sim-",N,"-M011-",dim(X)[2],".rdata",sep=""))
+# Simulate regression models with AR(1)+WN errors for different values of rho, sigma2s, sigma2m
+M011_sim <- function(nsims, rho, sigma2s) dlm_ar_sim(nsims, "ar", beta = c(900,5), sigma2m = 1, rho = rho, sigma2s = sigma2s)
+mydata = expand.grid(nsims = N, rho = c(.7,.8,.9,.99), sigma2s = seq(.5,2,.5))
+M011_dat <- list(mlply(mydata, M011_sim), mydata)
+save(M011_dat, file=paste(dpath,"dlm_ar_sim-",N,"-M011-",dim(X)[2],".rdata",sep=""))
 
 # Simulate regression models with AR(2) errors for different values of rho2, sigma2s
 M020_sim <- function(nsims, rho2, sigma2s) dlm_ar_sim(nsims, "ar", beta = c(900,5), rho = c(.6, rho2), sigma2s = sigma2s)
@@ -240,5 +242,5 @@ dlm_ar_plot <- function(N, n, n.sim, label, d)
 }
 
 require(plyr)
-mydata = expand.grid(N = 20, n = 1:16, n.sim = 1, label = c("M101","M010","M020"),d=2,stringsAsFactors=FALSE)
+mydata = expand.grid(N = 20, n = 1:16, n.sim = 1, label = c("M101","M010","M011","M020"),d=2,stringsAsFactors=FALSE)
 m_ply(mydata, dlm_ar_plot)

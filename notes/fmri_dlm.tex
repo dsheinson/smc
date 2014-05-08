@@ -6,8 +6,8 @@
 \usepackage{graphicx}
 
 \graphicspath{
-{/Users/Danny/Documents/"UCSB - Research"/smc/graphs/simpleLR/},
-{/Users/Danny/Documents/"UCSB - Research"/smc/graphs/}
+{/Users/Danny/Documents/"UCSB - Research"/smc/graphs/},
+{/Users/Danny/Documents/"UCSB - Research"/smc/graphs/twoEvent/}
 }
 
 \begin{document}
@@ -201,22 +201,22 @@ Three MCMC chains using the Gibbs sampling algorithm described in Section \ref{s
 
 \begin{figure}[ht]
 \begin{minipage}{0.5\linewidth}
-\includegraphics[width=1.0\textwidth]{fmri_mcmc_test-20-6-1-M101-3-11000-1000-10-1-1-1-1-1-traceplots-beta}
+\includegraphics[width=1.0\textwidth]{fmri_dlm_mcmc_test-20-6-1-M101-2-3-11000-1000-10-FALSE-traceplots-beta}
 \end{minipage}
 \begin{minipage}{0.5\linewidth}
-\includegraphics[width=1.0\textwidth]{fmri_mcmc_test-20-6-1-M101-3-11000-1000-10-1-1-1-1-1-traceplots-phi}
+\includegraphics[width=1.0\textwidth]{fmri_dlm_mcmc_test-20-6-1-M101-2-3-11000-1000-10-FALSE-traceplots-phi-1}
 \end{minipage}
 \begin{minipage}{0.5\linewidth}
-\includegraphics[width=1.0\textwidth]{fmri_mcmc_test-20-6-1-M101-3-11000-1000-10-1-1-1-1-1-traceplots-sigma2s}
+\includegraphics[width=1.0\textwidth]{fmri_dlm_mcmc_test-20-6-1-M101-2-3-11000-1000-10-FALSE-traceplots-sigma2m}
 \end{minipage}
 \begin{minipage}{0.5\linewidth}
-\includegraphics[width=1.0\textwidth]{fmri_mcmc_test-20-6-1-M101-3-11000-1000-10-1-1-1-1-1-traceplots-sigma2m}
+\includegraphics[width=1.0\textwidth]{fmri_dlm_mcmc_test-20-6-1-M101-2-3-11000-1000-10-FALSE-traceplots-sigma2s-1}
 \end{minipage}
 \caption{Marginal traceplots for unknown parameters of a dynamic regression model for three MCMC chains (colors). Gray horizontal lines correspond to MLEs and black horizontal lines correspond to true values used for simulation with actual values printed along the right side of the plot panel.} \label{fig:tracetheta}
 \end{figure}
 
 \begin{figure}[ht]
-\includegraphics[width=1.0\textwidth]{fmri_mcmc_test-20-6-1-M101-3-11000-1000-10-1-1-1-1-1-traceplots-x}
+\includegraphics[width=1.0\textwidth]{fmri_dlm_mcmc_test-20-6-1-M101-2-3-11000-1000-10-FALSE-traceplots-x-1}
 \caption{Marginal traceplots for the change in slope $x_t$ of a dynamic regression model for three MCMC chains (colors) for different $t$ (plot panels). Gray horizontal lines correspond to smoothed estimates with fixed parameter values set at the MLEs, and black horizontal lines correspond to true simulated states with actual values printed along the right side of the plot panel.} \label{fig:tracex}
 \end{figure}
 
@@ -247,7 +247,7 @@ Three MCMC chains using the Gibbs sampling algorithm described in Section \ref{s
 
 \section{Example - Regression with AR(1)+WN errors} \label{sec:exar}
 
-We can also visualize fMRI data being generated from a regression model with a constant slope and autocorrelated errors. The dynamic regression model specified by equation \eqref{eqn:dr} can be changed to this model by letting $F_t = 1$ instead of $\mbox{conv}_t$. That is, we can form a DLM representation of the following model: 
+We can also visualize fMRI data being generated from a regression model with a constant slope and autocorrelated errors. The dynamic regression model specified by equation \eqref{eqn:dr} can be changed to this model by letting $F_t = 1$ instead of $\mbox{conv}_t$. That is, we can form a DLM representation of the following model:
 \begin{align*}
 y_t &= \beta_0 + \beta_1\mbox{conv}_t + x_t + v_t \\
 x_t &= \phi x_{t-1} + w_t
@@ -263,22 +263,22 @@ Three MCMC chains were run on the simulated data set in the same manner as those
 
 \begin{figure}[ht]
 \begin{minipage}{0.5\linewidth}
-\includegraphics[width=1.0\textwidth]{fmri_mcmc_test-20-6-1-M011-3-11000-1000-10-1-1-1-1-1-traceplots-beta}
+\includegraphics[width=1.0\textwidth]{fmri_dlm_mcmc_test-20-6-1-M011-2-3-11000-1000-10-FALSE-traceplots-beta}
 \end{minipage}
 \begin{minipage}{0.5\linewidth}
-\includegraphics[width=1.0\textwidth]{fmri_mcmc_test-20-6-1-M011-3-11000-1000-10-1-1-1-1-1-traceplots-phi}
+\includegraphics[width=1.0\textwidth]{fmri_dlm_mcmc_test-20-6-1-M011-2-3-11000-1000-10-FALSE-traceplots-phi-1}
 \end{minipage}
 \begin{minipage}{0.5\linewidth}
-\includegraphics[width=1.0\textwidth]{fmri_mcmc_test-20-6-1-M011-3-11000-1000-10-1-1-1-1-1-traceplots-sigma2s}
+\includegraphics[width=1.0\textwidth]{fmri_dlm_mcmc_test-20-6-1-M011-2-3-11000-1000-10-FALSE-traceplots-sigma2m}
 \end{minipage}
 \begin{minipage}{0.5\linewidth}
-\includegraphics[width=1.0\textwidth]{fmri_mcmc_test-20-6-1-M011-3-11000-1000-10-1-1-1-1-1-traceplots-sigma2m}
+\includegraphics[width=1.0\textwidth]{fmri_dlm_mcmc_test-20-6-1-M011-2-3-11000-1000-10-FALSE-traceplots-sigma2s-1}
 \end{minipage}
 \caption{Marginal traceplots for unknown parameters of a regression model with AR(1)+WN errors for three MCMC chains (colors). Gray horizontal lines correspond to MLEs and black horizontal lines correspond to true values used for simulation with actual values printed along the right side of the plot panel.} \label{fig:tracetheta-arwn}
 \end{figure}
 
 \begin{figure}[ht]
-\includegraphics[width=1.0\textwidth]{fmri_mcmc_test-20-6-1-M011-3-11000-1000-10-1-1-1-1-1-traceplots-x}
+\includegraphics[width=1.0\textwidth]{fmri_dlm_mcmc_test-20-6-1-M011-2-3-11000-1000-10-FALSE-traceplots-x-1}
 \caption{Marginal traceplots for the change in slope $x_t$ of a regression model with AR(1)+WN errors for three MCMC chains (colors) for different $t$ (plot panels). Gray horizontal lines correspond to smoothed estimates with fixed parameter values set at the MLEs, and black horizontal lines correspond to true simulated states with actual values printed along the right side of the plot panel.} \label{fig:tracex-arwn}
 \end{figure}
 

@@ -5,6 +5,11 @@
 \usepackage{enumitem}
 \usepackage{graphicx}
 
+\graphicspath{
+{/Users/Danny/Documents/"UCSB - Research"/smc/graphs/},
+{/Users/Danny/Documents/"UCSB - Research"/smc/graphs/twoEvent/}
+}
+
 \begin{document}
 
 \section{Regression with AR(p) errors} \label{sec:model}
@@ -121,54 +126,54 @@ Three MCMC chains were run on each data set using a Gibbs sampling algorithm tha
 
 \begin{figure}[ht]
 \begin{minipage}{0.5\linewidth}
-\includegraphics[width=1.0\textwidth]{../graphs/fmri_mcmc_test-20-6-1-M010-3-11000-1000-10-0-1-0-1-1-traceplots-beta}
+\includegraphics[width=1.0\textwidth]{fmri_reg_mcmc_test-20-6-1-M010-2-3-11000-1000-10-traceplots-beta}
 \end{minipage}
 \begin{minipage}{0.5\linewidth}
-\includegraphics[width=1.0\textwidth]{../graphs/fmri_mcmc_test-20-6-1-M010-3-11000-1000-10-0-1-0-1-1-traceplots-phi}
+\includegraphics[width=1.0\textwidth]{fmri_reg_mcmc_test-20-6-1-M010-2-3-11000-1000-10-traceplots-phi-1}
 \end{minipage}
 \begin{minipage}{0.5\linewidth}
-\includegraphics[width=1.0\textwidth]{../graphs/fmri_mcmc_test-20-6-1-M010-3-11000-1000-10-0-1-0-1-1-traceplots-sigma2s}
+\includegraphics[width=1.0\textwidth]{fmri_reg_mcmc_test-20-6-1-M010-2-3-11000-1000-10-traceplots-sigma2s-1}
 \end{minipage}
 \caption{Marginal traceplots for unknown parameters of a regression model with AR(1) errors for three MCMC chains (colors). Gray horizontal lines correspond to MLEs and black horizontal lines correspond to true values used for simulation with actual values printed along the right side of the plot panel.} \label{fig:tracetheta1}
 \end{figure}
 
 \begin{figure}[ht]
 \begin{minipage}{0.5\linewidth}
-\includegraphics[width=1.0\textwidth]{../graphs/fmri_mcmc_test-20-6-1-M020-3-11000-1000-10-0-1-0-1-1-traceplots-beta}
+\includegraphics[width=1.0\textwidth]{fmri_reg_mcmc_test-20-6-1-M020-2-3-11000-1000-10-traceplots-beta}
 \end{minipage}
 \begin{minipage}{0.5\linewidth}
-\includegraphics[width=1.0\textwidth]{../graphs/fmri_mcmc_test-20-6-1-M020-3-11000-1000-10-0-1-0-1-1-traceplots-phi}
+\includegraphics[width=1.0\textwidth]{fmri_reg_mcmc_test-20-6-1-M020-2-3-11000-1000-10-traceplots-phi-1}
 \end{minipage}
 \begin{minipage}{0.5\linewidth}
-\includegraphics[width=1.0\textwidth]{../graphs/fmri_mcmc_test-20-6-1-M020-3-11000-1000-10-0-1-0-1-1-traceplots-sigma2s}
+\includegraphics[width=1.0\textwidth]{fmri_reg_mcmc_test-20-6-1-M020-2-3-11000-1000-10-traceplots-sigma2s-1}
 \end{minipage}
 \caption{Marginal traceplots for unknown parameters of a regression model with AR(2) errors for three MCMC chains (colors). Gray horizontal lines correspond to MLEs and black horizontal lines correspond to true values used for simulation with actual values printed along the right side of the plot panel.} \label{fig:tracetheta2}
 \end{figure}
 
-\begin{figure}[ht]
-\begin{minipage}{0.5\linewidth}
-\includegraphics[width=1.0\textwidth]{../graphs/fmri_mcmc_test-20-6-M010-11000-1000-10-0-1-0-1-1-hist-beta}
-\end{minipage}
-\begin{minipage}{0.5\linewidth}
-\includegraphics[width=1.0\textwidth]{../graphs/fmri_mcmc_test-20-6-M010-11000-1000-10-0-1-0-1-1-hist-phi}
-\end{minipage}
-\begin{minipage}{0.5\linewidth}
-\includegraphics[width=1.0\textwidth]{../graphs/fmri_mcmc_test-20-6-M010-11000-1000-10-0-1-0-1-1-hist-sigma2s}
-\end{minipage}
-\caption{Histograms of median sample values for fixed parameters among 20 data sets simulated from a regression model with AR(1) errors. Red vertical lines correspond to true values used for simulation.} \label{fig:medtheta1}
-\end{figure}
-
-\begin{figure}[ht]
-\begin{minipage}{0.5\linewidth}
-\includegraphics[width=1.0\textwidth]{../graphs/fmri_mcmc_test-20-6-M020-11000-1000-10-0-1-0-1-1-hist-beta}
-\end{minipage}
-\begin{minipage}{0.5\linewidth}
-\includegraphics[width=1.0\textwidth]{../graphs/fmri_mcmc_test-20-6-M020-11000-1000-10-0-1-0-1-1-hist-phi}
-\end{minipage}
-\begin{minipage}{0.5\linewidth}
-\includegraphics[width=1.0\textwidth]{../graphs/fmri_mcmc_test-20-6-M020-11000-1000-10-0-1-0-1-1-hist-sigma2s}
-\end{minipage}
-\caption{Histograms of median sample values for fixed parameters among 20 data sets simulated from a regression model with AR(1) errors. Red vertical lines correspond to true values used for simulation.} \label{fig:medtheta2}
-\end{figure}
+%\begin{figure}[ht]
+%\begin{minipage}{0.5\linewidth}
+%\includegraphics[width=1.0\textwidth]{../graphs/fmri_mcmc_test-20-6-M010-11000-1000-10-0-1-0-1-1-hist-beta}
+%\end{minipage}
+%\begin{minipage}{0.5\linewidth}
+%\includegraphics[width=1.0\textwidth]{../graphs/fmri_mcmc_test-20-6-M010-11000-1000-10-0-1-0-1-1-hist-phi}
+%\end{minipage}
+%\begin{minipage}{0.5\linewidth}
+%\includegraphics[width=1.0\textwidth]{../graphs/fmri_mcmc_test-20-6-M010-11000-1000-10-0-1-0-1-1-hist-sigma2s}
+%\end{minipage}
+%\caption{Histograms of median sample values for fixed parameters among 20 data sets simulated from a regression model with AR(1) errors. Red vertical lines correspond to true values used for simulation.} \label{fig:medtheta1}
+%\end{figure}
+%
+%\begin{figure}[ht]
+%\begin{minipage}{0.5\linewidth}
+%\includegraphics[width=1.0\textwidth]{../graphs/fmri_mcmc_test-20-6-M020-11000-1000-10-0-1-0-1-1-hist-beta}
+%\end{minipage}
+%\begin{minipage}{0.5\linewidth}
+%\includegraphics[width=1.0\textwidth]{../graphs/fmri_mcmc_test-20-6-M020-11000-1000-10-0-1-0-1-1-hist-phi}
+%\end{minipage}
+%\begin{minipage}{0.5\linewidth}
+%\includegraphics[width=1.0\textwidth]{../graphs/fmri_mcmc_test-20-6-M020-11000-1000-10-0-1-0-1-1-hist-sigma2s}
+%\end{minipage}
+%\caption{Histograms of median sample values for fixed parameters among 20 data sets simulated from a regression model with AR(1) errors. Red vertical lines correspond to true values used for simulation.} \label{fig:medtheta2}
+%\end{figure}
 
 \end{document} 

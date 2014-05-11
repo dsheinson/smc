@@ -6,7 +6,7 @@ require(dlm)
 dpath = "../data/"
 gpath = "../graphs/"
 
-arwn.mle <- function(nt, nsims, x, beta0 = 900, beta1 = 5, phi = 0.8, sigma2s = 1, sigma2m = 1)
+arwn.mle <- function(nt, nsims, x, beta0 = 900, beta1 = 5, phi = 0.8, sigma2s = 4, sigma2m = 1)
 {
   # Create x variable
   if(x == "conv")
@@ -59,4 +59,4 @@ require(doMC)
 registerDoMC()
 mydata = expand.grid(nt = c(500,1000,5000,10000), nsims = 1000, x = c("conv","norm","none"), stringsAsFactors=FALSE)
 mle.all = maply(mydata, arwn.mle, .parallel = TRUE)
-save(mle.all, file = paste(dpath,"dlm_arwn.rdata",sep=""))
+save(mle.all, file = paste(dpath,"dlm_arwn2.rdata",sep=""))

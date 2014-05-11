@@ -103,7 +103,7 @@ build_M011 <- function(par,V,U,nd=NULL)
   
   FF = matrix(rep(0,d+1),nr=1)
   JFF = matrix(1:(d+1),nr=1)
-  X = cbind(t(U[1,,]),1)
+  if(d != 1) X = cbind(t(U[1,,]),1) else X = cbind(U[1,,],1)
   V=exp(par[3])*V
   GG = diag(dim(X)[2]); GG[dim(X)[2],dim(X)[2]] = unlogit(par[1],-1,1)
   W = 0*diag(dim(X)[2]); W[dim(X)[2],dim(X)[2]] = exp(par[2])

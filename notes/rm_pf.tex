@@ -5,6 +5,11 @@
 \usepackage{enumitem}
 \usepackage{graphicx}
 
+\graphicspath{
+{/Users/Danny/Documents/"UCSB - Research"/smc/graphs/dlmRW/},
+{/Users/Danny/Documents/"UCSB - Research"/smc/graphs/}
+}
+
 \begin{document}
 
 \section{Model} \label{sec:model}
@@ -95,16 +100,16 @@ Consider models of the form described in \eqref{eqn:obs} and \eqref{eqn:state}. 
 A single time series of data, $y_{1:T}$ with $T = 150$, was simulated from $M_2$ with common observation and state equation variance $\sigma^2$ set equal to 1. From this simulated data, we can calculate directly the marginal likelihood of observing this data under $M_3$ (the "true" model). Figure \ref{fig:loglikvW} shows the calculated log marginal likelihood of the data for different models. We can also calculate the marginal posterior distributions $p(x_t|y_{1:t})$, $p(\phi|y_{1:t})$, and one-step ahead predictive distributions $p(y_t|y_{1:t-1})$ for $t = 1,2,\ldots,200$. This allows us to compute 95\% credible intervals for the unknown states and parameter and 95\% one-step ahead prediction intervals for each data point, displayed in Figure \ref{fig:sim}.
 
 \begin{figure}
-\includegraphics[width=1.0\textwidth]{../graphs/cv_loglikvsW}
+\includegraphics[width=1.0\textwidth]{cv_loglikvsW}
 \caption{Calculated log marginal likelihood of a single simulated time series from $M_3$ for increasing values of $\tilde{W}$, with vertical lines denoting values corresponding to models $M_1$ through $M_5$ (solid line for $M_3$).} \label{fig:loglikvW}
 \end{figure}
 
 \begin{figure}
 \begin{minipage}{0.5\textwidth}
-\includegraphics[width=1.0\textwidth]{../graphs/cv-test-states-1}
+\includegraphics[width=1.0\textwidth]{cv-test-states-1}
 \end{minipage}
 \begin{minipage}{0.5\textwidth}
-\includegraphics[width=1.0\textwidth]{../graphs/cv-test-precision-1}
+\includegraphics[width=1.0\textwidth]{cv-test-precision-1}
 \end{minipage}
 \caption{On left, sequential 95\% credible intervals (red lines) for $x_t|y_{1:t}$ and 95\% prediction intervals (blue lines) for $y_t|y_{1:t-1}$ (right) for $t = 1, 2, \ldots, 150$ under $M_3$. On right, sequential 95\% credible intervals (red lines) for $\phi|y_{1:t}$ for $t = 1, 2, \ldots, 150$. Black horizontal lines indicate the true simulated states (left) the true precision (right) used for simulation ($\phi = 1$) . Black points in left picture represent simulated data points. Credible intervals were calculated analytically using the student-t distribution.} \label{fig:sim}
 \end{figure}
@@ -113,29 +118,29 @@ To assess the variability of the approximation to the log marginal likelihood of
 
 \begin{figure}
 \begin{minipage}{1.0\linewidth}
-\includegraphics[width=1.0\textwidth]{../graphs/cv_pf_loglik-1-1-5-10}
+\includegraphics[width=1.0\textwidth]{cv_pf_loglik-1-1-5-10}
 \end{minipage}
 \begin{minipage}{1.0\linewidth}
-\includegraphics[width=1.0\textwidth]{../graphs/cv_pf_loglik-1-5-10-20}
+\includegraphics[width=1.0\textwidth]{cv_pf_loglik-1-5-10-20}
 \end{minipage}
 \begin{minipage}{1.0\linewidth}
-\includegraphics[width=1.0\textwidth]{../graphs/cv_pf_loglik-1-10-20-30}
+\includegraphics[width=1.0\textwidth]{cv_pf_loglik-1-10-20-30}
 \end{minipage}
 \caption{Three-way comparisons (rows) among different models (columns) of kernel density estimates of log marginal likelihoods approximated using the resample-move particle filter for each of 20 particle filter runs using 500 (red), 1000 (green), 5000 (turquoise), and 10000 (blue) particles. All particle filter runs were performed on a single simulated time series from $M_3$.} \label{fig:pf-hist}
 \end{figure}
 
 \begin{figure}
-\includegraphics[width=1.0\textwidth]{../graphs/cv_pf_ternary-1-1-5-10}
+\includegraphics[width=1.0\textwidth]{cv_pf_ternary-1-1-5-10}
 \caption{Ternary compositional plots of posterior model probabilities of $M_1$ ($\tilde{W} = 0.1$), $M_2$ ($\tilde{W} = 0.5$), and $M_3$ ($\tilde{W} = 1$) approximated using the resample-move particle filter repeatedly on the same data set (black circles), compared with the true posterior model probabilities for that data set (red circle), for increasing number of particles (different plot panels). The probability of a model generating a time series of observations is visualized by each point's proximity to that model's corner of the triangle.} \label{fig:pf-1sim-ternary1}
 \end{figure}
 
 \begin{figure}
-\includegraphics[width=1.0\textwidth]{../graphs/cv_pf_ternary-1-5-10-20}
+\includegraphics[width=1.0\textwidth]{cv_pf_ternary-1-5-10-20}
 \caption{Ternary compositional plots of posterior model probabilities of $M_2$ ($\tilde{W} = 0.5$), $M_3$ ($\tilde{W} = 1$), and $M_4$ ($\tilde{W} = 2$) approximated using the resample-move particle filter repeatedly on the same data set (black circles), compared with the true posterior model probabilities for that data set (red circle), for increasing number of particles (different plot panels). The probability of a model generating a time series of observations is visualized by each point's proximity to that model's corner of the triangle.} \label{fig:pf-1sim-ternary2}
 \end{figure}
 
 \begin{figure}
-\includegraphics[width=1.0\textwidth]{../graphs/cv_pf_ternary-1-10-20-30}
+\includegraphics[width=1.0\textwidth]{cv_pf_ternary-1-10-20-30}
 \caption{Ternary compositional plots of posterior model probabilities of $M_3$ ($\tilde{W} = 1$), $M_4$ ($\tilde{W} = 2$), and $M_5$ ($\tilde{W} = 3$) approximated using the resample-move particle filter repeatedly on the same data set (black circles), compared with the true posterior model probabilities for that data set (red circle), for increasing number of particles (different plot panels). The probability of a model generating a time series of observations is visualized by each point's proximity to that model's corner of the triangle.} \label{fig:pf-1sim-ternary3}
 \end{figure}
 
@@ -214,13 +219,43 @@ $M_1$ &  4 &   1 &   0 \\
 We can also evaluate the particle filter approximation of posterior model probabilities by representing the set of probabilities of each model for a particular simulated time series as a point on a triangle, where each corner represents one of the three models. Figure \ref{fig:ternary} displays this for of each simulated data set as well as for particle filter approximations with increasing number of particles. Figure \ref{fig:binary} compares the particle filter approximation of posterior model probabilities with the truth when considering only pairwise comparisons of models $M_2$ and $M_4$ with the true model, $M_3$.
 
 \begin{figure}
-\includegraphics[width=1.0\textwidth]{../graphs/cv_pf_ternary-bw}
+\includegraphics[width=1.0\textwidth]{cv_pf_ternary-bw}
 \caption{Ternary compositional plots of posterior model probabilities of $M_2$ ($\tilde{W} = 0.5$), $M_3$ ($\tilde{W} = 1$), and $M_4$ ($\tilde{W} = 2$) calculated analytically (top left) and approximated using the resample-move particle filter with increasing number of particles. Each point represents one simulated time series and the probability of a model generating a time series of observations is visualized by that point's proximity to that model's corner of the triangle. Points plotted in the same shade of gray correspond to the same simulation (to compare between plot panels).} \label{fig:ternary}
 \end{figure}
 
 \begin{figure}
-\includegraphics[width=1.0\textwidth]{../graphs/cv_pf_binary}
+\includegraphics[width=1.0\textwidth]{cv_pf_binary}
 \caption{Posterior model probabilities calculated analytically (left side of plot panels) and approximated using the resample-move particle filter (right side of plot panels) with increasing number of particles (columns) when comparing $M_3$ against $M_2$ (top row) and $M_3$ against $M_4$ (bottom row). Calculations and particle filter runs were performed on 20 data sets simulated from $M_3$ with $\sigma^2 = 1$.} \label{fig:binary}
+\end{figure}
+
+\clearpage
+
+\section{Example - fMRI}
+
+Next, we consider the possibility of model comparison in a situation where we are not able to obtain an explicit form of the true marginal likelihood. Specifically, we can consider data $y_t$ that represents a time series from one voxel of an fMRI experiment. We propose two possible models from which the time series can be assumed to be generated from:
+\begin{align}
+y_t &= \beta_0 + (\beta_1 + x_t)\mbox{conv}_t + v_t \label{eqn:M101} \\
+y_t &= \beta_0 + \beta_1\mbox{conv}_t + x_t + v_t \label{eqn:M011}
+\end{align}
+\noindent where $x_t$ follows an AR(1) process with lag-1 correlation $\phi$ and white noise variance $\sigma^2_s$, $v_t \stackrel{\mbox{iid}}{\sim} \mbox{N}(0,\sigma^2_m)$, $\mbox{conv}_t$ is the expected BOLD response at time $t$ (the convolution of the haemodynamic response function with the experimental stimulus pattern), and $\beta_0$ and $\beta_1$ are fixed parameters representing the baseline level of BOLD activity and the slope coefficient of the linear relationship between the observed and expected BOLD responses, respectively. Equation \eqref{eqn:M101} has a dynamic slope while equation \eqref{eqn:M011} has a constant slope with the autocorrelation pushed into the error term. We refer to the model represented by equation \eqref{eqn:M101} as $M_{101}$ and the model in equation \eqref{eqn:M011} as $M_{011}$.
+
+Both of these models can be represented as a DLM of the form
+\begin{align}
+y_t = U_t\beta + F_tx_t + v_t \label{eqn:obs} \\
+x_t = Gx_{t-1} + w_t \label{eqn:state}
+\end{align}
+\noindent where $v_t \stackrel{\mbox{iid}}{\sim} \mbox{N}(0,\sigma^2_m)$ independent of $w_t \stackrel{\mbox{iid}}{\sim} \mbox{N}(0,\sigma^2_s)$, $U_t = (1, \mbox{conv}_t)$, $\beta = (\beta_0,\beta_1)'$, and $G = \phi$. For $M_{101}$, we let $F_t = \mbox{conv}_t$ and for $M_{011}$ we let $F_t = 1$ for all $t$.
+
+Twenty time series were simulated according to both $M_{101}$ and $M_{011}$ with true parameter values set to \[\beta_0 = 900 \quad \beta_1 = 5 \quad \phi = 0.8 \quad \sigma^2_s = 1 \quad \sigma^2_m = 1\] The resample move particle filter with 100 particles was run under each model on each simulated data set 4 times. Figure \ref{fig:fmri-lik} shows estimates of the log marginal likelihood on data simulated from $M_{101}$ and $M_{011}$.
+
+\begin{figure}[ht]
+\begin{minipage}{0.75\linewidth}
+\includegraphics[width=1.0\textwidth]{fmri_rm_lik-20-M101-2-6-20-4-100}
+\end{minipage}
+\begin{minipage}{0.75\linewidth}
+\includegraphics[width=1.0\textwidth]{fmri_rm_lik-20-M011-2-6-20-4-100}
+\end{minipage}
+\caption{Estimated log marginal likelihood of $M_{101}$ (red) and $M_{011}$ (blue) from 4 different runs of the resample move particle filter with 100 particles on each simulated data set from model $M_{101}$ (top) and $M_{011}$ (bottom).} \label{fig:fmri-lik}
 \end{figure}
 
 \clearpage

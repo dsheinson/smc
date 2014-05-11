@@ -1,9 +1,12 @@
+source("pf_mc_functions.r")
+require(plyr)
+
 # Set data and graphics path
 dpath = "../data/"
 gpath = "../graphs/"
 
-# Function to plot pf results
-fmri_rm_plot <- function(N, mod.sim, dimx, n, nsims, nruns, mod.est, np, alpha = 0.05, burn = 10)
+# Function to plot rm pf quantiles
+fmri_rm_quantiles <- function(N, mod.sim, dimx, n, nsims, nruns, mod.est, np, alpha = 0.05, burn = 10)
 {
   # Load simulated data
   load(paste(dpath,"dlm_ar_sim-",N,"-",mod.sim,"-",dimx,".rdata",sep=""))
@@ -75,3 +78,52 @@ fmri_rm_plot <- function(N, mod.sim, dimx, n, nsims, nruns, mod.est, np, alpha =
     dev.off()
   }
 }
+
+# 100 particles
+mydata = expand.grid(N = 20, mod.sim = c("M101","M011"),dimx=2,n=6,nsims=20,nruns=4,mod.est=c("M101","M011"),np=100,alpha=0.05,burn=10,stringsAsFactors = FALSE)
+m_ply(mydata, fmri_rm_quantiles)
+
+# 5000 particles
+mydata = expand.grid(N = 20, mod.sim = "M101",dimx=2,n=6,nsims=4,nruns=1,mod.est=c("M101","M011"),np=5000,alpha=0.05,burn=10,stringsAsFactors = FALSE)
+m_ply(mydata, fmri_rm_quantiles)
+
+# Function to plot rm pf posterior model probabilities
+fmri_rm_lik <- function(N, mod.sim, dimx, n, nsims, nruns, np)
+{
+  # Load simulated data
+  load(paste(dpath,"dlm_ar_sim-",N,"-",mod.sim,"-",dimx,".rdata",sep=""))
+  mysims = get(paste(mod.sim,"_dat",sep=""))[[1]][[n]]
+  nt = dim(mysims[[1]]$y)[2]
+ 
+  # Load approximate log marginal likelihoods for particle filter runs
+  rm.lmarglik = array(NA, c(nruns, nsims, 2))
+  for(i in 1:nruns)
+  {
+    for(j in 1:nsims)
+    {
+      for(k in 1:2)
+      {
+        load(paste(dpath,"fmri_rm-",paste(N,mod.sim,dimx,n,j,i,c("M101","M011")[k],np,sep="-"),".rdata",sep=""))
+        rm.lmarglik[i,j,k] = pf.out$lmarglik
+      }
+    }
+  }
+   
+  # Plot log marginal likelihoods estimated by M101 vs M011
+  pdf(file=paste(gpath,"fmri_rm_lik-",paste(N, mod.sim, dimx, n, nsims, nruns, np,sep="-"),".pdf",sep=""))
+  par(mar=c(5,6,4,2)+0.1)
+  plot(rep(1,nruns), rm.lmarglik[,1,1], xlim = c(1,nsims), ylim = c(min(rm.lmarglik),max(rm.lmarglik)), col = 2, xlab = "Simulation", ylab = "Log marginal likelihood", main = paste("Log-likelihood of M101 and M011 given data simulated from ",mod.sim,sep=""), cex.lab = 1.5)
+  mtext(paste(np," Particles",sep=""),side=3)
+  if(nsims > 1) for(j in 2:nsims) points(rep(j,nruns), rm.lmarglik[,j,1], col=2)
+  for(j in 1:nsims) points(rep(j,nruns), rm.lmarglik[,j,2], col = 4)
+  legend("bottomright",c("M101","M011"),pch=c(1,1),col=c(2,4))
+  dev.off()
+}
+
+# 100 particles
+mydata = expand.grid(N = 20, mod.sim = c("M101","M011"),dimx=2,n=6,nsims=20,nruns=4,np=100,stringsAsFactors = FALSE)
+m_ply(mydata, fmri_rm_lik)
+
+# 5000 particles
+mydata = expand.grid(N = 20, mod.sim = c("M101"),dimx=2,n=6,nsims=4,nruns=1,np=5000,stringsAsFactors = FALSE)
+m_ply(mydata, fmri_rm_lik)

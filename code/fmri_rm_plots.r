@@ -79,50 +79,97 @@ fmri_rm_quantiles <- function(N, mod.sim, dimx, n, nsims, nruns, mod.est, np, sd
   }
 }
 
-mydata = expand.grid(N = 20, mod.sim = c("M101","M011"),dimx=2,n=6,nsims=2,nruns=2,mod.est=c("M101","M011"),np=10,sd.fac=c(.5,2),alpha=0.05,burn=10,stringsAsFactors = FALSE)
-m_ply(mydata, fmri_rm_quantiles)
-
-mydata = expand.grid(N = 20, mod.sim = c("M101","M011"),dimx=2,n=5:6,nsims=2,nruns=2,mod.est=c("M101","M011"),np=10,sd.fac=1,alpha=0.05,burn=10,stringsAsFactors = FALSE)
+mydata = expand.grid(N = 20, mod.sim = c("M101","M011"),dimx=2,n=6,nsims=2,nruns=2,mod.est=c("M101","M011"),np=10,sd.fac=c(.5,1,2),alpha=0.05,burn=10,stringsAsFactors = FALSE)
 m_ply(mydata, fmri_rm_quantiles)
 
 # Function to plot rm pf posterior model probabilities
-fmri_rm_lik <- function(N, mod.sim, dimx, n, nsims, nruns, np, sd.fac.M101 = 1, sd.fac.M011 = 1, alpha = 0.05)
+fmri_rm_lik <- function(N, mod.sim, dimx, n, nsims, nruns, np, sd.fac, byn, alpha = 0.05)
 {
   # Load simulated data
   load(paste(dpath,"dlm_ar_sim-",N,"-",mod.sim,"-",dimx,".rdata",sep=""))
-  mysims = get(paste(mod.sim,"_dat",sep=""))[[1]][[n]]
-  phi = mysims[[1]]$true.params$G[1,1]
-  sigma2s = mysims[[1]]$true.params$W[1,1]
-  nt = dim(mysims[[1]]$y)[2]
+  mysims = get(paste(mod.sim,"_dat",sep=""))[[1]]
  
   # Load approximate log marginal likelihoods for particle filter runs
-  rm.lmarglik = array(NA, c(nruns, nsims, 2))
-  for(i in 1:nruns)
+  rm.lmarglik = array(NA, c(nruns, nsims, 2, length(n), length(sd.fac)))
+  for(l in 1:length(n))
   {
-    for(j in 1:nsims)
+    for(m in 1:length(sd.fac))
     {
-      for(k in 1:2)
+      for(i in 1:nruns)
       {
-        mod = c("M101","M011")[k]
-        load(paste(dpath,"fmri_rm-",paste(N,mod.sim,dimx,n,j,i,mod,np,get(paste("sd.fac.",mod,sep="")),100*alpha,sep="-"),".rdata",sep=""))
-        rm.lmarglik[i,j,k] = pf.out$lmarglik
+        for(j in 1:nsims)
+        {
+          for(k in 1:2)
+          {
+            mod = c("M101","M011")[k]
+            load(paste(dpath,"fmri_rm-",paste(N,mod.sim,dimx,n[l],j,i,mod,np,sd.fac[m],100*alpha,sep="-"),".rdata",sep=""))
+            rm.lmarglik[i,j,k,l,m] = pf.out$lmarglik
+          }
+        }
       }
     }
   }
    
   # Plot log marginal likelihoods estimated by M101 vs M011
-  pdf(file=paste(gpath,"fmri_rm_lik-",paste(N, mod.sim, dimx, n, nsims, nruns, np, 100*sd.fac.M101,100*sd.fac.M011, sep="-"),".pdf",sep=""))
-  par(mar=c(5,6,4,2)+0.1)
-  plot(rep(1,nruns), rm.lmarglik[,1,1], xlim = c(1,nsims), ylim = c(min(rm.lmarglik),max(rm.lmarglik)), col = 2, xlab = "Simulation", ylab = "Log marginal likelihood", main = substitute(paste(a0,": ",phi," = ",aa,", ",sigma[s]^2," = ",ab,", M101 SD factor = ",ac,", M011 SD factor = ",ad,sep=""),list(a0 = mod.sim,aa=phi,ab=sigma2s,ac=sd.fac.M101,ad=sd.fac.M011)), cex.lab = 1.5)
-  mtext(paste(np," Particles",sep=""),side=3)
-  if(nsims > 1) for(j in 2:nsims) points(rep(j,nruns), rm.lmarglik[,j,1], col=2)
-  for(j in 1:nsims) points(rep(j,nruns), rm.lmarglik[,j,2], col = 4)
-  legend("bottomright",c("M101","M011"),pch=c(1,1),col=c(2,4))
+  pdf(file=paste(gpath,"fmri_rm_lik-",paste(N, mod.sim, dimx, nsims, nruns, np, byn, sep="-"),".pdf",sep=""))
+  par(mfrow=c(2,2),mar=c(5,6,4,2)+0.1)
+  if(byn)
+  {
+    for(i in 1:length(n))
+    {
+      beta = mysims[[n[i]]][[1]]$true.params$beta
+      phi = mysims[[n[i]]][[1]]$true.params$G[1,1]
+      sigma2s = mysims[[n[i]]][[1]]$true.params$W[1,1]
+      sigma2m = mysims[[n[i]]][[1]]$true.params$V[1,1]
+      if(i == 1)
+      {
+        xlab = "Simulation"
+        ylab = "Log marginal likelihood"
+        main = substitute(paste(aa," simulation, ",ab," particles",sep=""),list(aa=mod.sim,ab=np))
+        mtext = substitute(paste(beta[0]," = ",aa,", ",beta[1]," = ",ab,", ",phi," = ",ac,", ",sigma[s]^2," = ",ad,", ",sigma[m]^2," = ",ae,sep=""),list(aa=beta[1],ab=beta[2],ac=phi,ad=sigma2s,ae=sigma2m))
+      } else {
+        xlab = ylab = main = ""
+        mtext = substitute(paste(beta[0]," = ",aa,", ",beta[1]," = ",ab,", ",phi," = ",ac,", ",sigma[s]^2," = ",ad,", ",sigma[m]^2," = ",ae,sep=""),list(aa=beta[1],ab=beta[2],ac=phi,ad=sigma2s,ae=sigma2m))
+      }
+      plot(rep(1,nruns), rm.lmarglik[,1,1,i,1], xlim = c(1,nsims), ylim = c(min(rm.lmarglik),max(rm.lmarglik)), col = 2, xlab = xlab, ylab = ylab, main = main, cex.lab = 1.5)
+      mtext(mtext,side=3,cex=0.85)
+      if(nsims > 1) for(j in 2:nsims) points(rep(j,nruns), rm.lmarglik[,j,1,i,1], col=2)
+      for(j in 1:nsims) points(rep(j,nruns), rm.lmarglik[,j,2,i,1], col = 4)
+      if(i == 1) legend("bottomright",c("M101","M011"),pch=c(1,1),col=c(2,4))
+    }
+  } else {
+    beta = mysims[[n[1]]][[1]]$true.params$beta
+    phi = mysims[[n[1]]][[1]]$true.params$G[1,1]
+    sigma2s = mysims[[n[1]]][[1]]$true.params$W[1,1]
+    sigma2m = mysims[[n[1]]][[1]]$true.params$V[1,1]
+    for(i in 1:length(sd.fac))
+    {
+      ind.M101 = (mod.sim != "M101") + i*(mod.sim == "M101")
+      ind.M011 = (mod.sim != "M011") + i*(mod.sim == "M011")
+      if(i == 1)
+      {
+        xlab = "Simulation"
+        ylab = "Log marginal likelihood"
+        main = substitute(paste(aa," simulation, ",ab," particles",sep=""),list(aa=mod.sim,ab=np))
+        mtext = substitute(paste(beta[0]," = ",aa,", ",beta[1]," = ",ab,", ",phi," = ",ac,", ",sigma[s]^2," = ",ad,", ",sigma[m]^2," = ",ae,sep=""),list(aa=beta[1],ab=beta[2],ac=phi,ad=sigma2s,ae=sigma2m))
+      } else {
+        xlab = ylab = ""
+        main = paste(mod.sim," SD Factor = ",sd.fac[i],sep="")
+        mtext = substitute(paste(beta[0]," = ",aa,", ",beta[1]," = ",ab,", ",phi," = ",ac,", ",sigma[s]^2," = ",ad,", ",sigma[m]^2," = ",ae,sep=""),list(aa=beta[1],ab=beta[2],ac=phi,ad=sigma2s,ae=sigma2m))
+      }
+      plot(rep(1,nruns), rm.lmarglik[,1,1,1,ind.M101], xlim = c(1,nsims), ylim = c(min(rm.lmarglik),max(rm.lmarglik)), col = 2, xlab = xlab, ylab = ylab, main = main, cex.lab = 1.5)
+      mtext(mtext,side=3,cex=0.85)
+      if(nsims > 1) for(j in 2:nsims) points(rep(j,nruns), rm.lmarglik[,j,1,1,ind.M101], col=2)
+      for(j in 1:nsims) points(rep(j,nruns), rm.lmarglik[,j,2,1,ind.M011], col = 4)
+      if(i == 1) legend("bottomright",c("M101","M011"),pch=c(1,1),col=c(2,4))
+    }
+  }
   dev.off()
 }
 
-mydata = expand.grid(N = 20, mod.sim = c("M101","M011"),dimx=2,n=6,nsims=2,nruns=2,np=10,sd.fac.M101=c(.5,2),sd.fac.M011=c(.5,2),alpha=0.05,stringsAsFactors = FALSE)
-m_ply(mydata, fmri_rm_lik)
+mydata = expand.grid(N = 20, mod.sim = c("M101","M011"),dimx=2,nsims=2,nruns=2,np=10,stringsAsFactors = FALSE)
+m_ply(mydata, function(N,mod.sim,dimx,nsims,nruns,np) fmri_rm_lik(N, mod.sim, dimx, n=6, nsims, nruns, np, sd.fac=c(.5,2), byn=FALSE, alpha=0.05))
 
-mydata = expand.grid(N = 20, mod.sim = c("M101","M011"),dimx=2,n=5:6,nsims=2,nruns=2,np=10,sd.fac=1,alpha=0.05,stringsAsFactors = FALSE)
-m_ply(mydata, fmri_rm_lik)
+mydata = expand.grid(N = 20, mod.sim = c("M101","M011"),dimx=2,nsims=2,nruns=2,np=10,stringsAsFactors = FALSE)
+m_ply(mydata, function(N,mod.sim,dimx,nsims,nruns,np) fmri_rm_lik(N, mod.sim, dimx, n=5:6, nsims, nruns, np, sd.fac=1, byn=TRUE, alpha=0.05))
+

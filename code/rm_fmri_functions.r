@@ -12,7 +12,7 @@ dllik.M011 <- function(y, x, theta, u) dnorm(y, theta[1] + theta[2]*u[x[2]] + x[
 
 revo <- function(x, theta) c(rnorm(1, theta[3]*x[1], sqrt(theta[4])), x[2]+1)
 
-rprior <- function(b0 = c(900,5), B0 = c(5,5), phi0 = 0.8, Phi0 = 0.2, as0 = 1, bs0 = 1, am0 = 1, bm0 = 1)
+rprior.truth <- function(b0 = c(900,5), B0 = c(5,5), phi0 = 0.8, Phi0 = 0.2, as0 = 1, bs0 = 1, am0 = 1, bm0 = 1)
 {
   beta = rnorm(2, b0, sqrt(B0))
   phi = rnorm(1, phi0, sqrt(Phi0))
@@ -23,7 +23,29 @@ rprior <- function(b0 = c(900,5), B0 = c(5,5), phi0 = 0.8, Phi0 = 0.2, as0 = 1, 
   return(list(x=x0, theta = c(beta,phi,sigma2s,sigma2m)))
 }
 
-rmcmc <- function(y, x, theta, u, mod, n.iter = 1, smooth = TRUE, store.smooth = TRUE)
+rprior.convert <- function(mean, var, sd.fac = 1)
+{
+  b0 = mean[1:2]
+  B0 = (sd.fac^2)*var[1:2]
+  phi0 = mean[3]
+  Phi0 = (sd.fac^2)*var[3]
+  b = mean[4:5]^3 / ((sd.fac^2)*var[4:5]) + mean[4:5]
+  a = b / mean[4:5] + 1
+  return(list(b0=b0, B0=B0*diag(2), phi0=list(phi0), Phi0=list(matrix(Phi0)), as0 = a[1], bs0 = b[1], am0 = a[2], bm0 = b[2], m0 = 0))
+}
+
+rprior.train <- function(prior)
+{
+  beta = rnorm(2, prior$b0, sqrt(diag(prior$B0)))
+  phi = rnorm(1, prior$phi0[[1]], sqrt(prior$Phi0[[1]][1,1]))
+  while(!is.stationary(phi)) phi = rnorm(1, prior$phi0[[1]], sqrt(prior$Phi0[[1]][1,1]))
+  sigma2s = 1 / rgamma(1, prior$as0, prior$bs0)
+  sigma2m = 1 / rgamma(1, prior$am0, prior$bm0)
+  x0 = c(rnorm(1, 0, sqrt(sigma2s / (1 - phi^2))), 0)
+  return(list(x=x0, theta = c(beta,phi,sigma2s,sigma2m)))
+}
+
+rmcmc <- function(y, x, theta, u, mod, prior, n.iter = 1, smooth = TRUE, store.smooth = TRUE)
 { 
   y = matrix(y, nr = 1)
   nt = dim(y)[2]
@@ -35,8 +57,7 @@ rmcmc <- function(y, x, theta, u, mod, n.iter = 1, smooth = TRUE, store.smooth =
   xt = x[2,]
   x = matrix(x[1,], nr = 1)
   theta.list = list(beta = theta[1:2], phi = theta[3], sigma2s = theta[4], sigma2m = theta[5])
-  prior = list(b0 = c(900,5), B0 = 5*diag(2), phi0 = list(0.8), Phi0 = list(matrix(0.2)), as0 = 1, bs0 = 1, am0 = 1, bm0 = 1, m0 = 0)
-  
+
   for(k in 1:n.iter)
   {
     # Sample smoothed states by FFBS?

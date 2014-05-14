@@ -69,7 +69,7 @@ require(dlm)
 require(plyr)
 require(doMC)
 registerDoMC()
-mydata = expand.grid(N=20,n=6,n.sim=1:20,mod=c("M101","M011"),diff="",dimx=2,n.chain=1:3,nsims=11000,nburn=1000,nthin=10,same=FALSE,progress=FALSE,print.iter=FALSE)
+mydata = expand.grid(N=20,n=c(1,11,16),n.sim=1:20,mod=c("M101","M011"),diff="",dimx=2,n.chain=1:3,nsims=11000,nburn=1000,nthin=10,same=FALSE,progress=FALSE,print.iter=FALSE)
 m_ply(mydata, fmri_dlm_mcmc_test, .parallel = TRUE)
 
 fmri_reg_mcmc_test <- function(N, n, n.sim, mod, dimx, n.chain, nsims, nburn, nthin, progress=TRUE, print.iter=FALSE)
@@ -102,5 +102,5 @@ fmri_reg_mcmc_test <- function(N, n, n.sim, mod, dimx, n.chain, nsims, nburn, nt
   save(out.est, file = file)
 }
 
-mydata = expand.grid(N=20,n=6,n.sim=1:20,mod=c("M010","M020"),dimx=2,n.chain=1:3,nsims=11000,nburn=1000,nthin=10,progress=FALSE,print.iter=FALSE)
+mydata = expand.grid(N=20,n=c(1,11,16),n.sim=1:20,mod=c("M010","M020"),dimx=2,n.chain=1:3,nsims=11000,nburn=1000,nthin=10,progress=FALSE,print.iter=FALSE)
 m_ply(mydata, fmri_reg_mcmc_test, .parallel = TRUE)

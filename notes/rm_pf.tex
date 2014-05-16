@@ -246,17 +246,17 @@ x_t = Gx_{t-1} + w_t \label{eqn:state}
 \end{align}
 \noindent where $v_t \stackrel{\mbox{iid}}{\sim} \mbox{N}(0,\sigma^2_m)$ independent of $w_t \stackrel{\mbox{iid}}{\sim} \mbox{N}(0,\sigma^2_s)$, $U_t = (1, \mbox{conv}_t)$, $\beta = (\beta_0,\beta_1)'$, and $G = \phi$. For $M_{101}$, we let $F_t = \mbox{conv}_t$ and for $M_{011}$ we let $F_t = 1$ for all $t$.
 
-Twenty time series were simulated according to both $M_{101}$ and $M_{011}$ with true parameter values set to \[\beta_0 = 900 \quad \beta_1 = 5 \quad \phi = 0.8 \quad \sigma^2_s = 1 \quad \sigma^2_m = 1\] The resample move particle filter with 100 particles was run under each model on each simulated data set 4 times. Figure \ref{fig:fmri-lik} shows estimates of the log marginal likelihood on data simulated from $M_{101}$ and $M_{011}$.
+%Twenty time series were simulated according to both $M_{101}$ and $M_{011}$ with true parameter values set to \[\beta_0 = 900 \quad \beta_1 = 5 \quad \phi = 0.8 \quad \sigma^2_s = 1 \quad \sigma^2_m = 1\] The resample move particle filter with 100 particles was run under each model on each simulated data set 4 times. Figure \ref{fig:fmri-lik} shows estimates of the log marginal likelihood on data simulated from $M_{101}$ and $M_{011}$.
 
-\begin{figure}[ht]
-\begin{minipage}{0.75\linewidth}
-\includegraphics[width=1.0\textwidth]{fmri_rm_lik-20-M101-2-6-20-4-100}
-\end{minipage}
-\begin{minipage}{0.75\linewidth}
-\includegraphics[width=1.0\textwidth]{fmri_rm_lik-20-M011-2-6-20-4-100}
-\end{minipage}
-\caption{Estimated log marginal likelihood of $M_{101}$ (red) and $M_{011}$ (blue) from 4 different runs of the resample move particle filter with 100 particles on each simulated data set from model $M_{101}$ (top) and $M_{011}$ (bottom).} \label{fig:fmri-lik}
-\end{figure}
+%\begin{figure}[ht]
+%\begin{minipage}{0.75\linewidth}
+%\includegraphics[width=1.0\textwidth]{fmri_rm_lik-20-M101-2-6-20-4-100}
+%\end{minipage}
+%\begin{minipage}{0.75\linewidth}
+%\includegraphics[width=1.0\textwidth]{fmri_rm_lik-20-M011-2-6-20-4-100}
+%\end{minipage}
+%\caption{Estimated log marginal likelihood of $M_{101}$ (red) and $M_{011}$ (blue) from 4 different runs of the resample move particle filter with 100 particles on each simulated data set from model $M_{101}$ (top) and $M_{011}$ (bottom).} \label{fig:fmri-lik}
+%\end{figure}
 
 \clearpage
 

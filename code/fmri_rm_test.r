@@ -8,9 +8,6 @@ source("dlm_sim.r")
 dpath = "../data/"
 gpath = "../graphs/"
 
-# Set seed
-set.seed(54)
-
 # Function to run pfs
 fmri_rm <- function(N, mod.sim, dimx, n, n.sim, n.run, mod.est, np, sd.fac = 1, alpha = 0.05, progress = TRUE)
 {
@@ -55,8 +52,8 @@ fmri_rm <- function(N, mod.sim, dimx, n, n.sim, n.run, mod.est, np, sd.fac = 1, 
 require(plyr)
 require(doMC)
 registerDoMC()
-#data1 = expand.grid(N = 20, mod.est = c("M101","M011"), dimx = 2, n.sim = 1:8, n.run = 1:3, mod.sim = c("M101","M011"), sd.fac = c(1,3,5), n = 6, np = 100, progress = FALSE)
-data1 = expand.grid(N = 20, mod.est = c("M101","M011"), dimx = 2, n.sim = 1:8, n.run = 1:3, mod.sim = c("M101","M011"), sd.fac = 1, n = c(1,11,16), np = 100, progress = FALSE)
+data0 = expand.grid(N = 20, mod.est = "M011", dimx = 2, n.sim = 8, n.run = 3, mod.sim = "M011", sd.fac = 1, n = 1, np = 100, progress = FALSE)
+data1 = expand.grid(N = 20, mod.est = c("M101","M011"), dimx = 2, n.sim = 1:8, n.run = 1:3, mod.sim = c("M101","M011"), sd.fac = 1, n = c(11,16), np = 100, progress = FALSE)
 data2 = expand.grid(N = 20, mod.est = c("M101","M011"), dimx = 2, n.sim = 1:8, n.run = 1:3, mod.sim = c("M101","M011"), sd.fac = c(5,7), n = 6, np = 100, progress = FALSE)
-mydata = rbind(data1,data2)
+mydata = rbind(data0,data1,data2)
 m_ply(.dat = mydata, .fun = fmri_rm, .parallel = TRUE)

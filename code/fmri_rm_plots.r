@@ -79,7 +79,7 @@ fmri_rm_quantiles <- function(N, mod.sim, dimx, n, nsims, nruns, mod.est, np, sd
   }
 }
 
-mydata = expand.grid(N = 20, mod.sim = c("M101","M011"),dimx=2,n=6,nsims=2,nruns=2,mod.est=c("M101","M011"),np=10,sd.fac=c(.5,1,2),alpha=0.05,burn=10,stringsAsFactors = FALSE)
+mydata = expand.grid(N = 20, mod.sim = c("M101","M011"),dimx=2,n=6,nsims=8,nruns=3,mod.est=c("M101","M011"),np=100,sd.fac=c(1,3),alpha=0.05,burn=10,stringsAsFactors = FALSE)
 m_ply(mydata, fmri_rm_quantiles)
 
 # Function to plot rm pf posterior model probabilities
@@ -167,9 +167,9 @@ fmri_rm_lik <- function(N, mod.sim, dimx, n, nsims, nruns, np, sd.fac, byn, alph
   dev.off()
 }
 
-mydata = expand.grid(N = 20, mod.sim = c("M101","M011"),dimx=2,nsims=2,nruns=2,np=10,stringsAsFactors = FALSE)
-m_ply(mydata, function(N,mod.sim,dimx,nsims,nruns,np) fmri_rm_lik(N, mod.sim, dimx, n=6, nsims, nruns, np, sd.fac=c(.5,2), byn=FALSE, alpha=0.05))
+mydata = expand.grid(N = 20, mod.sim = c("M101","M011"),dimx=2,nsims=8,nruns=3,np=100,stringsAsFactors = FALSE)
+m_ply(mydata, function(N,mod.sim,dimx,nsims,nruns,np) fmri_rm_lik(N, mod.sim, dimx, n=6, nsims, nruns, np, sd.fac=c(1,3), byn=FALSE, alpha=0.05))
 
-mydata = expand.grid(N = 20, mod.sim = c("M101","M011"),dimx=2,nsims=2,nruns=2,np=10,stringsAsFactors = FALSE)
-m_ply(mydata, function(N,mod.sim,dimx,nsims,nruns,np) fmri_rm_lik(N, mod.sim, dimx, n=5:6, nsims, nruns, np, sd.fac=1, byn=TRUE, alpha=0.05))
+mydata = expand.grid(N = 20, mod.sim = c("M101","M011"),dimx=2,nsims=8,nruns=2,np=100,stringsAsFactors = FALSE)
+m_ply(mydata, function(N,mod.sim,dimx,nsims,nruns,np) fmri_rm_lik(N, mod.sim, dimx, n=c(1,6), nsims, nruns, np, sd.fac=1, byn=TRUE, alpha=0.05))
 

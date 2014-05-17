@@ -232,12 +232,12 @@ We can also evaluate the particle filter approximation of posterior model probab
 
 \section{Example - fMRI}
 
-Next, we consider the possibility of model comparison in a situation where we are not able to obtain an explicit form of the true marginal likelihood. Specifically, we can consider data $y_t$ that represents a time series from one voxel of an fMRI experiment. We propose two possible models from which the time series can be assumed to be generated from:
+Next, we consider the possibility of model comparison in a situation where we are not able to obtain an explicit form of the true marginal likelihood. Specifically, we can consider data $y_t$ that represents a time series from one voxel of an fMRI experiment. We propose two possible models for the data:
 \begin{align}
 y_t &= \beta_0 + (\beta_1 + x_t)\mbox{conv}_t + v_t \label{eqn:M101} \\
 y_t &= \beta_0 + \beta_1\mbox{conv}_t + x_t + v_t \label{eqn:M011}
 \end{align}
-\noindent where $x_t$ follows an AR(1) process with lag-1 correlation $\phi$ and white noise variance $\sigma^2_s$, $v_t \stackrel{\mbox{iid}}{\sim} \mbox{N}(0,\sigma^2_m)$, $\mbox{conv}_t$ is the expected BOLD response at time $t$ (the convolution of the haemodynamic response function with the experimental stimulus pattern), and $\beta_0$ and $\beta_1$ are fixed parameters representing the baseline level of BOLD activity and the slope coefficient of the linear relationship between the observed and expected BOLD responses, respectively. Equation \eqref{eqn:M101} has a dynamic slope while equation \eqref{eqn:M011} has a constant slope with the autocorrelation pushed into the error term. We refer to the model represented by equation \eqref{eqn:M101} as $M_{101}$ and the model in equation \eqref{eqn:M011} as $M_{011}$.
+\noindent where $x_t$ follows an AR(1) process with autocorrelation parameter $\phi$ and Gaussian white noise variance $\sigma^2_s$ (i.e. $x_t = \phi x_{t-1} + w_t$ with $w_t \stackrel{\mbox{iid}}{\sim} \mbox{N}(0,\sigma^2_s)$), $v_t \stackrel{\mbox{iid}}{\sim} \mbox{N}(0,\sigma^2_m)$, $\mbox{conv}_t$ is the expected BOLD response at time $t$ (the convolution of the haemodynamic response function with the experimental stimulus pattern), and $\beta_0$ and $\beta_1$ are fixed parameters representing the baseline level of BOLD activity and the slope coefficient for the linear relationship between the observed and expected BOLD responses, respectively. The hypothesis test $H_0: \beta_1 = 0$ versus $H_1: \beta_1 > 0$ is usually of interest for determining whether the voxel is responsive the experimental stimulus. Equation \eqref{eqn:M101} has a dynamic slope while equation \eqref{eqn:M011} has a constant slope with the autocorrelation pushed into the error term. We refer to the model represented by equation \eqref{eqn:M101} as $M_{101}$ and the model in equation \eqref{eqn:M011} as $M_{011}$.
 
 Both of these models can be represented as a DLM of the form
 \begin{align}
@@ -246,17 +246,35 @@ x_t = Gx_{t-1} + w_t \label{eqn:state}
 \end{align}
 \noindent where $v_t \stackrel{\mbox{iid}}{\sim} \mbox{N}(0,\sigma^2_m)$ independent of $w_t \stackrel{\mbox{iid}}{\sim} \mbox{N}(0,\sigma^2_s)$, $U_t = (1, \mbox{conv}_t)$, $\beta = (\beta_0,\beta_1)'$, and $G = \phi$. For $M_{101}$, we let $F_t = \mbox{conv}_t$ and for $M_{011}$ we let $F_t = 1$ for all $t$.
 
-%Twenty time series were simulated according to both $M_{101}$ and $M_{011}$ with true parameter values set to \[\beta_0 = 900 \quad \beta_1 = 5 \quad \phi = 0.8 \quad \sigma^2_s = 1 \quad \sigma^2_m = 1\] The resample move particle filter with 100 particles was run under each model on each simulated data set 4 times. Figure \ref{fig:fmri-lik} shows estimates of the log marginal likelihood on data simulated from $M_{101}$ and $M_{011}$.
+Eight time series of length $T = 250$ were simulated according to both $M_{101}$ and $M_{011}$ with true parameter values set to \[\beta_0 = 900 \quad \beta_1 = 5 \quad \phi = 0.8 \quad \sigma^2_s = 1 \quad \sigma^2_m = 1\] and the resample move particle filter with 100 particles was run 3 times under each model for each simulated time series. Thus, for each simulation, 3 estimates of the marginal likelihood of each model given the data could be calculated.
 
-%\begin{figure}[ht]
-%\begin{minipage}{0.75\linewidth}
-%\includegraphics[width=1.0\textwidth]{fmri_rm_lik-20-M101-2-6-20-4-100}
-%\end{minipage}
-%\begin{minipage}{0.75\linewidth}
-%\includegraphics[width=1.0\textwidth]{fmri_rm_lik-20-M011-2-6-20-4-100}
-%\end{minipage}
-%\caption{Estimated log marginal likelihood of $M_{101}$ (red) and $M_{011}$ (blue) from 4 different runs of the resample move particle filter with 100 particles on each simulated data set from model $M_{101}$ (top) and $M_{011}$ (bottom).} \label{fig:fmri-lik}
-%\end{figure}
+To offer a fair comparison between the two models, an additional time series of length $T = 100$ was simulated prior to each resample-move particle filter run using the same true values of the model parameters, and the particle filter was run on the 100-length time series in order construct priors for the subsequent particle filter run. Priors on the unknown parameters for the particle filter run on the 100-length time series were taken to be \[ \beta_0 \sim \mbox{N}(b_0,B_0) \quad \beta_1 \sim \mbox{N}(b_1,B_1) \quad \phi \sim \mbox{N}_{(-1,1)}(\phi_0,\Phi) \quad \sigma^2_s \sim \mbox{IG}(a_{s_0},b_{s_0}) \quad \sigma^2_m \sim \mbox{IG}(a_{m_0},b_{m_0}) \] with $b_0 = 900$, $b_1 = B_0 = B_1 = 5$, $\phi_0 = 0.8$, $\Phi_0 = 0.2$, $a_{s_0} = b_{s_0} = a_{m_0} = b_{m_0} = 1$. The hyperparamters for the priors for the subsequent particle filter runs were then set such that the mean and variance for each prior distribution was matched with the sample mean and sample variance of the ``prior'' posterior sample at $t = 100$. For particle filter runs on both the initial ($T = 100$) and original ($T = 250$) simulated time series, the prior on the initial state $x_0$ was $x_0|\phi,\sigma^2_s \sim \mbox{N}(0,\frac{\sigma^2_s}{1-\phi^2})$, i.e. the stationary distribution of an AR(1) process.
+
+The upper right plots of Figures \ref{fig:fmri-lik-n-M101} and \ref{fig:fmri-lik-n-M011} display the results of the log marginal likelihood calulations for these runs. These results indicate that it is easier to identify $M_{101}$ for these specific parameter values. Eight simulated data sets were then generated from both models with true values of $\phi$ and $\sigma^2$ changed, and these results are displayed in the remaining plot panels of the figures. These results suggest that it becomes easier to identify $M_{101}$ for larger values of $\phi$ and $\sigma^2_s$, and easier to identify $M_{011}$ for smaller values of $\phi$ and $\sigma^2_s$.
+
+\begin{figure}[ht]
+\includegraphics[width=1.0\textwidth]{fmri_rm_lik-20-M101-2-8-3-100-TRUE}
+\caption{Estimated log marginal likelihood of $M_{101}$ (red) and $M_{011}$ (blue) from 3 different runs of the resample move particle filter with 100 particles on each simulated data set from model $M_{101}$ for increasing true $\phi$ and $\sigma^2_s$.} \label{fig:fmri-lik-n-M101}
+\end{figure}
+
+\begin{figure}[ht]
+\includegraphics[width=1.0\textwidth]{fmri_rm_lik-20-M011-2-8-3-100-TRUE}
+\caption{Estimated log marginal likelihood of $M_{101}$ (red) and $M_{011}$ (blue) from 3 different runs of the resample move particle filter with 100 particles on each simulated data set from model $M_{011}$ for increasing true $\phi$ and $\sigma^2_s$.} \label{fig:fmri-lik-n-M011}
+\end{figure}
+
+\clearpage
+
+For the simulations with $\phi$ and $\sigma^2_s$ set to 0.8 and 1, respectively, additional resample move particle filters were run with prior distributions set such that the prior standard deviations were equal to 3 times the sample standard devation of the posterior sample generated at $t = 100$ from the initial particle filter run on the $T = 100$ length data set. This was meant to illustrate the point that, even for data simulated from $M_{101}$, $M_{011}$ can yield a higher log marginal likelihood if the prior used for $M_{101}$ is made more diffuse. Figure \ref{fig:fmri-lik-sd-M101} shows log marginal likelihood estimates for increasing prior standard deviation for $M_{101}$ on data simulated from $M_{101}$, and Figure \ref{fig:fmri-lik-sd-M011} shows analogous results for $M_{011}$.
+
+\begin{figure}[ht]
+\includegraphics[width=1.0\textwidth]{fmri_rm_lik-20-M101-2-8-3-100-FALSE}
+\caption{Estimated log marginal likelihood of $M_{101}$ (red) and $M_{011}$ (blue) from 3 different runs of the resample move particle filter with 100 particles on each simulated data set from model $M_{101}$ for increasing prior standard devation on $M_{101}$.} \label{fig:fmri-lik-sd-M101}
+\end{figure}
+
+\begin{figure}[ht]
+\includegraphics[width=1.0\textwidth]{fmri_rm_lik-20-M011-2-8-3-100-FALSE}
+\caption{Estimated log marginal likelihood of $M_{101}$ (red) and $M_{011}$ (blue) from 3 different runs of the resample move particle filter with 100 particles on each simulated data set from model $M_{011}$ for increasing prior standard devation on $M_{011}$.} \label{fig:fmri-lik-sd-M011}
+\end{figure}
 
 \clearpage
 

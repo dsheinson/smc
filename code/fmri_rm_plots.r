@@ -171,4 +171,4 @@ mydata = expand.grid(N = 20, mod.sim = c("M101","M011"),dimx=2,nsims=8,nruns=3,n
 m_ply(mydata, function(N,mod.sim,dimx,nsims,nruns,np) fmri_rm_lik(N, mod.sim, dimx, n=6, nsims, nruns, np, sd.fac=c(1,3), byn=FALSE, alpha=0.05))
 
 mydata = expand.grid(N = 20, mod.sim = c("M101","M011"),dimx=2,nsims=8,nruns=3,np=100,stringsAsFactors = FALSE)
-m_ply(mydata, function(N,mod.sim,dimx,nsims,nruns,np) fmri_rm_lik(N, mod.sim, dimx, n=c(1,6), nsims, nruns, np, sd.fac=1, byn=TRUE, alpha=0.05))
+m_ply(mydata, function(N,mod.sim,dimx,nsims,nruns,np) fmri_rm_lik(N, mod.sim, dimx, n=c(1,6,11), nsims, nruns, np, sd.fac=1, byn=TRUE, alpha=0.05))

@@ -125,6 +125,7 @@ fmri_rm_lik <- function(N, mod.sim, dimx, n, nsims, nruns, np, sd.fac, byn, ylim
   if(missing(ylim)) ylim = c(min(rm.lmarglik),max(rm.lmarglik))
   
   # Plot log marginal likelihoods estimated by M101 vs M011
+  if(!prior) file=paste(gpath,"fmri_rm_lik-",paste(N, mod.sim, dimx, nsims, nruns, np, byn, sep="-"),".pdf",sep="") else file=paste(gpath,"fmri_rm_lik-",paste(N, mod.sim, dimx, nsims, nruns, np, byn, "prior", sep="-"),".pdf",sep="")
   pdf(file=paste(gpath,"fmri_rm_lik-",paste(N, mod.sim, dimx, nsims, nruns, np, byn, sep="-"),".pdf",sep=""))
   par(mfrow=c(2,2),mar=c(5,6,4,2)+0.1)
   if(byn)
@@ -183,6 +184,9 @@ fmri_rm_lik <- function(N, mod.sim, dimx, n, nsims, nruns, np, sd.fac, byn, ylim
 
 mydata = expand.grid(N = 20, mod.sim = c("M101","M011"),dimx=2,nsims=8,nruns=3,np=100,stringsAsFactors = FALSE)
 m_ply(mydata, function(N,mod.sim,dimx,nsims,nruns,np) fmri_rm_lik(N, mod.sim, dimx, n=6, nsims, nruns, np, sd.fac=c(1,3,5,7), byn=FALSE, alpha=0.05))
+
+# mydata = expand.grid(N = 20, mod.sim = c("M101","M011"),dimx=2,nsims=8,nruns=3,np=100,stringsAsFactors = FALSE)
+# m_ply(mydata, function(N,mod.sim,dimx,nsims,nruns,np) fmri_rm_lik(N, mod.sim, dimx, n=6, nsims, nruns, np, sd.fac=c(1,3,5,7), byn=FALSE, prior = TRUE, alpha=0.05))
 
 mydata = expand.grid(N = 20, mod.sim = c("M101","M011"), dimx=2, nsims=8, nruns=3, np=100, stringsAsFactors = FALSE)
 m_ply(mydata, function(N,mod.sim,dimx,nsims,nruns,np) fmri_rm_lik(N, mod.sim, dimx, n=c(1,6,11), nsims, nruns, np, sd.fac=1, byn=TRUE, alpha=0.05))

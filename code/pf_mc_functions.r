@@ -14,3 +14,15 @@ postModProbs <- function(lmarglik, priorModProbs)
   postModProbs.log = lmarglik + log(priorModProbs) - log(sum(exp(lmarglik)*priorModProbs))
   return(exp(postModProbs.log))
 }
+
+# Function to calculate log marginal likelihood of particle sample given a different prior
+pf.lmarglik.prior <- function(out, dlprior.old, dlprior.new)
+{
+  tt = dim(out$weight)[2]
+  nt = tt - 1
+  np = dim(out$weight)[1]
+  weights = matrix(NA, nr = np, nc = tt)
+  for(j in 1:tt)  for(i in 1:np) weights[i,j] = out$weight[i,j] + dlprior.new(out$state[[j]][1,i,1],out$theta[,i,1]) - dlprior.old(out$state[[j]][1,i,1],out$theta[,i,1])
+  weights = apply(weights, 2, function(x) renormalize(x,log=TRUE))
+  return(pf.lmarglik(list(weight = weights, increment = out$increment)))
+}

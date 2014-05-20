@@ -1,4 +1,5 @@
 source("pf_mc_functions.r")
+source("rm_fmri_functions.r")
 require(plyr)
 
 # Set data and graphics path
@@ -83,7 +84,7 @@ mydata = expand.grid(N = 20, mod.sim = c("M101","M011"),dimx=2,n=6,nsims=8,nruns
 m_ply(mydata, fmri_rm_quantiles)
 
 # Function to plot rm pf posterior model probabilities
-fmri_rm_lik <- function(N, mod.sim, dimx, n, nsims, nruns, np, sd.fac, byn, alpha = 0.05)
+fmri_rm_lik <- function(N, mod.sim, dimx, n, nsims, nruns, np, sd.fac, byn, prior = FALSE, alpha = 0.05)
 {
   # Load simulated data
   load(paste(dpath,"dlm_ar_sim-",N,"-",mod.sim,"-",dimx,".rdata",sep=""))
@@ -102,8 +103,18 @@ fmri_rm_lik <- function(N, mod.sim, dimx, n, nsims, nruns, np, sd.fac, byn, alph
           for(k in 1:2)
           {
             mod = c("M101","M011")[k]
-            load(paste(dpath,"fmri_rm-",paste(N,mod.sim,dimx,n[l],j,i,mod,np,sd.fac[m],100*alpha,sep="-"),".rdata",sep=""))
-            rm.lmarglik[i,j,k,l,m] = pf.out$lmarglik
+            if(!prior)
+            {
+              load(paste(dpath,"fmri_rm-",paste(N,mod.sim,dimx,n[l],j,i,mod,np,sd.fac[m],100*alpha,sep="-"),".rdata",sep=""))
+              rm.lmarglik[i,j,k,l,m] = pf.out$lmarglik
+            } else {
+              load(paste(dpath,"fmri_rm-",paste(N,mod.sim,dimx,n[l],j,i,mod,np,sd.fac[1],100*alpha,sep="-"),".rdata",sep=""))
+              prior.old = pf.out$prior
+              prior.new = rprior.convert(pf.out$wt.mom$center, diag(pf.out$wt.mom$cov), 3)
+              dlprior.old = function(x, theta) dlprior(x, theta, prior.old)
+              dlprior.new = function(x, theta) dlprior(x, theta, prior.new)
+              rm.lmarglik[i,j,k,l,m] = pf.lmarglik.prior(pf.out$out, dlprior.old, dlprior.new)
+            }
           }
         }
       }

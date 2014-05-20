@@ -45,6 +45,15 @@ rprior.train <- function(prior)
   return(list(x=x0, theta = c(beta,phi,sigma2s,sigma2m)))
 }
 
+dlprior <- function(x,theta,prior)
+{
+  dlbeta = sum(dnorm(theta[1:2],prior$b0,sqrt(diag(prior$B0)),log=TRUE))
+  dlphi = dnorm(theta[3],prior$phi0[[1]],sqrt(diag(prior$Phi0[[1]])),log=TRUE)
+  dlsigma2 = sum(dgamma(theta[4:5],c(prior$as0,prior$am0),c(prior$bs0,prior$bm0),log=TRUE))
+  dlx0 = dnorm(x,prior$m0,sqrt(theta[4] / (1 - theta[3]^2)),log=TRUE)
+  return(dlbeta + dlphi + dlsigma2 + dlx0)
+}
+
 rmcmc <- function(y, x, theta, u, mod, prior, n.iter = 1, smooth = TRUE, store.smooth = TRUE)
 { 
   y = matrix(y, nr = 1)

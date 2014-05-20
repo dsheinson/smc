@@ -84,7 +84,7 @@ mydata = expand.grid(N = 20, mod.sim = c("M101","M011"),dimx=2,n=6,nsims=8,nruns
 m_ply(mydata, fmri_rm_quantiles)
 
 # Function to plot rm pf posterior model probabilities
-fmri_rm_lik <- function(N, mod.sim, dimx, n, nsims, nruns, np, sd.fac, byn, prior = FALSE, alpha = 0.05)
+fmri_rm_lik <- function(N, mod.sim, dimx, n, nsims, nruns, np, sd.fac, byn, ylim, prior = FALSE, alpha = 0.05)
 {
   # Load simulated data
   load(paste(dpath,"dlm_ar_sim-",N,"-",mod.sim,"-",dimx,".rdata",sep=""))
@@ -121,6 +121,9 @@ fmri_rm_lik <- function(N, mod.sim, dimx, n, nsims, nruns, np, sd.fac, byn, prio
     }
   }
    
+  # Input y-limits?
+  if(missing(ylim)) ylim = c(min(rm.lmarglik),max(rm.lmarglik))
+  
   # Plot log marginal likelihoods estimated by M101 vs M011
   pdf(file=paste(gpath,"fmri_rm_lik-",paste(N, mod.sim, dimx, nsims, nruns, np, byn, sep="-"),".pdf",sep=""))
   par(mfrow=c(2,2),mar=c(5,6,4,2)+0.1)
@@ -142,7 +145,7 @@ fmri_rm_lik <- function(N, mod.sim, dimx, n, nsims, nruns, np, sd.fac, byn, prio
         xlab = ylab = main = ""
         mtext = substitute(paste(beta[0]," = ",aa,", ",beta[1]," = ",ab,", ",phi," = ",ac,", ",sigma[s]^2," = ",ad,", ",sigma[m]^2," = ",ae,sep=""),list(aa=beta[1],ab=beta[2],ac=phi,ad=sigma2s,ae=sigma2m))
       }
-      plot(rep(1,nruns), rm.lmarglik[,1,1,i,1], xlim = c(1,nsims), ylim = c(min(rm.lmarglik),max(rm.lmarglik)), col = 2, xlab = xlab, ylab = ylab, main = main, cex.lab = 1.5)
+      plot(rep(1,nruns), rm.lmarglik[,1,1,i,1], xlim = c(1,nsims), ylim = ylim, col = 2, xlab = xlab, ylab = ylab, main = main, cex.lab = 1.5)
       mtext(mtext,side=3,cex=0.85)
       if(nsims > 1) for(j in 2:nsims) points(rep(j,nruns), rm.lmarglik[,j,1,i,1], col=2)
       for(j in 1:nsims) points(rep(j,nruns), rm.lmarglik[,j,2,i,1], col = 4)
@@ -168,7 +171,7 @@ fmri_rm_lik <- function(N, mod.sim, dimx, n, nsims, nruns, np, sd.fac, byn, prio
         main = paste(mod.sim," SD Factor = ",sd.fac[i],sep="")
         mtext = substitute(paste(beta[0]," = ",aa,", ",beta[1]," = ",ab,", ",phi," = ",ac,", ",sigma[s]^2," = ",ad,", ",sigma[m]^2," = ",ae,sep=""),list(aa=beta[1],ab=beta[2],ac=phi,ad=sigma2s,ae=sigma2m))
       }
-      plot(rep(1,nruns), rm.lmarglik[,1,1,1,ind.M101], xlim = c(1,nsims), ylim = c(min(rm.lmarglik),max(rm.lmarglik)), col = 2, xlab = xlab, ylab = ylab, main = main, cex.lab = 1.5)
+      plot(rep(1,nruns), rm.lmarglik[,1,1,1,ind.M101], xlim = c(1,nsims), ylim = ylim, col = 2, xlab = xlab, ylab = ylab, main = main, cex.lab = 1.5)
       mtext(mtext,side=3,cex=0.85)
       if(nsims > 1) for(j in 2:nsims) points(rep(j,nruns), rm.lmarglik[,j,1,1,ind.M101], col=2)
       for(j in 1:nsims) points(rep(j,nruns), rm.lmarglik[,j,2,1,ind.M011], col = 4)
@@ -179,7 +182,7 @@ fmri_rm_lik <- function(N, mod.sim, dimx, n, nsims, nruns, np, sd.fac, byn, prio
 }
 
 mydata = expand.grid(N = 20, mod.sim = c("M101","M011"),dimx=2,nsims=8,nruns=3,np=100,stringsAsFactors = FALSE)
-m_ply(mydata, function(N,mod.sim,dimx,nsims,nruns,np) fmri_rm_lik(N, mod.sim, dimx, n=6, nsims, nruns, np, sd.fac=c(1,3), byn=FALSE, alpha=0.05))
+m_ply(mydata, function(N,mod.sim,dimx,nsims,nruns,np) fmri_rm_lik(N, mod.sim, dimx, n=6, nsims, nruns, np, sd.fac=c(1,3,5,7), byn=FALSE, alpha=0.05))
 
-mydata = expand.grid(N = 20, mod.sim = c("M101","M011"),dimx=2,nsims=8,nruns=3,np=100,stringsAsFactors = FALSE)
+mydata = expand.grid(N = 20, mod.sim = c("M101","M011"), dimx=2, nsims=8, nruns=3, np=100, stringsAsFactors = FALSE)
 m_ply(mydata, function(N,mod.sim,dimx,nsims,nruns,np) fmri_rm_lik(N, mod.sim, dimx, n=c(1,6,11), nsims, nruns, np, sd.fac=1, byn=TRUE, alpha=0.05))

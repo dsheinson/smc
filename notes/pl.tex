@@ -29,11 +29,11 @@ Like all other particle filters, particle learning prescribes a recursive formul
 \end{enumerate}
 The algorithm is initialized by specifying initial particles $\left(x_0^{(j)},s_0^{(j)},\theta_0^{(j)}\right)$ and weights $w_0^{(j)}$ for all $j$, usually done by sampling from the prior $p(x_0,\theta)$ with equal weights. Note that the algorithm requires the ability to evaluate the conditional predictive distribution $p(y_{t+1}|x_t,\theta)$ as well as the ability to sample from the conditional posterior distribution $p(x_{t+1}|y_{t+1},x_t,\theta)$. Thus, particle learning is only applicable to models for which the form of these distributions is analytically tractable. In addition, we must define the recursive map $S$ to update the sufficient statistics based on the new observation $y_{t+1}$ and the newly sampled state $x_{t+1}^{(j)}$.
 
-Efficiency of the algorithm can be enhanced by marginalizing out the current state $x_t$ and tracking conditional state sufficient statistics. This process, known as Rao-Blackwellization, requires tractability of the distributions $p(y_{t+1}|s_{x,t},\theta)$, which is used in place of $p(y_{t+1}|x_t,\theta)$ in the ``Resample'' step, and $p(x_{t+1}|y_{t+1},s_{x,t},\theta)$, which is used in place of $p(x_{t+1}|y_{t+1},x_t,\theta)$ in the ``Propagate'' step, where $s_{x,t}$ is the conditional (on $\theta$) sufficient statistics for $x_t$.
+Efficiency of the algorithm can be enhanced by marginalizing out the current state $x_t$ and tracking conditional state sufficient statistics. This process, known as Rao-Blackwellization, requires tractability of the distributions $p(y_{t+1}|s_{x,t},\theta)$, which is used in place of $p(y_{t+1}|x_t,\theta)$ in the ``Resample'' step, and $p(x_{t+1}|y_{t+1},s_{x,t},\theta)$, which is used in place of $p(x_{t+1}|y_{t+1},x_t,\theta)$ in the ``Propagate'' step, where $s_{x,t}$ is the conditional (on $\theta$) sufficient statistics for $x_t$. It is also necessary to define a recursive map $S_x$ for updating $s_{x,t}$ given $s_{x,t-1}$, $y_{t+1}$, and $\theta$.
 
 Furthermore, the ``Resample'' step can be regarded as optional and only needed if particle weights are out of balance. For iterations of the algorithm for which we choose to forgo resampling, we 1) omit the ``Resample'' step, 2) replace all instances of the sampled index $k$ with the particle index $j$, and 3) add a final ``Calculate weights'' step where particle $j$ is assigned associated weight $w_{t+1}^{(j)}$, where \[\tilde{w}_{t+1}^{(j)} = w_t^{(j)}p\left(y_{t+1}|x_t^{(j)},\theta_t^{(j)}\right) \qquad w_{t+1}^{(j)} = \tilde{w}_{t+1}^{(j)} \left/ \sum_{l=1}^J \tilde{w}_{t+1}^{(l)}\right..\] If Rao-Blackwellization is performed, then $\tilde{w}_{t+1}^{(j)} = w_t^{(j)}p\left(y_{t+1}|s_{x,t}^{(j)},\theta_t^{(j)}\right)$ in the ``Calculate weights'' step.
 
-\section{Example - local level DLM with common state and observation variance}
+\section{Example - local level DLM with common state and observation variance} \label{sec:ll}
 
 For an illustration of particle learning, we consider the local level or random-walk DLM. In this example, an analytical form for $p(x_t,\theta|y_{1:t})$ exists, and so a particle filtering algorithm is not needed for this situation in practice. However, we offer this example so that we can evaluate the performance of particle learning through comparison with known distributions.
 
@@ -65,7 +65,7 @@ To implement a particle learning algorithm to approximate $p(x_t,\theta|y_{1:t})
 \begin{align*}
 &y_{t+1}|x_t,\theta \sim \mbox{N}\left(x_t,\theta(1-\lambda)\right) \\
 &x_{t+1}|y_{t+1},x_t,\theta \sim \mbox{N}(\mu_t,\tau^2)
-\end{align*} 
+\end{align*}
 where \[\mu_t = \frac{\lambda}{1+\lambda}(y_{t+1} + x_t / \lambda) \qquad \tau^2 = \theta\frac{\lambda}{1+\lambda}\]
 \noindent We also note the conditional posterior for $\theta$:
 \begin{equation}
@@ -82,10 +82,10 @@ a_1 &= 3/2 + a_0 \qquad a_{t+1} = a_t + 1, t \ge 1 \\
 b_1 &= \frac{1}{2}\left((y_1-x_1)^2 + \frac{1}{\lambda}(x_1-x_0)^2 + x_0^2\right) + b_0 \qquad b_{t+1} = \frac{1}{2}\left((y_{t+1}-x_{t+1})^2 + \frac{1}{\lambda}(x_{t+1}-x_t)^2\right) + b_t, t \ge 1
 \end{align*}
 
-To implement a Rao-Blackwellized version of the particle learning algorithm, we note the conditional sufficient statistics for $x_t|\theta$ given by $s_{x,t} = (m_t, C_t)$ where $m_0 = 0$, $C_0 = \theta$, and recursive updates are given by the Kalman filter equations:
+To implement a Rao-Blackwellized version of the particle learning algorithm, we note the conditional sufficient statistics for $x_t|\theta$ given by $s_{x,t} = (m_t, C_t)$, where $m_0 = 0$ and $C_0 = \theta$, and recursive updates given by the Kalman filter equations:
 \begin{align*}
 m_{t+1} &= A_{t+1}y_{t+1} + (1-A_{t+1})m_t \\
-C_{t+1} &= A_{t+1}\theta 
+C_{t+1} &= A_{t+1}\theta
 \end{align*}
 \noindent where $A_{t+1} = \frac{C_t + \theta\lambda}{C_t + \theta(1+\lambda)}$. We then derive the following conditional distributions:
 \begin{align*}
@@ -93,6 +93,27 @@ C_{t+1} &= A_{t+1}\theta
 &x_{t+1}|y_{t+1},s_{x,t},\theta \sim \mbox{N}(\tilde{\mu}_t,\tilde{\tau}^2)
 \end{align*}
 where \[\tilde{\mu}_t = \frac{\lambda}{1+\lambda}(y_{t+1} + m_t / \lambda) \qquad \tilde{\tau}^2 = \frac{\lambda}{1+\lambda}\left(\theta + \frac{C_t}{\lambda(1+\lambda)}\right)\]
+
+\section{Example - DLM models with AR(1) error structure}
+
+We now derive a particle learning algorithm for models for which $p(x_t,\theta|y_{1:t})$ is intractable. Consider the DLM given by
+\begin{align}
+y_t &= U_t\beta + F_tx_t + v_t \label{eqn:obs} \\
+x_t &= \phi x_{t-1} + w_t \label{eqn:state}
+\end{align}
+\noindent where $U_t$ is a known $d$-length vector of covariates, $F_t$ is a known scalar, $\beta = (\beta_0,\beta_1,\ldots,\beta_{d-1})'$ is unknown, and $\phi$ is an unknown scalar. $U_t$ and $F_t$ are allowed to vary with time. With $y_t$, $x_t$, $v_t$, and $w_t$ defined the same way as in Section \ref{sec:ll}, the unknown fixed parameters are now defined by $\theta = (\beta',\phi,\sigma^2_s,\sigma^2_m)'$. The components of $\beta$ are defined on the whole real line while $\phi$ is restricted to $(-1,1)$ to ensure stationarity of the first-order autoregressive process for the state. The variances $\sigma^2_s$ and $\sigma^2_m$ are of course restricted to be non-negative.
+
+To implement a particle learning algorithm with this model, we derive the conditional predictive and conditional posterior distributions
+\begin{align*}
+&y_{t+1}|x_t,\theta \sim \mbox{N}(U_{t+1}\beta + F_t\phi x_t, F_t^2\sigma^2_s + \sigma^2_m) \\
+&x_{t+1}|y_{t+1},x_t,\theta \sim \mbox{N}(\mu_t,\tau^2)
+\end{align*}
+\noindent where \[\mu_t = \tau^2\left(\frac{(y_{t+1}-U_{t_1}\beta)F_{t+1}}{\sigma^2_m} + \frac{\phi x_t}{\sigma^2_s}\right) \qquad \tau^2 = \left(\frac{F_{t+1}^2}{\sigma^2_m} + \frac{1}{\sigma^2_s}\right)^{-1},\] and for a Rao-Blackwellized version, we use
+\begin{align*}
+&y_{t+1}|s_{x,t},\theta \sim \mbox{N}(,) \\
+&x_{t+1}|y_{t+1},s_{x,t},\theta \sim \mbox{N}(\tilde{\mu}_t,\tilde{\tau}^2)
+\end{align*}
+\noindent where \[\tilde{\mu}_t = \tau^2\left(\frac{(y_{t+1}-U_{t_1}\beta)F_{t+1}}{\sigma^2_m} + \frac{\phi m_t}{\sigma^2_s}\right) \qquad \tilde{\tau}^2 = \tau^2\left(\tau^2(\phi/\sigma^2_s)^2C_t + 1\right).\]
 \clearpage
 
 \bibliographystyle{plainnat}

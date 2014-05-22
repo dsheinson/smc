@@ -3,19 +3,20 @@ dpath = "../data/"
 gpath = "../graphs/"
 
 # Function to construct traceplots for MCMC chains
-fmri_mcmc_plot <- function(N, n, n.sim, mod, diff, dimx, n.chains, nsims, nburn, nthin, same)
+fmri_mcmc_plot <- function(N, n, n.sim, mod, diff, dimx, n.chains, nsims, nburn, nthin, same, rm.prior)
 {
   # Load simulated data
   load(paste(dpath,"dlm_ar_sim-",N,"-",mod,diff,"-",dimx,".rdata",sep=""))
   mysims = get(paste(mod,"_dat",sep=""))[[1]][[n]]
   if(strsplit(mod,"")[[1]][4] == 0) modtype = "reg" else modtype = "dlm"
   if(!same & modtype == "reg") same.lab = "" else same.lab = paste("-",same,sep="")
+  if(rm.prior) prior.lab = "-prior" else prior.lab = ""
   
   # Load MCMC data
   out.all <- list()
   for(i in 1:n.chains)
   {
-    file = paste(dpath,"fmri_",modtype,"_mcmc_test-",paste(N,n,n.sim,mod,sep="-"),paste(diff,dimx,i,nsims,nburn,nthin,sep="-"),same.lab,".rdata",sep="")
+    file = paste(dpath,"fmri_",modtype,"_mcmc_test-",paste(N,n,n.sim,mod,sep="-"),paste(diff,dimx,i,nsims,nburn,nthin,sep="-"),same.lab,prior.lab,".rdata",sep="")
     load(file)
     out.all[[i]] = out.est
   }
@@ -171,7 +172,7 @@ fmri_mcmc_plot <- function(N, n, n.sim, mod, diff, dimx, n.chains, nsims, nburn,
 require(coda)
 require(mcmcse)
 require(plyr)
-data1 = expand.grid(N=20,n=6,n.sim=1:20,mod=c("M010","M020"),diff="",dimx=2,n.chains=3,nsims=11000,nburn=1000,nthin=10,same=FALSE,stringsAsFactors=FALSE)
-data2 = expand.grid(N=20,n=c(1,6,11,16),n.sim=1:8,mod=c("M011","M101"),diff="",dimx=2,n.chains=3,nsims=11000,nburn=1000,nthin=10,same=FALSE,stringsAsFactors=FALSE)
+data1 = expand.grid(N=20,n=6,n.sim=1:20,mod=c("M010","M020"),diff="",dimx=2,n.chains=3,nsims=11000,nburn=1000,nthin=10,same=FALSE,rm.prior=FALSE,stringsAsFactors=FALSE)
+data2 = expand.grid(N=20,n=6,n.sim=1:8,mod=c("M011","M101"),diff="",dimx=2,n.chains=3,nsims=11000,nburn=1000,nthin=10,same=FALSE,rm.prior=c(FALSE,TRUE),stringsAsFactors=FALSE)
 mydata = rbind(data1,data2)
 m_ply(mydata, fmri_mcmc_plot)

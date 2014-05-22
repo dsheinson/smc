@@ -80,7 +80,7 @@ fmri_rm_quantiles <- function(N, mod.sim, dimx, n, nsims, nruns, mod.est, np, sd
   }
 }
 
-mydata = expand.grid(N = 20, mod.sim = c("M101","M011"),dimx=2,n=c(1,6,11,16),nsims=8,nruns=3,mod.est=c("M101","M011"),np=100,sd.fac=1,alpha=0.05,burn=10,stringsAsFactors = FALSE)
+mydata = expand.grid(N = 20, mod.sim = c("M101","M011"),dimx=2,n=6,nsims=8,nruns=3,mod.est=c("M101","M011"),np=100,sd.fac=1,alpha=0.05,burn=10,stringsAsFactors = FALSE)
 m_ply(mydata, fmri_rm_quantiles)
 
 # Function to plot rm pf posterior model probabilities
@@ -103,17 +103,19 @@ fmri_rm_lik <- function(N, mod.sim, dimx, n, nsims, nruns, np, sd.fac, byn, ylim
           for(k in 1:2)
           {
             mod = c("M101","M011")[k]
-            if(!prior)
+            if(!prior | m == 1)
             {
               load(paste(dpath,"fmri_rm-",paste(N,mod.sim,dimx,n[l],j,i,mod,np,sd.fac[m],100*alpha,sep="-"),".rdata",sep=""))
               rm.lmarglik[i,j,k,l,m] = pf.out$lmarglik
             } else {
+              require(smcUtils)
               load(paste(dpath,"fmri_rm-",paste(N,mod.sim,dimx,n[l],j,i,mod,np,sd.fac[1],100*alpha,sep="-"),".rdata",sep=""))
               prior.old = pf.out$prior
-              prior.new = rprior.convert(pf.out$wt.mom$center, diag(pf.out$wt.mom$cov), 3)
+              prior.new = rprior.convert(pf.out$wt.mom$center, diag(pf.out$wt.mom$cov), sd.fac[m])
               dlprior.old = function(x, theta) dlprior(x, theta, prior.old)
               dlprior.new = function(x, theta) dlprior(x, theta, prior.new)
               rm.lmarglik[i,j,k,l,m] = pf.lmarglik.prior(pf.out$out, dlprior.old, dlprior.new)
+              print(paste(i,j,k,l,m,sep="-"))
             }
           }
         }
@@ -126,7 +128,7 @@ fmri_rm_lik <- function(N, mod.sim, dimx, n, nsims, nruns, np, sd.fac, byn, ylim
   
   # Plot log marginal likelihoods estimated by M101 vs M011
   if(!prior) file=paste(gpath,"fmri_rm_lik-",paste(N, mod.sim, dimx, nsims, nruns, np, byn, sep="-"),".pdf",sep="") else file=paste(gpath,"fmri_rm_lik-",paste(N, mod.sim, dimx, nsims, nruns, np, byn, "prior", sep="-"),".pdf",sep="")
-  pdf(file=paste(gpath,"fmri_rm_lik-",paste(N, mod.sim, dimx, nsims, nruns, np, byn, sep="-"),".pdf",sep=""))
+  pdf(file=file)
   par(mfrow=c(2,2),mar=c(5,6,4,2)+0.1)
   if(byn)
   {

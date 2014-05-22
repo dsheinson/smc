@@ -22,7 +22,15 @@ pf.lmarglik.prior <- function(out, dlprior.old, dlprior.new)
   nt = tt - 1
   np = dim(out$weight)[1]
   weights = matrix(NA, nr = np, nc = tt)
-  for(j in 1:tt)  for(i in 1:np) weights[i,j] = out$weight[i,j] + dlprior.new(out$state[[j]][1,i,1],out$theta[,i,1]) - dlprior.old(out$state[[j]][1,i,1],out$theta[,i,1])
+  pb = txtProgressBar(0,tt*np,style=3)
+  for(j in 1:tt)
+  {
+    for(i in 1:np)
+    {
+      setTxtProgressBar(pb,(j-1)*np+i)
+      weights[i,j] = out$weight[i,j] + dlprior.new(out$state[[j]][1,i,1],out$theta[,i,1]) - dlprior.old(out$state[[j]][1,i,1],out$theta[,i,1])
+    }
+  }
   weights = apply(weights, 2, function(x) renormalize(x,log=TRUE))
   return(pf.lmarglik(list(weight = weights, increment = out$increment)))
 }

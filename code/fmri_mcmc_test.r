@@ -5,7 +5,7 @@ dpath = "/storage/sheinson_research/"
 source("dlm_mcmc_functions.r")
 source("reg_mcmc_functions.r")
 
-fmri_dlm_mcmc_test <- function(N, n, n.sim, mod, diff, dimx, n.chain, nsims, nburn, nthin, same=FALSE, progress=TRUE, print.iter=FALSE)
+fmri_dlm_mcmc_test <- function(N, n, n.sim, mod, diff, dimx, n.chain, nsims, nburn, nthin, same=FALSE, rm.prior=FALSE, progress=TRUE, print.iter=FALSE)
 {
   # Load data
   load(paste(dpath,"dlm_ar_sim-",N,"-",mod,diff,"-",dimx,".rdata",sep=""))
@@ -31,14 +31,21 @@ fmri_dlm_mcmc_test <- function(N, n, n.sim, mod, diff, dimx, n.chain, nsims, nbu
       phi0[[i]] = 0
       Phi0[[i]] = matrix(1e6,1,1)
     }
+    prior = list(m0 = rep(0,p), b0 = rep(0,d), B0 = 1e6*diag(d), am0 = 1e-6, bm0 = 1e-6, phi0 = phi0, Phi0 = Phi0, as0 = as0, bs0 = bs0)
   } else {
-    phi0 = list(rep(0,p))
-    Phi0 = list(1e6*diag(p))
-    as0 = 1e-6
-    bs0 = 1e-6
+    if(!rm.prior)
+    {
+      phi0 = list(rep(0,p))
+      Phi0 = list(1e6*diag(p))
+      as0 = 1e-6
+      bs0 = 1e-6
+      prior = list(m0 = rep(0,p), b0 = rep(0,d), B0 = 1e6*diag(d), am0 = 1e-6, bm0 = 1e-6, phi0 = phi0, Phi0 = Phi0, as0 = as0, bs0 = bs0)
+    } else {
+      load(paste(dpath,"fmri_rm-",paste(N,mod,dimx,n,n.sim,1,mod,100,1,5,sep="-"),".rdata",sep=""))
+      prior = pf.out$prior
+    }
   }
-  prior = list(m0 = rep(0,p), b0 = rep(0,d), B0 = 1e6*diag(d), am0 = 1e-6, bm0 = 1e-6, phi0 = phi0, Phi0 = Phi0, as0 = as0, bs0 = bs0)
-  
+
   # Run MCMC
   mcmc.details = list(n.sims = nsims, n.thin = nthin, n.burn = nburn)
   out = dlm.ar.mcmc(y, psi, prior, same=same, mcmc.details=mcmc.details, progress=progress, print.iter=print.iter)
@@ -59,8 +66,8 @@ fmri_dlm_mcmc_test <- function(N, n, n.sim, mod, diff, dimx, n.chain, nsims, nbu
   x.mle <- t(fit.smooth$s[,-(1:d)])
   
   # Allocate results in list and save
-  out.est = list(out=out,theta.mle=theta.mle,x.mle=x.mle)
-  file = paste(dpath,"fmri_dlm_mcmc_test-",paste(N,n,n.sim,mod,sep="-"),paste(diff,dimx,n.chain,nsims,nburn,nthin,same,sep="-"),".rdata",sep="")
+  out.est = list(out=out,theta.mle=theta.mle,x.mle=x.mle,prior=prior)
+  if(!rm.prior) file = paste(dpath,"fmri_dlm_mcmc_test-",paste(N,n,n.sim,mod,sep="-"),paste(diff,dimx,n.chain,nsims,nburn,nthin,same,sep="-"),".rdata",sep="") else file = paste(dpath,"fmri_dlm_mcmc_test-",paste(N,n,n.sim,mod,sep="-"),paste(diff,dimx,n.chain,nsims,nburn,nthin,same,"prior",sep="-"),".rdata",sep="")
   print(file)
   save(out.est, file = file)
 }
@@ -69,7 +76,7 @@ require(dlm)
 require(plyr)
 require(doMC)
 registerDoMC()
-mydata = expand.grid(N=20,n=c(1,6,11,16),n.sim=1:8,mod=c("M101","M011"),diff="",dimx=2,n.chain=1:2,nsims=11000,nburn=1000,nthin=10,same=FALSE,progress=FALSE,print.iter=FALSE)
+mydata = expand.grid(N=20,n=6,n.sim=1:8,mod=c("M101","M011"),diff="",dimx=2,n.chain=1:2,nsims=11000,nburn=1000,nthin=10,same=FALSE,rm.prior=c(FALSE,TRUE),progress=FALSE,print.iter=FALSE)
 m_ply(mydata, fmri_dlm_mcmc_test, .parallel = TRUE)
 
 fmri_reg_mcmc_test <- function(N, n, n.sim, mod, dimx, n.chain, nsims, nburn, nthin, progress=TRUE, print.iter=FALSE)

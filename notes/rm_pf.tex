@@ -33,10 +33,10 @@ We can update the calculation of $p(x_t,\theta|y_{1:t})$ as data arrives sequent
 \noindent for $t \ge 1$, the posterior distribution $p(x_t,\phi|y_{1:t})$ is $\mbox{NG}(m_t,\tilde{C}_t,\alpha_t,\beta_t)$ where $m_t$, $\tilde{C}_t$, $\alpha_t$, and $\beta_t$ are calculated through the following equations \citep{petris2009dynamic}:
 
 \begin{align}
-a_t &= Gm_{t-1} &\qquad \tilde{R}_t &= G\tilde{C}_{t-1}G' + W \label{eqn:state.pred} \\
-f_t &= Fa_t &\qquad \tilde{Q_t} &= F\tilde{R}_tF' + V \label{eqn:obs.pred} \\
+a_t &= Gm_{t-1} &\qquad \tilde{R}_t &= G\tilde{C}_{t-1}G' + \tilde{W} \label{eqn:state.pred} \\
+f_t &= Fa_t &\qquad \tilde{Q_t} &= F\tilde{R}_tF' + \tilde{V} \label{eqn:obs.pred} \\
 m_t &= a_t + \tilde{R}_tF'\tilde{Q}_t^{-1}(y_t-f_t) &\qquad \tilde{C}_t &= \tilde{R}_t - \tilde{R}_tF'\tilde{Q}_t^{-1}F\tilde{R}_t \\
-\alpha_t &= \alpha_{t-1} + q / 2 &\qquad \beta_t &= \beta_{t-1} + (y_t-f_t)'\tilde{Q}_t^{-1}(y_t-f_t)
+\alpha_t &= \alpha_{t-1} + q / 2 &\qquad \beta_t &= \beta_{t-1} + \frac{1}{2}(y_t-f_t)'\tilde{Q}_t^{-1}(y_t-f_t)
 \end{align}
 
 \noindent where $q$ is the dimension of $y_t$.

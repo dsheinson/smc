@@ -18,7 +18,7 @@ We consider a particle filtering algorithm called particle learning \citep{Carv:
 \begin{equation}
 p(x_t,\theta|y_{1:t}) \approx \sum_{j=1}^J w_t^{(j)}\delta_{\left(x_t^{(j)},\theta_t^{(j)}\right)},
 \end{equation}
-\noindent where $\left(x_t^{(j)},\theta_t^{(j)}\right)$ represents sampled values corresponding to the $j^{\mbox{th}}$ particle, $w_t^{(j)}$ is the associated weight of the $j^{\mbox{th}}$ particle, and $\delta_x$ is a Dirac delta function that puts point mass at $x$. We require that $\sum_{j=1}^J w_t^{(j)} = 1$ for all $t$ and note that the subscript $t$ on $\theta_t^{(j)}$ does not imply that $\theta$ is dynamic, but rather that the sampled values for $\theta$ can change over time.
+where $\left(x_t^{(j)},\theta_t^{(j)}\right)$ represents sampled values corresponding to the $j^{\mbox{th}}$ particle, $w_t^{(j)}$ is the associated weight of the $j^{\mbox{th}}$ particle, and $\delta_x$ is a Dirac delta function that puts point mass at $x$. We require that $\sum_{j=1}^J w_t^{(j)} = 1$ for all $t$ and note that the subscript $t$ on $\theta_t^{(j)}$ does not imply that $\theta$ is dynamic, but rather that the sampled values for $\theta$ can change over time.
 
 Like all other particle filters, particle learning prescribes a recursive formula for updating the discrete approximation to the filtered distribution over time. To avoid particle degeneracy in the fixed parameters, sampled values for $\theta$ are refreshed at each time point using conditional sufficient statistics. Let $s_t$ denote the sufficient statistics for $\theta$ conditional on the current state $x_t$. Then, we add the sampled values of the sufficient statistics, $s_t^{(j)}$, to the particles, i.e. particle $j$ and time $t$ is now represented by $\left(x_t^{(j)},s_t^{(j)},\theta_t^{(j)}\right)$. We move from an approximation to $p(x_t,\theta|y_{1:t})$ to that of $p(x_{t+1},\theta|y_{1:t+1})$ by the following procedure for each particle $j = 1,2,\ldots,J$:
 \begin{enumerate}
@@ -42,7 +42,7 @@ The local level model is specified by state and observation equations
 y_t &= x_t + v_t \label{eqn:llobs} \\
 x_t &= x_{t-1} + w_t \label{eqn:llstate}
 \end{align}
-\noindent where $y_t$ and $x_t$ are univariate, $v_t \stackrel{\mbox{iid}}{\sim} \mbox{N}(0,\theta)$, $w_t \stackrel{\mbox{iid}}{\sim} \mbox{N}(0,\theta\lambda)$, and $v_t \perp w_s$ for all $s$ and $t$. We regard $\theta$ as an unknown parameter representing the common state and observation variance (up to a constant) and $\lambda$, which represents the signal to noise ratio, is regarded as known. We define the following prior distribution on the initial state $x_0$ and fixed parameter $\theta$:
+where $y_t$ and $x_t$ are univariate, $v_t \stackrel{\mbox{iid}}{\sim} \mbox{N}(0,\theta)$, $w_t \stackrel{\mbox{iid}}{\sim} \mbox{N}(0,\theta\lambda)$, and $v_t \perp w_s$ for all $s$ and $t$. We regard $\theta$ as an unknown parameter representing the common state and observation variance (up to a constant) and $\lambda$, which represents the signal to noise ratio, is regarded as known. We define the following prior distribution on the initial state $x_0$ and fixed parameter $\theta$:
 \begin{equation}
 x_0|\theta \sim \mbox{N}(m_0,\theta C_0) \qquad \theta \sim \mbox{IG}(a_0,b_0) \label{eqn:llprior}
 \end{equation}
@@ -59,7 +59,7 @@ We can also calculate the marginal posterior distributions $p(x_t|y_{1:t})$ and 
 x_t|y_{1:t} \sim \mbox{T}(m_t,C_t \frac{b_t}{a_t},2a_t) \qquad \theta|y_{1:t} \sim \mbox{IG}(a_t, b_t), \label{eqn:margpost}
 \end{equation}
 and the one-step ahead predictive density $p(y_t|y_{1:t-1})$ using equation \eqref{eqn:obs.pred} since \[y_t|y_{1:t-1} \sim \mbox{T}(f_t,Q_t \frac{b_{t-1}}{a_{t-1}},2a_{t-1})\]
-\noindent where $\mbox{T}(\mu,\sigma^2,d)$ represents the non-standard student-t distribution with location parameter $\mu$, scale parameter $\sigma^2$, and $d$ degrees of freedom.
+where $\mbox{T}(\mu,\sigma^2,d)$ represents the non-standard student-t distribution with location parameter $\mu$, scale parameter $\sigma^2$, and $d$ degrees of freedom.
 
 To implement a particle learning algorithm to approximate $p(x_t,\theta|y_{1:t})$ for all $t$, we derive the following conditional distributions given the current state $x_t$ and fixed parameter $\theta$:
 \begin{align*}
@@ -71,7 +71,7 @@ where \[\mu_t = \frac{\lambda}{1+\lambda}(y_{t+1} + x_t / \lambda) \qquad \tau^2
 \begin{equation}
 \theta|y_{1:t+1},x_{0:t+1} \sim \mbox{IG}(a_{t+1},b_{t+1})
 \end{equation}
-\noindent where
+where
 \begin{align*}
 a_t &= t + 1/2 + a_0, t \ge 1 \\
 b_t &= \frac{1}{2}\left(\sum_{k=1}^t (y_k - x_k)^2 + \frac{1}{\lambda}\sum_{k=1}^t (x_k - x_{k-1})^2 + x_0^2\right) + b_0
@@ -87,7 +87,7 @@ To implement a Rao-Blackwellized version of the particle learning algorithm, we 
 m_{t+1} &= A_{t+1}y_{t+1} + (1-A_{t+1})m_t \\
 C_{t+1} &= A_{t+1}\theta
 \end{align*}
-\noindent where $A_{t+1} = \frac{C_t + \theta\lambda}{C_t + \theta(1+\lambda)}$. We then derive the following conditional distributions:
+where $A_{t+1} = \frac{C_t + \theta\lambda}{C_t + \theta(1+\lambda)}$. We then derive the following conditional distributions:
 \begin{align*}
 &y_{t+1}|s_{x,t},\theta \sim \mbox{N}\left(m_t, C_t + \theta(1-\lambda)\right) \\
 &x_{t+1}|y_{t+1},s_{x,t},\theta \sim \mbox{N}(\tilde{\mu}_t,\tilde{\tau}^2)
@@ -101,19 +101,26 @@ We now derive a particle learning algorithm for models for which $p(x_t,\theta|y
 y_t &= U_t\beta + F_tx_t + v_t \label{eqn:obs} \\
 x_t &= \phi x_{t-1} + w_t \label{eqn:state}
 \end{align}
-\noindent where $U_t$ is a known $d$-length vector of covariates, $F_t$ is a known scalar, $\beta = (\beta_0,\beta_1,\ldots,\beta_{d-1})'$ is unknown, and $\phi$ is an unknown scalar. $U_t$ and $F_t$ are allowed to vary with time. With $y_t$, $x_t$, $v_t$, and $w_t$ defined the same way as in Section \ref{sec:ll}, the unknown fixed parameters are now defined by $\theta = (\beta',\phi,\sigma^2_s,\sigma^2_m)'$. The components of $\beta$ are defined on the whole real line while $\phi$ is restricted to $(-1,1)$ to ensure stationarity of the first-order autoregressive process for the state. The variances $\sigma^2_s$ and $\sigma^2_m$ are of course restricted to be non-negative.
+where $U_t$ is a known $d$-length vector of covariates, $F_t$ is a known scalar, $\beta = (\beta_0,\beta_1,\ldots,\beta_{d-1})'$ is unknown, and $\phi$ is an unknown scalar. $U_t$ and $F_t$ are allowed to vary with time. With $y_t$, $x_t$, $v_t$, and $w_t$ defined the same way as in Section \ref{sec:ll}, the unknown fixed parameters are now defined by $\theta = (\beta',\phi,\sigma^2_s,\sigma^2_m)'$. The components of $\beta$ are defined on the whole real line while $\phi$ is restricted to $(-1,1)$ to ensure stationarity of the first-order autoregressive process for the state. The variances $\sigma^2_s$ and $\sigma^2_m$ are of course restricted to be non-negative.
 
 To implement a particle learning algorithm with this model, we derive the conditional predictive and conditional posterior distributions
 \begin{align*}
 &y_{t+1}|x_t,\theta \sim \mbox{N}(U_{t+1}\beta + F_t\phi x_t, F_t^2\sigma^2_s + \sigma^2_m) \\
 &x_{t+1}|y_{t+1},x_t,\theta \sim \mbox{N}(\mu_t,\tau^2)
 \end{align*}
-\noindent where \[\mu_t = \tau^2\left(\frac{(y_{t+1}-U_{t_1}\beta)F_{t+1}}{\sigma^2_m} + \frac{\phi x_t}{\sigma^2_s}\right) \qquad \tau^2 = \left(\frac{F_{t+1}^2}{\sigma^2_m} + \frac{1}{\sigma^2_s}\right)^{-1},\] and for a Rao-Blackwellized version, we use
+where \[\mu_t = \tau^2\left(\frac{(y_{t+1}-U_{t_1}\beta)F_{t+1}}{\sigma^2_m} + \frac{\phi x_t}{\sigma^2_s}\right) \qquad \tau^2 = \left(\frac{F_{t+1}^2}{\sigma^2_m} + \frac{1}{\sigma^2_s}\right)^{-1},\] and for a Rao-Blackwellized version, we use
 \begin{align*}
-&y_{t+1}|s_{x,t},\theta \sim \mbox{N}(,) \\
+&y_{t+1}|s_{x,t},\theta \sim \mbox{N}(U_{t+1}\beta,F_{t+1}\phi m_t, F_t^2(\phi^2 C_t + \sigma^2_s) + \sigma^2_m \\
 &x_{t+1}|y_{t+1},s_{x,t},\theta \sim \mbox{N}(\tilde{\mu}_t,\tilde{\tau}^2)
 \end{align*}
-\noindent where \[\tilde{\mu}_t = \tau^2\left(\frac{(y_{t+1}-U_{t_1}\beta)F_{t+1}}{\sigma^2_m} + \frac{\phi m_t}{\sigma^2_s}\right) \qquad \tilde{\tau}^2 = \tau^2\left(\tau^2(\phi/\sigma^2_s)^2C_t + 1\right).\]
+where \[\tilde{\mu}_t = \tau^2\left(\frac{(y_{t+1}-U_{t_1}\beta)F_{t+1}}{\sigma^2_m} + \frac{\phi m_t}{\sigma^2_s}\right) \qquad \tilde{\tau}^2 = \left(\frac{\sigma^2_m\phi}{F_{t+1}^2\sigma^2_s + \sigma^2_m}\right)^2C_t + \tau^2.\]
+and $s_{x,t} = (m_t,C_t)$ are the sufficient statistics for $x_t$ that can be updated by the recursive equations
+\begin{align*}
+&f_t = U_t\beta + F_t\phi m_{t-1} \qquad &Q_t = F_t^2(\phi^2C_{t-1} + \sigma^2_s) + \sigma^2_m \\
+&m_t = A_t\frac{(y_t - U_t\beta)}{F_t} + (1 - A_t)\phi m_{t-1} \qquad &C_t = (\phi^2C_{t-1} + \sigma^2_s)(1 - A_t) \\ 
+\end{align*}
+where $A_t = \frac{F_t^2(\phi^2C_{t-1} + \sigma^2_s)}{F_t^2(\phi^2C_{t-1} + \sigma^2_s) + \sigma^2_m}$.
+
 \clearpage
 
 \bibliographystyle{plainnat}

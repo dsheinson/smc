@@ -114,12 +114,12 @@ where \[\mu_t = \tau^2\left(\frac{(y_{t+1}-U_{t_1}\beta)F_{t+1}}{\sigma^2_m} + \
 &x_{t+1}|y_{t+1},s_{x,t},\theta \sim \mbox{N}(\tilde{\mu}_t,\tilde{\tau}^2)
 \end{align*}
 where \[\tilde{\mu}_t = \tau^2\left(\frac{(y_{t+1}-U_{t_1}\beta)F_{t+1}}{\sigma^2_m} + \frac{\phi m_t}{\sigma^2_s}\right) \qquad \tilde{\tau}^2 = \left(\frac{\sigma^2_m\phi}{F_{t+1}^2\sigma^2_s + \sigma^2_m}\right)^2C_t + \tau^2.\]
-and $s_{x,t} = (m_t,C_t)$ are the sufficient statistics for $x_t$ that can be updated by the recursive equations
+and $s_{x,t} = (m_t,C_t)$ are the sufficient statistics for $x_t|\theta$ that can be updated by the recursive equations
 \begin{align*}
 &f_t = U_t\beta + F_t\phi m_{t-1} \qquad &Q_t = F_t^2(\phi^2C_{t-1} + \sigma^2_s) + \sigma^2_m \\
 &m_t = A_t\frac{(y_t - U_t\beta)}{F_t} + (1 - A_t)\phi m_{t-1} \qquad &C_t = (\phi^2C_{t-1} + \sigma^2_s)(1 - A_t) \\ 
 \end{align*}
-where $A_t = \frac{F_t^2(\phi^2C_{t-1} + \sigma^2_s)}{F_t^2(\phi^2C_{t-1} + \sigma^2_s) + \sigma^2_m}$.
+where $A_t = \frac{F_t^2(\phi^2C_{t-1} + \sigma^2_s)}{F_t^2(\phi^2C_{t-1} + \sigma^2_s) + \sigma^2_m}$. Lastly, we derive the conditional distributions for $\theta$ using \[p(\theta|y_{1:t},x_{0:t}) = \]
 
 \clearpage
 

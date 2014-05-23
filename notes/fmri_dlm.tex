@@ -155,7 +155,7 @@ b_{m_t}^{(i)} &= \frac{1}{2}\mbox{SS}_y + b_{m_0} \\
 \begin{align*}
 a_{s_t}^{(i)} &= (p/2)(t+1) + a_{s_0} \\
 b_{s_t}^{(i)} &= \frac{1}{2}\mbox{SS}_x + \frac{1}{2}(x_0^{(i-1)}-m_0)'\tilde{C_0}(\phi^{(i)})(x_0^{(i-1)}-m_0) + b_{s_0} \\
-\mbox{SS}_x &= (\tilde{x} - \tilde{X}\phi)'(\tilde{x} - \tilde{X}\phi)
+\mbox{SS}_x &= (\tilde{x} - \tilde{X}\phi^{(i)})'(\tilde{x} - \tilde{X}\phi^{(i)})
 \end{align*}
 \noindent Here, $\tilde{C_0}(\phi^{(i)})$ implies that the matrix $\tilde{C_0}$ is constructed using $\phi^{(i)}$.
 \item Sample $x_{0:t}^{(i)}$ using the following forward filtering backward sampling (FFBS) algorithm \citep{petris2009dynamic}:

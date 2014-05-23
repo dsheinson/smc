@@ -24,7 +24,7 @@ fmri_rm_quantiles <- function(N, mod.sim, dimx, n, nsims, nruns, mod.est, np, sd
     out.all = list()
     for(k in 1:3)
     {
-      load(paste(dpath,"fmri_dlm_mcmc_test-",paste(N,n,j,mod.sim,dimx,k,11000,1000,10,FALSE,sep="-"),".rdata",sep=""))
+      load(paste(dpath,"fmri_dlm_mcmc_test-",paste(N,n,j,mod.sim,dimx,k,11000,1000,10,FALSE,"prior",sep="-"),".rdata",sep=""))
       out.all[[k]] = out.est
     }
     x.mcmc <- quantile(sapply(out.all, function(a) a$out$x[,1,nt+1]), c(alpha/2,1-alpha/2))

@@ -23,7 +23,7 @@ where $\left(x_t^{(j)},\theta_t^{(j)}\right)$ represents sampled values correspo
 Like all other particle filters, particle learning prescribes a recursive formula for updating the discrete approximation to the filtered distribution over time. To avoid particle degeneracy in the fixed parameters, sampled values for $\theta$ are refreshed at each time point using conditional sufficient statistics. Let $s_t$ denote the sufficient statistics for $\theta$ conditional on the current state $x_t$. Then, we add the sampled values of the sufficient statistics, $s_t^{(j)}$, to the particles, i.e. particle $j$ and time $t$ is now represented by $\left(x_t^{(j)},s_t^{(j)},\theta_t^{(j)}\right)$. We move from an approximation to $p(x_t,\theta|y_{1:t})$ to that of $p(x_{t+1},\theta|y_{1:t+1})$ by the following procedure for each particle $j = 1,2,\ldots,J$:
 \begin{enumerate}
 \item Resample: sample an index $k \in \{1,\ldots,j,\ldots,J\}$ with associated probabilities $\{g_{t+1}^{(1)},\ldots,g_{t+1}^{(j)},\ldots,g_{t+1}^{(J)}\}$, where \[\tilde{g}_{t+1}^{(j)} = p\left(y_{t+1}|x_t^{(j)},\theta_t^{(j)}\right) \qquad g_{t+1}^{(j)} = \tilde{g}_{t+1}^{(j)} \left/ \sum_{l=1}^J \tilde{g}_{t+1}^{(l)}\right.,\]
-\item Propagate: sample $x_{t+1}^{(j)} \sim p\left(x_{t+1}|y_{t+1},x_t^{(k)},\theta\right)$,
+\item Propagate: sample $x_{t+1}^{(j)} \sim p\left(x_{t+1}|y_{t+1},x_t^{(k)},\theta_t^{(k)}\right)$,
 \item Update: calculate $s_{t+1}^{(j)} = S\left(y_{t+1},x_{t+1}^{(j)},s_t^{(k)}\right)$,
 \item Regenerate: sample $\theta_{t+1}^{(j)} \sim p\left(\theta|s_{t+1}^{(j)}\right)$.
 \end{enumerate}
@@ -63,7 +63,7 @@ where $\mbox{T}(\mu,\sigma^2,d)$ represents the non-standard student-t distribut
 
 To implement a particle learning algorithm to approximate $p(x_t,\theta|y_{1:t})$ for all $t$, we derive the following conditional distributions given the current state $x_t$ and fixed parameter $\theta$:
 \begin{align*}
-&y_{t+1}|x_t,\theta \sim \mbox{N}\left(x_t,\theta(1-\lambda)\right) \\
+&y_{t+1}|x_t,\theta \sim \mbox{N}\left(x_t,\theta(1+\lambda)\right) \\
 &x_{t+1}|y_{t+1},x_t,\theta \sim \mbox{N}(\mu_t,\tau^2)
 \end{align*}
 where \[\mu_t = \frac{\lambda}{1+\lambda}(y_{t+1} + x_t / \lambda) \qquad \tau^2 = \theta\frac{\lambda}{1+\lambda}\]
@@ -89,7 +89,7 @@ C_{t+1} &= A_{t+1}\theta
 \end{align*}
 where $A_{t+1} = \frac{C_t + \theta\lambda}{C_t + \theta(1+\lambda)}$. We then derive the following conditional distributions:
 \begin{align*}
-&y_{t+1}|s_{x,t},\theta \sim \mbox{N}\left(m_t, C_t + \theta(1-\lambda)\right) \\
+&y_{t+1}|s_{x,t},\theta \sim \mbox{N}\left(m_t, C_t + \theta(1+\lambda)\right) \\
 &x_{t+1}|y_{t+1},s_{x,t},\theta \sim \mbox{N}(\tilde{\mu}_t,\tilde{\tau}^2)
 \end{align*}
 where \[\tilde{\mu}_t = \frac{\lambda}{1+\lambda}(y_{t+1} + m_t / \lambda) \qquad \tilde{\tau}^2 = \frac{\lambda}{1+\lambda}\left(\theta + \frac{C_t}{\lambda(1+\lambda)}\right)\]
@@ -108,17 +108,13 @@ To implement a particle learning algorithm with this model, we derive the condit
 &y_{t+1}|x_t,\theta \sim \mbox{N}(U_{t+1}\beta + F_t\phi x_t, F_t^2\sigma^2_s + \sigma^2_m) \\
 &x_{t+1}|y_{t+1},x_t,\theta \sim \mbox{N}(\mu_t,\tau^2)
 \end{align*}
-where \[\mu_t = \tau^2\left(\frac{(y_{t+1}-U_{t_1}\beta)F_{t+1}}{\sigma^2_m} + \frac{\phi x_t}{\sigma^2_s}\right) \qquad \tau^2 = \left(\frac{F_{t+1}^2}{\sigma^2_m} + \frac{1}{\sigma^2_s}\right)^{-1},\] and for a Rao-Blackwellized version, we use
+where \[\mu_t = \tau^2\left(\frac{(y_{t+1}-U_{t+1}\beta)F_{t+1}}{\sigma^2_m} + \frac{\phi x_t}{\sigma^2_s}\right) \qquad \tau^2 = \left(\frac{F_{t+1}^2}{\sigma^2_m} + \frac{1}{\sigma^2_s}\right)^{-1},\] and for a Rao-Blackwellized version, we use
 \begin{align*}
-&y_{t+1}|s_{x,t},\theta \sim \mbox{N}(U_{t+1}\beta,F_{t+1}\phi m_t, F_t^2(\phi^2 C_t + \sigma^2_s) + \sigma^2_m \\
+&y_{t+1}|s_{x,t},\theta \sim \mbox{N}(U_{t+1}\beta + F_{t+1}\phi m_t, F_t^2(\phi^2 C_t + \sigma^2_s) + \sigma^2_m \\
 &x_{t+1}|y_{t+1},s_{x,t},\theta \sim \mbox{N}(\tilde{\mu}_t,\tilde{\tau}^2)
 \end{align*}
 where \[\tilde{\mu}_t = \tau^2\left(\frac{(y_{t+1}-U_{t_1}\beta)F_{t+1}}{\sigma^2_m} + \frac{\phi m_t}{\sigma^2_s}\right) \qquad \tilde{\tau}^2 = \left(\frac{\sigma^2_m\phi}{F_{t+1}^2\sigma^2_s + \sigma^2_m}\right)^2C_t + \tau^2.\]
-and $s_{x,t} = (m_t,C_t)$ (with $m_0 = 0$ and $C_0 = \frac{\sigma^2_s}{1-\phi^2}$) are the sufficient statistics for $x_t|\theta$ that can be updated by the recursive equations
-\begin{align*}
-&f_t = U_t\beta + F_t\phi m_{t-1} \qquad &Q_t = F_t^2(\phi^2C_{t-1} + \sigma^2_s) + \sigma^2_m \\
-&m_t = A_t\frac{(y_t - U_t\beta)}{F_t} + (1 - A_t)\phi m_{t-1} \qquad &C_t = (\phi^2C_{t-1} + \sigma^2_s)(1 - A_t) \\
-\end{align*}
+and $s_{x,t} = (m_t,C_t)$ (with $m_0 = 0$ and $C_0 = \frac{\sigma^2_s}{1-\phi^2}$) are the sufficient statistics for $x_t|\theta$ that can be updated by the recursive equations \[m_t = A_t\frac{(y_t - U_t\beta)}{F_t} + (1 - A_t)\phi m_{t-1} \qquad C_t = (\phi^2C_{t-1} + \sigma^2_s)(1 - A_t)\]
 where $A_t = \frac{F_t^2(\phi^2C_{t-1} + \sigma^2_s)}{F_t^2(\phi^2C_{t-1} + \sigma^2_s) + \sigma^2_m}$. Lastly, we derive the conditional distributions for $\theta$ using
 \begin{align*}
 p(\theta|y_{1:t},x_{0:t}) &= p(\beta,\phi,\sigma^2_s,\sigma^2_m|y_{1:t},x_{0:t}) \\
@@ -130,12 +126,12 @@ where the prior distributions on $\theta$ are given by
 \begin{align*}
 p(\beta,\phi,\sigma^2_s,\sigma^2_m) &= p(\beta,\sigma^2_m)p(\phi,\sigma^2_s) \\
 p(\beta,\sigma^2_m) &= p(\beta|\sigma^2_m)p(\sigma^2_m) = \mbox{N}(\beta; b_0, \sigma^2_m B_0)\mbox{IG}(\sigma^2_m;a_{m_0},b_{m_0}) \\
-p(\phi,\sigma^2_s) &= p(\phi|\sigma^2_s)p(\sigma^2_s) = \mbox{N}(\phi; \phi_0, \sigma^2_s \Phi_0)\mbox{IG}(\sigma^2_s;a_{s_0},b_{s_0})
+p(\phi,\sigma^2_s) &= p(\phi|\sigma^2_s)p(\sigma^2_s) = \mbox{N}_{(-1,1)}(\phi; \phi_0, \sigma^2_s \Phi_0)\mbox{IG}(\sigma^2_s;a_{s_0},b_{s_0})
 \end{align*}
 with the hyperparameters $b_0$, $B_0$, $\phi_0$, $\Phi_0$, $a_{m_0}$, $b_{m_0}$, $a_{s_0}$, and $b_{s_0}$ assumed known. The conditional posterior distributions for $\theta$ are then given by
 \begin{align*}
 p(\beta,\sigma^2_m|y_{1:t},x_{0:t}) &= \mbox{N}(\beta; b_t, \sigma^2_m B_t)\mbox{IG}(\sigma^2_m;a_{m_t},b_{m_t}) \\
-p(\phi,\sigma^2_s|y_{1:t},x_{0:t}) &= \Psi(\phi,\sigma^2_s)\mbox{N}(\phi; \phi_t, \sigma^2_s \Phi_t)\mbox{IG}(\sigma^2_s;a_{s_t},b_{s_t}) \\
+p(\phi,\sigma^2_s|y_{1:t},x_{0:t}) &= \Psi(\phi,\sigma^2_s)\mbox{N}_{(-1,1)}(\phi; \phi_t, \sigma^2_s \Phi_t)\mbox{IG}(\sigma^2_s;a_{s_t},b_{s_t}) \\
 \end{align*}
 where
 \begin{align*}
@@ -145,8 +141,9 @@ a_{m_t} &= t/2 + a_{m_0} & b_{m_t} &= \frac{1}{2}\left(\sum_{k=1}^t (y_k - F_kx_
 a_{s_t} &= (t+1)/2 + a_{s_0} & b_{s_t} &= \frac{1}{2}\left(\sum_{k=1}^t x_k^2 + \phi_0'\Phi_0^{-1}\phi_0 + \phi_t'\Phi_t^{-1}\phi_t\right) + b_{s_0} \\
 \Psi(\phi,\sigma^2_s) &= \sqrt{1-\phi^2}\exp\left(-\frac{1-\phi^2}{2\sigma^2_s}x_0^2\right) & &
 \end{align*}
-While sampling from $p(\beta,\sigma^2_m|y_{1:t},x_{0:t})$ is straightforward, sampling from $p(\phi,\sigma^2_s|y_{1:t},x_{0:t})$ requires a Metropolis step where a joint sample $(\phi^*,{\sigma^2_s}^*)$ from $\mbox{N}(\phi; \phi_t, \sigma^2_s \Phi_t)\mbox{IG}(\sigma^2_s;a_{s_t},b_{s_t})$ is accepted with probability \[R = \mbox{min}\left[1,\frac{\Psi\left(\phi^*,{\sigma^2_s}^*\right)}{\Psi\left(\phi_{t-1}^{(j)},{\sigma^2_s}_{t-1}^{(j)}\right)}\right],\]
-where $\left(\phi_{t-1}^{(j)},{\sigma^2_s}_{t-1}^{(j)}\right)$ are the values of $\phi$ and $\sigma^2_s$ for particle $j$ at time $t-1$. Sampling from these distributions requires tracking the sufficient statistics \[s_t = \left(\sum_{k=1}^t U_k'(y_k - F_kx_k),\sum_{k=1}^t U_k'U_k,\sum_{k=1}^t (y_k - F_kx_k)^2,\sum_{k=1}^t x_kx_{k-1},\sum_{k=1}^t x_{k-1}^2,\sum_{k=1}^t x_k^2,x_0\right)\] which are updated through the recursive map given by \[s_t = s_{t-1} + \left(U_t'(y_t - F_tx_t),U_t'U_t,(y_t - F_tx_t)^2,x_tx_{t-1},x_{t-1}^2,x_t^2,0\right)\]
+While sampling from $p(\beta,\sigma^2_m|y_{1:t},x_{0:t})$ is straightforward, sampling from $p(\phi,\sigma^2_s|y_{1:t},x_{0:t})$ requires a Metropolis step where a joint sample $(\phi^*,{\sigma^2_s}^*)$ from $\mbox{N}_{(-1,-1)}(\phi; \phi_t, \sigma^2_s \Phi_t)\mbox{IG}(\sigma^2_s;a_{s_t},b_{s_t})$ is accepted with probability \[R = \mbox{min}\left[1,\frac{\Psi\left(\phi^*,{\sigma^2_s}^*\right)}{\Psi\left(\phi_{t-1}^{(j)},{\sigma^2_s}_{t-1}^{(j)}\right)}\right],\]
+where $\left(\phi_{t-1}^{(j)},{\sigma^2_s}_{t-1}^{(j)}\right)$ are the values of $\phi$ and $\sigma^2_s$ for particle $j$ at time $t-1$. Sampling from these distributions requires tracking the sufficient statistics \[s_t = \left(\sum_{k=1}^t U_k'(y_k - F_kx_k),\sum_{k=1}^t U_k'U_k,\sum_{k=1}^t (y_k - F_kx_k)^2,\sum_{k=1}^t x_kx_{k-1},\sum_{k=1}^t x_{k-1}^2,\sum_{k=1}^t x_k^2,a_{m_t},a_{s_t},x_0\right)\] which are updated through the recursive map given by \[s_t = s_{t-1} + \left(U_t'(y_t - F_tx_t),U_t'U_t,(y_t - F_tx_t)^2,x_tx_{t-1},x_{t-1}^2,x_t^2,a_{m_{t-1}} + 1/2,a_{s_{t-1}} + 1/2,0\right)\]
+with initial value \[s_0 = (0,0,0,0,x_0^2,0,a_{m_0},a_{s_0}+1/2,x_0)\]
 Alternately, samples from $p(\theta|y_{1:t},x_{0:t})$ can be generated from the sample approximation to $p(\theta|y_{1:t-1},x_{0:t-1})$ using an MCMC scheme (see `fmri\_dlm.pdf' Section 2.2 steps 2-5 with $\tilde{V} = 1$, $q = 1$, $\tilde{X} = (x_0,\ldots,x_{t-1})'$, $\tilde{x} = (x_1,\ldots,x_t)'$, $m_0 = 0$, and $\tilde{C}_0 = (1-\phi^2)^{-1}$). The same sufficient statistics $s_t$ defined above need to be tracked in order to employ this sampling scheme.
 
 \clearpage

@@ -11,8 +11,8 @@ dlpred.ll <- function(y, x, suff.x, theta, lambda=1, rb=F)
 revo.ll <- function(y, x, suff.x, theta, lambda=1, rb=F)
 {
   omega = lambda / (1+lambda)
-  mu = omega*(y + (rb*suff.x[1] + (1-rb)*x)/lambda)
-  tau = sqrt(omega*(theta + rb*(suff.x[2]/(lambda*(1+lambda)))))
+  mu = ifelse(rb,omega*(y + suff.x[1]/lambda),omega*(y + x/lambda))
+  tau = ifelse(rb,sqrt(omega*(theta + suff.x[2]/(lambda*(1+lambda)))),sqrt(omega*theta))
   return(rnorm(1,mu,tau))
 }
 

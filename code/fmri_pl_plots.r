@@ -73,3 +73,106 @@ fmri_pl_quantiles <- function(N, mod.sim, n, nsims, nrtot, nruns, mod.est, np, a
 require(plyr)
 mydata = expand.grid(N = 20, mod.sim = "M011",n=15,nsims=1,nrtot=20,nruns=5,mod.est=c("M101","M011","M101s"),np=c(100,500,1000),alpha=0.05,burn=0,stringsAsFactors = FALSE)
 m_ply(mydata, fmri_pl_quantiles)
+
+fmri_pl_loglik_wsim = function(N, mod.sim, n, nsims, nrtot, nruns, mod.est, np, alpha = 0.05)
+{
+  # Plot marginal likelihoods for each sim for each # particles
+  for(n.sim in 1:nsims)
+  {
+    # Load simulated data
+    load(paste(dpath,"dlm_ar_sim-",N,"-",mod.sim,"-2.rdata",sep=""))
+    mysims = get(paste(mod.sim,"_dat",sep=""))[[1]][[n]]
+
+    # Parameter and model labels
+    mlabels = rep(NA,length(mod.est))
+    for(i in 1:length(mod.est)) mlabels[i] = eval(bquote(expression(M[.(paste(strsplit(mod.est[i],"")[[1]][-1],sep="",collapse=""))])))
+    truth.theta = c(mysims[[j]]$true.params$beta,mysims[[j]]$true.params$G[1,1],mysims[[j]]$true.params$W[1,1],mysims[[j]]$true.params$V[1,1])
+ 
+    # Load approximate log marginal likelihoods for particle filter runs
+    lmargliks = list()
+    for(j in 1:length(np))
+    {
+      lmargliks[[j]] = matrix(nr = nruns, nc = length(mod.est))
+      for(k in 1:length(mod.est))
+      {
+        load(paste(dpath,"fmri_pl-",paste(N,mod.sim,n,n.sim,nrtot,mod.est[k],np[j],alpha,sep="-"),".rdata",sep=""))
+        lmargliks[[j]][,k] = pf.out$lmarglik
+      }
+    }
+    
+    # Plot kernel density estimates of of log marginal likelihoods for pfs compared with truth
+    dmax = max(sapply(lmargliks, function(x) apply(x, 2, function(a) max(density(a)$y,na.rm=TRUE))))
+    bmax = max(sapply(lmargliks, function(x) apply(x, 2, function(a) max(density(a)$x,na.rm=TRUE))))   
+    bmin = min(sapply(lmargliks, function(x) apply(x, 2, function(a) min(density(a)$x,na.rm=TRUE))))
+    cols = rainbow(length(np))
+    pdf(file=paste(gpath,"fmri_pl_loglik-",paste(mod.sim,n,n.sim,nruns,sep="-"),".pdf",sep=""),width=5*length(mod.est),height=5)
+    par(mfrow=c(1,length(mod.est)),mar=c(5,6,4,2)+0.1)
+    xlab = c("Log marginal likelihood",rep("",length(mod.est)-1))
+    ylab = c("Density",rep("",length(mod.est)-1))
+    for(i in 1:length(mod.est))
+    {
+      plot(density(lmargliks[[1]][,i]),lwd=2,col=cols[1],main=mlabels[i],xlab=xlab[i],ylab=ylab[i],xlim=c(bmin,bmax),ylim=c(0,dmax),cex.axis=1.5,cex.lab=1.75,cex.main=2)
+      if(length(np > 1)) for(k in 2:length(np)) lines(density(lmargliks[[k]][,i]),lwd=2,col=cols[k])
+      if(i == 1) legend("topleft",legend=paste(np," particles",sep=""),lty=rep(1,length(np)),lwd=rep(2,length(np)),col=cols,cex=1.5)
+      if(i == which(mod.est == mod.sim)) mtext(substitute(paste(beta[0]," = ",aa,", ",beta[1]," = ",ab,", ",phi," = ",ac,", ",sigma[s]^2," = ",ad,", ",sigma[m]^2," = ",ae,sep=""),list(aa=truth.theta[1],ab=truth.theta[2],ac=truth.theta[3],ad=truth.theta[4],ae=truth.theta[5])),side=3,cex=0.85)
+    }
+    dev.off()
+  }
+}
+
+require(plyr)
+mydata = expand.grid(N = 20, mod.sim = "M011", n = 15, nsims = 1, nrtot = 20, nruns = 20)
+m_ply(mydata, function(N, mod.sim, n, nsims, nrtot, nruns) fmri_pl_loglik_wsim(N, mod.sim, n, nsims, nrtot, nruns, c("M101","M011","M101s"), c(100, 500, 1000)))
+
+fmri_pl_comp_wsim = function(N, mod.sim, n, nsims, nrtot, nruns, mod.est, np, alpha = 0.05)
+{
+  require(compositions)
+  
+  # Plot quantiles for each sim for each # particles
+  for(n.sim in 1:nsims)
+  {
+    # Load simulated data
+    load(paste(dpath,"dlm_ar_sim-",N,"-",mod.sim,"-2.rdata",sep=""))
+    mysims = get(paste(mod.sim,"_dat",sep=""))[[1]][[n]]
+    truth.theta = c(mysims[[j]]$true.params$beta,mysims[[j]]$true.params$G[1,1],mysims[[j]]$true.params$W[1,1],mysims[[j]]$true.params$V[1,1])
+    
+    # Load approximate log marginal likelihoods for particle filter runs
+    lmargliks = list()
+    for(j in 1:length(np))
+    {
+      lmargliks[[j]] = matrix(nr = nruns, nc = length(mod.est))
+      for(k in 1:length(mod.est))
+      {
+        load(paste(dpath,"fmri_pl-",paste(N,mod.sim,n,n.sim,nrtot,mod.est[k],np[j],alpha,sep="-"),".rdata",sep=""))
+        lmargliks[[j]][,k] = pf.out$lmarglik
+      }
+    }
+    
+    # Ternary diagrams of posterior model probabilities
+    # Compute pl approximate posterior model probabilities
+    pmargliks = list()
+    for(i in 1:length(np))
+    {
+      pmargliks[[i]] = apply(lmargliks[[i]], 1, function(a) postModProbs(a, rep(1/length(mod.est), length(mod.est))))
+      pmargliks[[i]] = t(pmargliks[[i]])
+    }
+    
+    # Ternary diagrams of posterior model probabilities
+    require(compositions)
+    mlabels = rep(NA,length(mod.est))
+    for(i in 1:length(mod.est)) mlabels[i] = eval(bquote(expression(M[.(paste(strsplit(mod.est[i],"")[[1]][-1],sep="",collapse=""))])))
+    pdf(file=paste(gpath,"fmri_pl_ternary-",paste(mod.sim,n,n.sim,nruns,sep="-"),".pdf",sep=""),width=10,height=10)
+    par(mfrow=c(2,2))
+    for(i in 1:length(np))
+    {
+      plot(acomp(pmargliks[[i]]),labels=mlabels, lwd=2)
+      mtext(paste(np[i]," particles",sep=""),side=3,cex=2)
+    }
+    dev.off()
+  }
+}
+
+require(plyr)
+mydata = expand.grid(N = 20, mod.sim = "M011", n = 15, nsims = 1, nrtot = 20, nruns = 20)
+m_ply(mydata, function(N, mod.sim, n, nsims, nrtot, nruns) fmri_pl_comp_wsim(N, mod.sim, n, nsims, nrtot, nruns, c("M101","M011","M101s"), c(100, 500, 1000)))
+

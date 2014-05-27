@@ -71,5 +71,5 @@ fmri_pl_quantiles <- function(N, mod.sim, n, nsims, nrtot, nruns, mod.est, np, a
 }
 
 require(plyr)
-mydata = expand.grid(N = 20, mod.sim = "M011",n=15,nsims=1,nrtot=20,nruns=5,mod.est=c("M101","M011","M101s"),np=c(100,500),alpha=0.05,burn=0,stringsAsFactors = FALSE)
+mydata = expand.grid(N = 20, mod.sim = "M011",n=15,nsims=1,nrtot=20,nruns=5,mod.est=c("M101","M011","M101s"),np=c(100,500,1000),alpha=0.05,burn=0,stringsAsFactors = FALSE)
 m_ply(mydata, fmri_pl_quantiles)

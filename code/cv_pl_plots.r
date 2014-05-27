@@ -6,7 +6,7 @@ source("pf_mc_functions.r")
 dpath = "../data/"
 gpath = "../graphs/"
 
-cv_pl_quantiles <- function(lambda, np, nruns, nsims, alpha = 0.05, burn = 0)
+cv_pl_quantiles <- function(lambda, np, nrtot, nruns, nsims, alpha = 0.05, burn = 0)
 {
   # Plot quantiles for each sim for each # particles
   for(n.sim in 1:nsims)
@@ -25,8 +25,8 @@ cv_pl_quantiles <- function(lambda, np, nruns, nsims, alpha = 0.05, burn = 0)
     for(j in 1:length(np))
     {
       # Load data
-      load(paste(dpath,"cv_pl-",lambda,"-",np[j],"-",nruns,"-",n.sim,".rdata",sep=""))
-      attach(pf.out)
+      load(paste(dpath,"cv_pl-",lambda,"-",np[j],"-",nrtot,"-",n.sim,".rdata",sep=""))
+      attach(pf.out,warn.conflicts=F)
       filt = rownames(lmarglik)
       
       # Plot 95% CI for states
@@ -45,7 +45,7 @@ cv_pl_quantiles <- function(lambda, np, nruns, nsims, alpha = 0.05, burn = 0)
       }
       gmin = min(mysims[[n.sim]]$x[1,], g.lk, apply(g.ls,2,min))
       gmax = max(mysims[[n.sim]]$x[1,], g.uk, apply(g.us,2,max))
-      pdf(paste(gpath,"cv-pl-states-",10*lambda,"-",n.sim,"-",nruns,"-",np[j],".pdf",sep=""))
+      pdf(paste(gpath,"cv-pl-states-",10*lambda,"-",n.sim,"-",nrtot,"-",nruns,"-",np[j],".pdf",sep=""))
       plot(0:nt,mysims[[n.sim]]$x[1,],ylim=c(gmin,gmax),type="l",xlab=expression(t),ylab="Position",col='gray',lwd=3)
       mtext(paste(np[j]," particles",sep=""),side=3)
       for(i in 1:length(filt))
@@ -78,7 +78,7 @@ cv_pl_quantiles <- function(lambda, np, nruns, nsims, alpha = 0.05, burn = 0)
       }
       gmin = min(1, g.lp, apply(g.lf,2,min))
       gmax = max(1, g.up, apply(g.uf,2,max))
-      pdf(paste(gpath,"cv-pl-precision-",10*lambda,"-",n.sim,"-",nruns,"-",np[j],".pdf",sep=""))
+      pdf(paste(gpath,"cv-pl-precision-",10*lambda,"-",n.sim,"-",nrtot,"-",nruns,"-",np[j],".pdf",sep=""))
       plot(0:nt,lp,type="l",lwd=3,ylim=c(gmin,gmax),main="95% CI for Filtered Precision",xlab=expression(t),ylab=expression(1/theta))
       mtext(paste(np[j]," particles",sep=""),side=3)
       for(i in 1:length(filt))
@@ -99,12 +99,12 @@ cv_pl_quantiles <- function(lambda, np, nruns, nsims, alpha = 0.05, burn = 0)
 }
 
 require(plyr)
-mydata = expand.grid(lambda = c(.5,1,2), np=c(100,500), nruns=20,nsims=1,stringsAsFactors=FALSE)
+mydata = expand.grid(lambda = c(.5,1,2), np=c(100,500,1000,5000), nrtot=20, nruns=5,nsims=1,stringsAsFactors=FALSE)
 m_ply(mydata, cv_pl_quantiles)
 
 cv_pl_loglik_wsim = function(np, nruns, nsims, lambda = c(.5, 1, 2), filt = c('pl','plrb','kd','rm'))
 {
-  # Plot quantiles for each sim for each # particles
+  # Plot marginal likelihoods for each sim for each # particles
   for(n.sim in 1:nsims)
   {
     # Load simulated data
@@ -171,7 +171,7 @@ cv_pl_loglik_wsim = function(np, nruns, nsims, lambda = c(.5, 1, 2), filt = c('p
 
 require(plyr)
 mydata = expand.grid(nruns = 20, nsims = 1)
-m_ply(mydata, function(nruns, nsims) cv_pl_loglik_wsim(c(100,500), nruns, nsims, filt = c('pl','plrb','rm')))
+m_ply(mydata, function(nruns, nsims) cv_pl_loglik_wsim(c(100,500,1000,5000), nruns, nsims, filt = c('pl','plrb','rm')))
 
 cv_pl_comp_wsim = function(np, nruns, nsims, lambda = c(.5, 1, 2), filt = c('pl','plrb','kd','rm'))
 {
@@ -221,7 +221,7 @@ cv_pl_comp_wsim = function(np, nruns, nsims, lambda = c(.5, 1, 2), filt = c('pl'
     require(compositions)
     wlabels = rep(NA,length(lambda))
     for(i in 1:length(lambda)) wlabels[i] = as.expression(bquote(paste(lambda," = ",sep="") ~ .(lambda[i])))
-    pdf(file=paste(gpath,"cv_pl_ternary-",n.sim,"-",paste(10*lambda,sep="",collapse="-"),".pdf",sep=""),width=10,height=10)
+    pdf(file=paste(gpath,"cv_pl_ternary-",paste(10*lambda,sep="",collapse="-"),"-",n.sim,"-",nruns,".pdf",sep=""),width=10,height=10)
     par(mfrow=c(2,2))
     for(i in 1:length(np))
     {
@@ -237,4 +237,4 @@ cv_pl_comp_wsim = function(np, nruns, nsims, lambda = c(.5, 1, 2), filt = c('pl'
 
 require(plyr)
 mydata = expand.grid(nruns = 20, nsims = 1)
-m_ply(mydata, function(nruns, nsims) cv_pl_comp_wsim(c(100,500), nruns, nsims, filt = c('pl','plrb','kd','rm')))
+m_ply(mydata, function(nruns, nsims) cv_pl_comp_wsim(c(100,500,1000,5000), nruns, nsims, filt = c('pl','plrb','kd','rm')))

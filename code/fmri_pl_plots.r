@@ -71,7 +71,7 @@ fmri_pl_quantiles <- function(N, mod.sim, n, nsims, nrtot, nruns, mod.est, np, a
 }
 
 require(plyr)
-mydata = expand.grid(N = 20, mod.sim = "M011",n=15,nsims=1,nrtot=20,nruns=5,mod.est=c("M101","M011","M101s"),np=c(100,500,1000),alpha=0.05,burn=0,stringsAsFactors = FALSE)
+mydata = expand.grid(N = 20, mod.sim = "M011",n=15,nsims=1,nrtot=20,nruns=5,mod.est=c("M101","M011","M101s"),np=c(100,500,1000,5000),alpha=0.05,burn=0,stringsAsFactors = FALSE)
 m_ply(mydata, fmri_pl_quantiles)
 
 fmri_pl_loglik_wsim = function(N, mod.sim, n, nsims, nrtot, nruns, mod.est, np, alpha = 0.05)
@@ -86,7 +86,7 @@ fmri_pl_loglik_wsim = function(N, mod.sim, n, nsims, nrtot, nruns, mod.est, np, 
     # Parameter and model labels
     mlabels = rep(NA,length(mod.est))
     for(i in 1:length(mod.est)) mlabels[i] = eval(bquote(expression(M[.(paste(strsplit(mod.est[i],"")[[1]][-1],sep="",collapse=""))])))
-    truth.theta = c(mysims[[j]]$true.params$beta,mysims[[j]]$true.params$G[1,1],mysims[[j]]$true.params$W[1,1],mysims[[j]]$true.params$V[1,1])
+    truth.theta = c(mysims[[n.sim]]$true.params$beta,mysims[[n.sim]]$true.params$G[1,1],mysims[[n.sim]]$true.params$W[1,1],mysims[[n.sim]]$true.params$V[1,1])
  
     # Load approximate log marginal likelihoods for particle filter runs
     lmargliks = list()
@@ -122,7 +122,7 @@ fmri_pl_loglik_wsim = function(N, mod.sim, n, nsims, nrtot, nruns, mod.est, np, 
 
 require(plyr)
 mydata = expand.grid(N = 20, mod.sim = "M011", n = 15, nsims = 1, nrtot = 20, nruns = 20)
-m_ply(mydata, function(N, mod.sim, n, nsims, nrtot, nruns) fmri_pl_loglik_wsim(N, mod.sim, n, nsims, nrtot, nruns, c("M101","M011","M101s"), c(100, 500, 1000)))
+m_ply(mydata, function(N, mod.sim, n, nsims, nrtot, nruns) fmri_pl_loglik_wsim(N, mod.sim, n, nsims, nrtot, nruns, c("M101","M011","M101s"), c(100, 500, 1000,5000)))
 
 fmri_pl_comp_wsim = function(N, mod.sim, n, nsims, nrtot, nruns, mod.est, np, alpha = 0.05)
 {
@@ -134,7 +134,7 @@ fmri_pl_comp_wsim = function(N, mod.sim, n, nsims, nrtot, nruns, mod.est, np, al
     # Load simulated data
     load(paste(dpath,"dlm_ar_sim-",N,"-",mod.sim,"-2.rdata",sep=""))
     mysims = get(paste(mod.sim,"_dat",sep=""))[[1]][[n]]
-    truth.theta = c(mysims[[j]]$true.params$beta,mysims[[j]]$true.params$G[1,1],mysims[[j]]$true.params$W[1,1],mysims[[j]]$true.params$V[1,1])
+    truth.theta = c(mysims[[n.sim]]$true.params$beta,mysims[[n.sim]]$true.params$G[1,1],mysims[[n.sim]]$true.params$W[1,1],mysims[[n.sim]]$true.params$V[1,1])
     
     # Load approximate log marginal likelihoods for particle filter runs
     lmargliks = list()
@@ -174,5 +174,5 @@ fmri_pl_comp_wsim = function(N, mod.sim, n, nsims, nrtot, nruns, mod.est, np, al
 
 require(plyr)
 mydata = expand.grid(N = 20, mod.sim = "M011", n = 15, nsims = 1, nrtot = 20, nruns = 20)
-m_ply(mydata, function(N, mod.sim, n, nsims, nrtot, nruns) fmri_pl_comp_wsim(N, mod.sim, n, nsims, nrtot, nruns, c("M101","M011","M101s"), c(100, 500, 1000)))
+m_ply(mydata, function(N, mod.sim, n, nsims, nrtot, nruns) fmri_pl_comp_wsim(N, mod.sim, n, nsims, nrtot, nruns, c("M101","M011","M101s"), c(100, 500, 1000, 5000)))
 

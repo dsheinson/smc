@@ -28,13 +28,13 @@ dlm.sim <- function(nt, F, G, V, W, x0, beta, U = 0)
   chol.V = try(chol(V),silent=TRUE)
   if(class(chol.V) == "try-error")
   {
-    chol.V = chol(V,pivot=TRUE)
+    chol.V = suppressWarnings(chol(V,pivot=TRUE))
     oo.V = order(attr(chol.V, "pivot"))
   }
   chol.W = try(chol(W),silent=TRUE)
   if(class(chol.W) == "try-error")
   {
-    chol.W = chol(W,pivot=TRUE)
+    chol.W = suppressWarnings(chol(W,pivot=TRUE))
     oo.W = order(attr(chol.W, "pivot"))
   }
 

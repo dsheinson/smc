@@ -45,8 +45,9 @@ kd_pf = function(y, dllik, pstate, revo, rprior, n, delta=0.99, progress = TRUE,
 
   # Initialize weights
   weight = matrix(NA, n, nt+1)
+  n.weights = matrix(NA, n, nt)
+  p.weights = matrix(NA, n, nt)
   weight[,1] = 1/n
-  increment = matrix(NA, n, nt)
   
   # Initialize parent
   parent = matrix(NA, n, nt+1)
@@ -59,7 +60,7 @@ kd_pf = function(y, dllik, pstate, revo, rprior, n, delta=0.99, progress = TRUE,
   if(progress) pb = txtProgressBar(0,nt,style=3)
   p.state = matrix(NA, ns, n)
   p.theta = matrix(NA, np, n)
-  p.weights = numeric(n)
+
   for (i in 1:nt) 
   {
     if(progress) setTxtProgressBar(pb,i)
@@ -80,11 +81,10 @@ kd_pf = function(y, dllik, pstate, revo, rprior, n, delta=0.99, progress = TRUE,
     for (j in 1:n)
     {
       p.state[,j]  = pstate(state[,j,i], theta[,j,i])
-      p.weights[j] = log(weight[j,i]) + dllik(y[,i], p.state[,j], p.theta[,j])
+      p.weights[j,i] = dllik(y[,i], p.state[,j], p.theta[,j])
     }
-    
-    p.weights = renormalize(p.weights, log=T)
-    tmp = resample(p.weights,...)
+
+    tmp = resample(renormalize(log(weight[,i]) + p.weights[,i], log=T), ...)
     kk = tmp$indices
     did.resample = !(all(kk == 1:n))
 
@@ -92,14 +92,13 @@ kd_pf = function(y, dllik, pstate, revo, rprior, n, delta=0.99, progress = TRUE,
     {
       if(did.resample) theta[,j,i+1] = p.theta[,kk[j]] + h*cl%*%rnorm(np) else theta[,j,i+1] = theta[,j,i]
       state[,j,i+1] = revo(state[,kk[j],i], theta[,j,i+1])
-      increment[j,i] = dllik(y[,i],   state[,   j,i+1], theta[,   j,i+1]) - dllik(y[,i], p.state[,kk[j]],  p.theta[,kk[j]])
-      weight[j,i+1] = log(tmp$weights[kk[j]]) + increment[j,i]
+      n.weights[j,i] = dllik(y[,i],   state[,   j,i+1], theta[,   j,i+1]) - dllik(y[,i], p.state[,kk[j]],  p.theta[,kk[j]])
     }
 
-    weight[,i+1] = renormalize(weight[,i+1], log=T)
+    weight[,i+1] = renormalize(log(tmp$weights) + n.weights[,i], log=T)
 
     parent[,i+1] = kk
   }
 
-  return(list(state=state, theta=theta, weight=weight, increment=increment, parent=parent))
+  return(list(state=state, theta=theta, weight=weight, p.weights=p.weights, n.weights=n.weights, parent=parent))
 }

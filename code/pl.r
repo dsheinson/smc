@@ -21,7 +21,7 @@ pl = function(y, dlpred, revo, rprior, rmove, smap.theta, smap.state, n, progres
   
   # Find dimension of state, parameters, sufficient statistics
   current.seed = .Random.seed
-  tmp = rprior()
+  tmp = rprior(1)
   ns = length(tmp$x)
   np = length(tmp$theta)
   nfs = length(tmp$suff.x)
@@ -41,7 +41,7 @@ pl = function(y, dlpred, revo, rprior, rmove, smap.theta, smap.state, n, progres
     suff.state[,j,1] = tmp$suff.x
     suff.theta[,j,1] = tmp$suff.theta
   }
-  
+
   # Initialize normalized and incremental weights
   weight = matrix(NA, n, nt+1)
   increment = matrix(NA, n, nt)
@@ -71,22 +71,14 @@ pl = function(y, dlpred, revo, rprior, rmove, smap.theta, smap.state, n, progres
     kk = tmp$indices
     weight[,i+1] = tmp$weights
     did.resample = !(all(kk == 1:n))
-    
-    # Propagate state and update sufficient statistics
+
+    # Propagate state, update sufficient statistics, and replenish fixed parameters
     for(j in 1:n)
     {
-      state[,j,i+1] = revo(y[,i],state[,kk[j],i],suff.state[,kk[j],i],theta[,kk[j],i])
-      suff.theta[,j,i+1] = smap.theta(suff.theta[,kk[j],i], y[,i], state[,j,i+1], state[,kk[j],i])
-    }
-
-    for(j in 1:n) suff.state[,j,i+1] = smap.state(suff.state[,kk[j],i],y[,i],theta[,kk[j],i])
-    
-    # Move particles
-    if(did.resample)
-    {
-      for (j in 1:n) theta[,j,i+1] = rmove(theta[,kk[j],i],suff.theta[,j,i+1])
-    } else {
-      theta[,,i+1] = theta[,kk,i]
+      state[,j,i+1] = revo(y[,i], state[,kk[j],i], suff.state[,kk[j],i], theta[,kk[j],i]) # Propagate
+      suff.theta[,j,i+1] = smap.theta(suff.theta[,kk[j],i], y[,i], state[,j,i+1]) # Update suff stat theta
+      suff.state[,j,i+1] = smap.state(suff.state[,kk[j],i],y[,i],theta[,kk[j],i]) # Update suff stat state
+      theta[,j,i+1] = rmove(suff.theta[,j,i+1]) # Refresh theta
     }
     
     # Track parent particles

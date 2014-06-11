@@ -1,9 +1,8 @@
 # Function to approximate the log marginal likelihood using particle filtering given a list returned by rm_pf()
-pf.lmarglik <- function(out)
+pf.lmarglik <- function(out, unnorm=F)
 {
-  nt = dim(out$increment)[2]
-  log.marglik <- 0
-  for(i in 1:nt) log.marglik = log.marglik + log(sum(exp(out$increment[,i]+log(out$weight[,i]))))
+  nt = dim(out$weight)[2]-1
+  if(unnorm) log.marglik = sum(log(apply(exp(out$n.weights),2,mean)*apply(exp(out$p.weights)*out$weight[,1:nt],2,sum))) else log.marglik = sum(log(apply(exp(out$increment)*out$weight[1:nt],2,sum)))
   return(log.marglik)
 }
 

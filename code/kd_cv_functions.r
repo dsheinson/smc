@@ -16,7 +16,7 @@ pstate.kd <- function(x, theta, lambda = 1)
   x
 }
 
-rprior.kd <- function(j, a0=1, b0=1)
+rprior.kd <- function(a0=1, b0=1)
 {
   theta = 1 / rgamma(1, a0, b0)
   x0 = rnorm(1, 0, sqrt(theta))

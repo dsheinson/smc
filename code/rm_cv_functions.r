@@ -1,35 +1,49 @@
-dllik <- function(y, x, theta, f = 1, v = 1) dnorm(y,f*x,sqrt(theta*v),log=TRUE)
+dllik.cv <- function(y, x, theta, f = 1, v = 1) dnorm(y,f*x,sqrt(theta*v),log=TRUE)
 
-revo <- function(x, theta, g = 1, w = 1) rnorm(1,g*x,sqrt(theta*w))
+revo.cv <- function(x, theta, g = 1, w = 1) rnorm(1,g*x,sqrt(theta*w))
 
-rprior <- function(a=1,b=1,m0=0,C0=1)
+rprior.cv <- function(a0=1,b0=1,m0=0,C0=1)
 {
-  mytheta = 1 / rgamma(1,a,b)
-  mystate = rnorm(1,m0,sqrt(C0*mytheta))
-  return(list(x=mystate,theta=mytheta))
+  theta = 1 / rgamma(1,a0,b0)
+  x = rnorm(1,m0,sqrt(C0*theta))
+  return(list(x=x,theta=theta))
 }
 
-rm_mcmc <- function(y, x, theta, a0, b0, mydlm, n.iter, smooth = TRUE, store.smooth = TRUE)
+# assume y and x are univariate 1 by nt and 1 by nt + 1 matrices, respectively
+rm_mcmc <- function(y, x, theta, a0, b0, mydlm, L, n.iter, move.states = TRUE)
 {
+  # Set k = nt - L where L is the lag from the current time point
+  nt = length(y)
+  if(L >= nt)
+  {
+    k = 1
+    L = nt - 1
+  } else {
+   k = nt - L
+  }
+
   for(t in 1:n.iter)
   {
     # Sample smoothed states by FFBS
-    if(smooth) x.smooth = sample.states(y, theta, mydlm) else x.smooth = x
+    if(move.states | n.iter > 1)
+    {
+      samp.x = sample.states(y, theta, mydlm, L)
+      if(k > 1) samp.x = c(x[1:(k-1)], samp.x)
+    } else {
+      samp.x = x
+    }
     
     # Sample theta from full conditional
-    theta = sample.theta(y, x.smooth, theta, a0, b0, mydlm)
-    
-    # Sample states by FFBS
-    if(store.smooth) x = x.smooth
+    theta = sample.theta(y, samp.x, a0, b0, mydlm)
   }
-  return(list(state=x,theta=theta))
+  return(list(state=samp.x,theta=theta))
 }
 
 ###################
 # Utility functions
 ###################
 
-sample.theta <- function(y, x, theta, a0, b0, mydlm)
+sample.theta <- function(y, x, a0, b0, mydlm)
 {
   K = length(y)
   F = mydlm$F; G = mydlm$G; V = mydlm$V; W = mydlm$W; m0 = mydlm$m0; C0 = mydlm$C0 
@@ -38,7 +52,7 @@ sample.theta <- function(y, x, theta, a0, b0, mydlm)
   return(1/rgamma(1,a,b))
 }
 
-sample.states <- function(y, theta, mydlm)
+sample.states <- function(y, theta, mydlm, L)
 {
   # Initialize DLM
   nt = length(y)
@@ -66,12 +80,12 @@ sample.states <- function(y, theta, mydlm)
   }
   
   # Backward-sampling
-  x = rep(NA, nt + 1)
-  x[nt + 1] = rnorm(1, m[nt + 1], sqrt(C[nt + 1]))
-  for(i in nt:1)
+  x = rep(NA, L + 2)
+  x[L + 2] = rnorm(1, m[nt + 1], sqrt(C[nt + 1]))
+  for(i in (L+1):1)
   {
-    h = m[i] + C[i]*G*(1/R[i])*(x[i+1] - A[i])
-    H = C[i] - C[i]*G*(1/R[i])*G*C[i]
+    h = m[nt - L - 1 + i] + C[nt - L - 1 + i]*G*(1/R[nt - L - 1 + i])*(x[i+1] - A[nt - L - 1 + i])
+    H = C[nt - L - 1 + i] - C[nt - L - 1 + i]*G*(1/R[nt - L - 1 + i])*G*C[nt - L - 1 + i]
     x[i] = rnorm(1, h, sqrt(H))
   }
   return(x)

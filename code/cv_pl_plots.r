@@ -6,10 +6,10 @@ source("pf_mc_functions.r")
 dpath = "../data/"
 gpath = "../graphs/"
 
-cv_pl_quantiles <- function(lambda, np, nrtot, nruns, nsims, alpha = 0.05, burn = 0)
+cv_pl_quantiles <- function(lambda, np, nrtot, nruns, nsims, filt, alpha = 0.05, burn = 0)
 {
   # Plot quantiles for each sim for each # particles
-  for(n.sim in 1:nsims)
+  for(n.sim in nsims)
   {
     # Load simulated data
     load(paste(dpath,"rw_sim.rdata",sep=""))
@@ -27,9 +27,17 @@ cv_pl_quantiles <- function(lambda, np, nrtot, nruns, nsims, alpha = 0.05, burn 
       # Load data
       load(paste(dpath,"cv_pl-",lambda,"-",np[j],"-",nrtot,"-",n.sim,".rdata",sep=""))
       attach(pf.out,warn.conflicts=F)
-      filt = rownames(lmarglik)
+      if(missing(filt))
+      {
+        filt = rownames(lmarglik)
+        filt.ind = 1:length(filt)
+      } else {
+        filt.ind = which(rownames(lmarglik) %in% filt)
+      }
       
-      # Plot 95% CI for states
+      # Plot 95% CI for states and precision
+      pdf(paste(gpath,"cv-pl-quant-",10*lambda,"-",n.sim,"-",nrtot,"-",nruns,"-",np[j],".pdf",sep=""),width=10,height=5)
+      par(mfrow=c(1,2))
       nt = dim(y)[2]
       if(burn > 0)
       {
@@ -45,10 +53,9 @@ cv_pl_quantiles <- function(lambda, np, nrtot, nruns, nsims, alpha = 0.05, burn 
       }
       gmin = min(mysims[[n.sim]]$x[1,], g.lk, apply(g.ls,2,min))
       gmax = max(mysims[[n.sim]]$x[1,], g.uk, apply(g.us,2,max))
-      pdf(paste(gpath,"cv-pl-states-",10*lambda,"-",n.sim,"-",nrtot,"-",nruns,"-",np[j],".pdf",sep=""))
       plot(0:nt,mysims[[n.sim]]$x[1,],ylim=c(gmin,gmax),type="l",xlab=expression(t),ylab="Position",col='gray',lwd=3)
       mtext(paste(np[j]," particles",sep=""),side=3)
-      for(i in 1:length(filt))
+      for(i in filt.ind)
       {
         for(k in 1:nruns)
         {
@@ -61,7 +68,6 @@ cv_pl_quantiles <- function(lambda, np, nrtot, nruns, nsims, alpha = 0.05, burn 
       lines(0:nt,uk,lwd=3)
       legend("topleft",legend=c(filt, "True Post", "True Sim"),lty=c(rep(1,length(filt)),1,1),col=c(2:(length(filt)+1),1,'gray'),lwd=c(rep(1,length(filt)),1,2))
       title("95% CI for filtered states")
-      dev.off()
       
       # Plot 95% CI for precision
       if(burn > 0)
@@ -78,10 +84,9 @@ cv_pl_quantiles <- function(lambda, np, nrtot, nruns, nsims, alpha = 0.05, burn 
       }
       gmin = min(1, g.lp, apply(g.lf,2,min))
       gmax = max(1, g.up, apply(g.uf,2,max))
-      pdf(paste(gpath,"cv-pl-precision-",10*lambda,"-",n.sim,"-",nrtot,"-",nruns,"-",np[j],".pdf",sep=""))
       plot(0:nt,lp,type="l",lwd=3,ylim=c(gmin,gmax),main="95% CI for Filtered Precision",xlab=expression(t),ylab=expression(1/theta))
       mtext(paste(np[j]," particles",sep=""),side=3)
-      for(i in 1:length(filt))
+      for(i in filt.ind)
       {
         for(k in 1:nruns)
         {
@@ -99,10 +104,10 @@ cv_pl_quantiles <- function(lambda, np, nrtot, nruns, nsims, alpha = 0.05, burn 
 }
 
 require(plyr)
-mydata = expand.grid(lambda = c(.5,1,2), np=c(100,500,1000,5000), nrtot=20, nruns=5,nsims=1,stringsAsFactors=FALSE)
-m_ply(mydata, cv_pl_quantiles)
+mydata = expand.grid(lambda = c(.5,1,2), np=c(100), nrtot=20, nruns=10, stringsAsFactors=FALSE)
+m_ply(mydata, function(lambda, np, nrtot, nruns) cv_pl_quantiles(lambda, np, nrtot, nruns, 1, c('pl', 'kd', 'rm100')))
 
-cv_pl_loglik_wsim = function(np, nruns, nsims, lambda = c(.5, 1, 2), filt = c('pl','plrb','kd','rm'))
+cv_pl_loglik_wsim = function(np, nruns, nsims, lambda = c(.5, 1, 2), filt = c('pl','plrb','kd','rm'), blim, dmax)
 {
   # Plot marginal likelihoods for each sim for each # particles
   for(n.sim in 1:nsims)
@@ -133,9 +138,15 @@ cv_pl_loglik_wsim = function(np, nruns, nsims, lambda = c(.5, 1, 2), filt = c('p
     }
 
     # Plot kernel density estimates of of log marginal likelihoods for pfs compared with truth
-    dmax = max(sapply(lmargliks, function(x) apply(x, c(1,3), function(a) max(density(a)$y,na.rm=TRUE))))
-    bmax = max(sapply(lmargliks, function(x) apply(x, c(1,3), function(a) max(density(a)$x,na.rm=TRUE))))   
-    bmin = min(sapply(lmargliks, function(x) apply(x, c(1,3), function(a) min(density(a)$x,na.rm=TRUE))))
+    if(missing(dmax)) dmax = max(sapply(lmargliks, function(x) apply(x, c(1,3), function(a) max(density(a)$y,na.rm=TRUE))))
+    if(missing(blim))
+    {
+      bmax = max(sapply(lmargliks, function(x) apply(x, c(1,3), function(a) max(density(a)$x,na.rm=TRUE))))   
+      bmin = min(sapply(lmargliks, function(x) apply(x, c(1,3), function(a) min(density(a)$x,na.rm=TRUE))))
+    } else {
+      bmin = blim[1]
+      bmax = blim[2]
+    }
     cols = rainbow(length(filt))
     pdf(file=paste(gpath,"cv_pl_loglik-",paste(10*lambda,sep="",collapse="-"),"-",n.sim,"-",nruns,".pdf",sep=""),width=5*length(lambda),height=5*length(np))
     par(mfrow=c(length(np),length(lambda)),mar=c(5,6,4,2)+0.1)
@@ -170,8 +181,8 @@ cv_pl_loglik_wsim = function(np, nruns, nsims, lambda = c(.5, 1, 2), filt = c('p
 }
 
 require(plyr)
-mydata = expand.grid(nruns = 20, nsims = 1)
-m_ply(mydata, function(nruns, nsims) cv_pl_loglik_wsim(c(100,500,1000,5000), nruns, nsims, filt = c('pl','plrb','rm')))
+mydata = expand.grid(nruns = 2, nsims = 1)
+m_ply(mydata, function(nruns, nsims) cv_pl_loglik_wsim(c(100), nruns, nsims, filt = c('pl','kd','rm100','rm50','rm25')))
 
 cv_pl_comp_wsim = function(np, nruns, nsims, lambda = c(.5, 1, 2), filt = c('pl','plrb','kd','rm'))
 {
@@ -236,5 +247,5 @@ cv_pl_comp_wsim = function(np, nruns, nsims, lambda = c(.5, 1, 2), filt = c('pl'
 }
 
 require(plyr)
-mydata = expand.grid(nruns = 20, nsims = 1)
-m_ply(mydata, function(nruns, nsims) cv_pl_comp_wsim(c(100,500,1000,5000), nruns, nsims, filt = c('pl','plrb','kd','rm')))
+mydata = expand.grid(nruns = 2, nsims = 1)
+m_ply(mydata, function(nruns, nsims) cv_pl_comp_wsim(c(100,500,1000), nruns, nsims, filt = c('pl','kd','rm100','rm50','rm25')))

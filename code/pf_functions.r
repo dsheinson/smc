@@ -25,6 +25,34 @@ pf.quantile = function(out, wts, ftheta, probs=.5, normwt=TRUE)
   return(quantiles)
 }
 
+# pf.mix.quantile - function that calculates quantiles of filtered distributions for states/parameters using mixture distributions, where sufficient statistics define the components of the mixture at each particle; returns a 3-D array with dimensions number of observations, number of params/states, and number of quantiles desired
+# Arguments:
+# out - a (#params)-length list of 3-D dimensional arrays of sufficient statistics for particles with dimensions number of sufficient statistics for parameter and number of observations; this can be the suff.state or suff.theta component of the output list from function pl
+# wts - a matrix of wts with rows corresponding to particles and columns corresponding to observations; can be the weight component of the output list from function pl; number of rows must match the 2nd dimension of out and number of columns must match the third dimension of out
+# probs - a vector of quantiles to be calculated
+# F - a (#params)-length list of functions that return the cdf of the mixture distribution for a parameter given a quantile, an (#params) by (#particles) matrix of sufficient statistics and a (#particles)-length vector mixture weights
+# int - 2-element vector giving interval range over which 'uniroot' searches for quantiles
+pf.mix.quantile = function(out, wts, F, probs=c(.025,.975), int=c(-1000,1000))
+{
+  npar = length(out)  
+  nq = length(probs)
+  tt = dim(wts)[2]
+  quantiles = array(NA, c(tt,npar,nq))
+  for(k in 1:npar)
+  {
+    stopifnot(dim(wts)[1] == dim(out[[k]])[2])
+    for(i in 1:tt)
+    {
+      for(j in 1:nq)
+      {
+        G = function(x) F[[k]](x, out[[k]][,,i], wts[,i]) - probs[j]
+        quantiles[i,k,j] = uniroot(G,int)$root
+      }
+    }
+  }
+  return(quantiles)
+}
+
 # pf_plot - function that creates a grid of plots of credible intervals over time of filtered distributions based on particle filter output; number of particles along the rows, parameter along the columns and different pf's for which to compare within plot panels
 # Arguments:
 # n - integer vector of number of particles (rows)

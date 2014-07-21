@@ -122,8 +122,8 @@ cv_pl_quantiles <- function(lambda, np, nrtot, nruns, nsims, filt, alpha = 0.05,
       if(j == 1) mtext(expression(x[t]),side=2,cex=1.5,line=2)
    
       # Plot 95% CI for precision
-      plot(0:nt,lp,type="l",lwd=3,axes=FALSE,ylim=c(ymin[2],ymax[2]),main=main[2],xlab=xlab[2],ylab=ylab[2], cex.lab = 2, cex.main = 2, cex.axis = 1.25)
-      box()
+      plot(0:nt,lp,type="l",lwd=3,axes=ifelse(j==1,TRUE,FALSE),ylim=c(ymin[2],ymax[2]),main=main[2],xlab=xlab[2],ylab=ylab[2], cex.lab = 2, cex.main = 2, cex.axis = 1.25)
+      if(j != 1) box()
       for(i in 1:length(filt.ind))
       {
         for(k in 1:nruns)
@@ -193,7 +193,7 @@ cv_pl_loglik_wsim = function(np, nruns, nsims, lambda = c(.5, 1, 2), filt = c('p
     }
     cols = rainbow(length(filt))
     pdf(file=paste(gpath,"cv_pl_loglik-",paste(10*lambda,sep="",collapse="-"),"-",n.sim,"-",nruns,".pdf",sep=""),width=5*length(lambda),height=5*length(np))
-    par(mfrow=c(length(np),length(lambda)),mar=c(5,6,4,2)+0.1)
+    par(mfrow=c(length(np),length(lambda)),mar=c(5,6,4,2)+0.1,mgp=c(4,1,0))
     for(j in 1:length(np))
     {
       for(i in 1:length(lambda))
@@ -214,12 +214,14 @@ cv_pl_loglik_wsim = function(np, nruns, nsims, lambda = c(.5, 1, 2), filt = c('p
         } else {
           xlab = ylab = main = ""
         }
-        plot(density(lmargliks[[j]][1,,i]),lwd=2,col=cols[1],main=main,xlab=xlab,ylab=ylab,xlim=c(bmin,bmax),ylim=c(0,dmax),cex.axis=1.5,cex.lab=2,cex.main=2.25)
+        plot(density(lmargliks[[j]][1,,i]),axes=ifelse(j==1&i==1,TRUE,FALSE),lwd=2,col=cols[1],main=main,xlab=xlab,ylab=ylab,xlim=c(bmin,bmax),ylim=c(0,dmax),cex.axis=1.5,cex.lab=2.25,cex.main=2.35)
+        if(!(j == 1 & i == 1)) box()
+        if(j == 1 & i == 1) mtext("Density",side=2,line=2.2,cex=1.5)
         if(length(filt > 1)) for(k in 2:length(filt)) lines(density(lmargliks[[j]][k,,i]),lwd=2,col=cols[k])
         abline(v=true.lmarglik[i],lwd=1,col=1)
         for(l in which(!(1:length(lambda) %in% i))) abline(v=true.lmarglik[l],lwd=1,col=1,lty=2)
-        mtext(round(true.lmarglik[i],2),side=1,at=true.lmarglik[i],cex=0.75)
-        if(i == 1 & j == 1) legend("topleft",c(filt,"Truth","Truth (other models)"),lty=c(rep(1,length(filt)),1,2),lwd=c(rep(2,length(filt)),1,1),col=c(cols,1,1),cex=1.5)
+        mtext(round(true.lmarglik[i],2),side=1,at=true.lmarglik[i],cex=0.85)
+        if(i == 1 & j == 1) legend("topleft",c(filt,"Truth","Truth (others)"),lty=c(rep(1,length(filt)),1,2),lwd=c(rep(2,length(filt)),1,1),col=c(cols,1,1),cex=1.6)
       }
     }
     dev.off()

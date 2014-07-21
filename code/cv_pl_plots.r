@@ -70,7 +70,7 @@ cv_pl_quantiles <- function(lambda, np, nrtot, nruns, nsims, filt, alpha = 0.05,
     }
     
     pdf(paste(gpath,"cv-pl-quant-",10*lambda,"-",n.sim,"-",nrtot,"-",nruns,".pdf",sep=""),width=10,height=5*length(np))
-    par(mfrow=c(length(np),2), mar=c(5,6,4,2)+0.1)
+    par(mfrow=c(length(np),2), mar=c(5,6,4,2)+0.1,mgp=c(4,0.5,0))
     for(j in 1:length(np))
     {
       # Load data
@@ -102,7 +102,12 @@ cv_pl_quantiles <- function(lambda, np, nrtot, nruns, nsims, filt, alpha = 0.05,
       }
       
       # Plot 95% CI for states
-      plot(0:nt,mysims[[n.sim]]$x[1,],ylim=c(ymin[1],ymax[1]),type="l",main=main[1],xlab=xlab[1],ylab=ylab[1],col='gray',lwd=3, cex.lab = 2, cex.main = 2, cex.axis = 1.25)
+      if(j == 1){
+        plot(0:nt,mysims[[n.sim]]$x[1,],ylim=c(ymin[1],ymax[1]),type="l",main=main[1],xlab=xlab[1],ylab=ylab[1],col='gray',lwd=3, cex.lab = 2.2, cex.main = 2.2, cex.axis = 1.35)
+      } else {
+        plot(0:nt,mysims[[n.sim]]$x[1,],ylim=c(ymin[1],ymax[1]),type="l",axes=FALSE,main=main[1],xlab=xlab[1],ylab=ylab[1],col='gray',lwd=3, cex.lab = 2.2, cex.main = 2.2, cex.axis = 1.35)
+        box()
+      }
       for(i in 1:length(filt.ind))
       {
         for(k in 1:nruns)
@@ -114,9 +119,11 @@ cv_pl_quantiles <- function(lambda, np, nrtot, nruns, nsims, filt, alpha = 0.05,
       lines(0:nt,mysims[[n.sim]]$x[1,],lwd=3,col="gray")
       lines(0:nt,lk,lwd=3)
       lines(0:nt,uk,lwd=3)
+      if(j == 1) mtext(expression(x[t]),side=2,cex=1.5,line=2)
    
       # Plot 95% CI for precision
-      plot(0:nt,lp,type="l",lwd=3,ylim=c(ymin[2],ymax[2]),main=main[2],xlab=xlab[2],ylab=ylab[2], cex.lab = 2, cex.main = 2, cex.axis = 1.25)
+      plot(0:nt,lp,type="l",lwd=3,axes=FALSE,ylim=c(ymin[2],ymax[2]),main=main[2],xlab=xlab[2],ylab=ylab[2], cex.lab = 2, cex.main = 2, cex.axis = 1.25)
+      box()
       for(i in 1:length(filt.ind))
       {
         for(k in 1:nruns)
@@ -127,8 +134,9 @@ cv_pl_quantiles <- function(lambda, np, nrtot, nruns, nsims, filt, alpha = 0.05,
       }
       lines(0:nt,lp,lwd=3)
       lines(0:nt,up,lwd=3)
+      if(j == 1) mtext(expression(1/theta),side=2,cex=1.5,line=2)
       abline(h=1,col='gray',lwd=3)
-      if(j == 1) legend("topright",legend=c(filt.names, "True Post", "True Sim"),lty=c(rep(1,length(filt.names)),1,1),col=c(2:(length(filt.names)+1),1,'gray'),lwd=c(rep(1,length(filt.names)),3,3), cex=1.5)
+      if(j == 1) legend("topright",legend=c(filt.names, "True Post", "True Sim"),lty=c(rep(1,length(filt.names)),1,1),col=c(2:(length(filt.names)+1),1,'gray'),lwd=c(rep(1,length(filt.names)),3,3), cex=1.75)
     }
     dev.off()
   }

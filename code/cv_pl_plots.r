@@ -70,7 +70,7 @@ cv_pl_quantiles <- function(lambda, np, nrtot, nruns, nsims, filt, alpha = 0.05,
     }
     
     pdf(paste(gpath,"cv-pl-quant-",10*lambda,"-",n.sim,"-",nrtot,"-",nruns,".pdf",sep=""),width=10,height=5*length(np))
-    par(mfrow=c(length(np),2), mar=c(5,6,4,2)+0.1,mgp=c(4,0.5,0))
+    par(mfrow=c(length(np),2), mar=c(5,9,7,2)+0.1,mgp=c(6,1,0))
     for(j in 1:length(np))
     {
       # Load data
@@ -103,9 +103,9 @@ cv_pl_quantiles <- function(lambda, np, nrtot, nruns, nsims, filt, alpha = 0.05,
       
       # Plot 95% CI for states
       if(j == 1){
-        plot(0:nt,mysims[[n.sim]]$x[1,],ylim=c(ymin[1],ymax[1]),type="l",main=main[1],xlab=xlab[1],ylab=ylab[1],col='gray',lwd=3, cex.lab = 2.2, cex.main = 2.2, cex.axis = 1.35)
+        plot(0:nt,mysims[[n.sim]]$x[1,],ylim=c(ymin[1],ymax[1]),type="l",main=main[1],xlab=xlab[1],ylab=ylab[1],col='gray',lwd=3, cex.lab = 3, cex.main = 2.65, cex.axis = 1.9)
       } else {
-        plot(0:nt,mysims[[n.sim]]$x[1,],ylim=c(ymin[1],ymax[1]),type="l",axes=FALSE,main=main[1],xlab=xlab[1],ylab=ylab[1],col='gray',lwd=3, cex.lab = 2.2, cex.main = 2.2, cex.axis = 1.35)
+        plot(0:nt,mysims[[n.sim]]$x[1,],ylim=c(ymin[1],ymax[1]),type="l",axes=FALSE,main=main[1],xlab=xlab[1],ylab=ylab[1],col='gray',lwd=3, cex.lab = 3, cex.main = 2.65, cex.axis = 1.9)
         box()
       }
       for(i in 1:length(filt.ind))
@@ -119,10 +119,14 @@ cv_pl_quantiles <- function(lambda, np, nrtot, nruns, nsims, filt, alpha = 0.05,
       lines(0:nt,mysims[[n.sim]]$x[1,],lwd=3,col="gray")
       lines(0:nt,lk,lwd=3)
       lines(0:nt,uk,lwd=3)
-      if(j == 1) mtext(expression(x[t]),side=2,cex=1.5,line=2)
-   
+      if(j == 1)
+      {
+        mtext(expression(x[t]),side=2,cex=2,line=2.75)
+        mtext(expression(t),side=1,cex=2,line=3.5)
+      }
+      
       # Plot 95% CI for precision
-      plot(0:nt,lp,type="l",lwd=3,axes=ifelse(j==1,TRUE,FALSE),ylim=c(ymin[2],ymax[2]),main=main[2],xlab=xlab[2],ylab=ylab[2], cex.lab = 2, cex.main = 2, cex.axis = 1.25)
+      plot(0:nt,lp,type="l",lwd=3,axes=ifelse(j==1,TRUE,FALSE),ylim=c(ymin[2],ymax[2]),main=main[2],xlab=xlab[2],ylab=ylab[2], cex.lab = 3, cex.main = 2.65, cex.axis = 1.9)
       if(j != 1) box()
       for(i in 1:length(filt.ind))
       {
@@ -134,7 +138,7 @@ cv_pl_quantiles <- function(lambda, np, nrtot, nruns, nsims, filt, alpha = 0.05,
       }
       lines(0:nt,lp,lwd=3)
       lines(0:nt,up,lwd=3)
-      if(j == 1) mtext(expression(1/theta),side=2,cex=1.5,line=2)
+      if(j == 1) mtext(expression(1/theta),side=2,cex=2,line=2.75)
       abline(h=1,col='gray',lwd=3)
       if(j == 1) legend("topright",legend=c(filt.names, "True Post", "True Sim"),lty=c(rep(1,length(filt.names)),1,1),col=c(2:(length(filt.names)+1),1,'gray'),lwd=c(rep(1,length(filt.names)),3,3), cex=1.75)
     }
@@ -193,7 +197,7 @@ cv_pl_loglik_wsim = function(np, nruns, nsims, lambda = c(.5, 1, 2), filt = c('p
     }
     cols = rainbow(length(filt))
     pdf(file=paste(gpath,"cv_pl_loglik-",paste(10*lambda,sep="",collapse="-"),"-",n.sim,"-",nruns,".pdf",sep=""),width=5*length(lambda),height=5*length(np))
-    par(mfrow=c(length(np),length(lambda)),mar=c(5,6,4,2)+0.1,mgp=c(4,1,0))
+    par(mfrow=c(length(np),length(lambda)),mar=c(8,9,7,2)+0.1,mgp=c(5.5,1,0))
     for(j in 1:length(np))
     {
       for(i in 1:length(lambda))
@@ -201,7 +205,7 @@ cv_pl_loglik_wsim = function(np, nruns, nsims, lambda = c(.5, 1, 2), filt = c('p
         if(j == 1 & i == 1)
         {
           ylab = paste("J = ",np[j],sep="")
-          xlab = "Log marginal likelihood"
+          xlab = expression(log(p(y[1:T])))
           main = substitute(paste(lambda," = ",aa),list(aa=lambda[i]))
         } else if(j == 1) {
           xlab = ""
@@ -214,13 +218,13 @@ cv_pl_loglik_wsim = function(np, nruns, nsims, lambda = c(.5, 1, 2), filt = c('p
         } else {
           xlab = ylab = main = ""
         }
-        plot(density(lmargliks[[j]][1,,i]),axes=ifelse(j==1&i==1,TRUE,FALSE),lwd=2,col=cols[1],main=main,xlab=xlab,ylab=ylab,xlim=c(bmin,bmax),ylim=c(0,dmax),cex.axis=1.5,cex.lab=2.25,cex.main=2.35)
+        plot(density(lmargliks[[j]][1,,i]),axes=ifelse(j==1&i==1,TRUE,FALSE),lwd=2,col=cols[1],main=main,xlab=xlab,ylab=ylab,xlim=c(bmin,bmax),ylim=c(0,dmax),cex.axis=1.9,cex.lab=4,cex.main=4)
         if(!(j == 1 & i == 1)) box()
-        if(j == 1 & i == 1) mtext("Density",side=2,line=2.2,cex=1.5)
+        if(j == 1 & i == 1) mtext("Density",side=2,line=2.5,cex=2)
         if(length(filt > 1)) for(k in 2:length(filt)) lines(density(lmargliks[[j]][k,,i]),lwd=2,col=cols[k])
         abline(v=true.lmarglik[i],lwd=1,col=1)
         for(l in which(!(1:length(lambda) %in% i))) abline(v=true.lmarglik[l],lwd=1,col=1,lty=2)
-        mtext(round(true.lmarglik[i],2),side=1,at=true.lmarglik[i],cex=0.85)
+        mtext(round(true.lmarglik[i],2),side=3,at=true.lmarglik[i],cex=1.5)
         if(i == 1 & j == 1) legend("topleft",c(filt,"Truth","Truth (others)"),lty=c(rep(1,length(filt)),1,2),lwd=c(rep(2,length(filt)),1,1),col=c(cols,1,1),cex=1.6)
       }
     }
@@ -286,7 +290,7 @@ cv_pl_comp_wsim = function(np, nruns, nsims, lambda = c(.5, 1, 2), filt = c('pl'
     wlabels = rep(NA,length(lambda))
     for(i in 1:length(lambda)) wlabels[i] = as.expression(bquote(paste(lambda," = ",sep="") ~ .(lambda[i])))
     pdf(file=paste(gpath,"cv_pl_ternary-",paste(10*lambda,sep="",collapse="-"),"-",n.sim,"-",nruns,".pdf",sep=""),width=10,height=10)
-    par(mfrow=c(2,2))
+    par(mfrow=c(2,2),mar=c(5,7,4,4)+0.1,cex.lab=2)
     for(i in 1:length(np))
     {
       plot(acomp(pmargliks[[i]][,,1]),labels=wlabels, col=2, lwd=2)
